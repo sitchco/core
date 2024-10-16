@@ -1,0 +1,10 @@
+{
+    "name": "sitchco/sitchco-core",
+    "description": "Core Monorepo for Sitchco WordPress projects",
+    "autoload": {
+        "psr-4": {
+            "Sitchco\\Util": "util/"
+        }
+    },
+    "type": "wordpress-muplugin"
+}
