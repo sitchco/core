@@ -9,6 +9,7 @@
     "type": "wordpress-muplugin",
     "require": {
         "illuminate/support": "*",
-        "php-di/php-di": "^7.0"
+        "php-di/php-di": "^7.0",
+        "timber/timber": "*"
     }
 }
