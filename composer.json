@@ -8,6 +8,7 @@
     },
     "type": "wordpress-muplugin",
     "require": {
-        "illuminate/support": "*"
+        "illuminate/support": "*",
+        "php-di/php-di": "^7.0"
     }
 }

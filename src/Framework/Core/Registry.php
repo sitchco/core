@@ -4,31 +4,27 @@ namespace Sitchco\Framework\Core;
 
 class Registry
 {
-    private static $modules = [];
+    use Singleton;
+    private static $moduleClassnames = [];
     private $registeredModules = [];
 
-    public function __construct()
+    protected function __construct()
     {
         add_action('after_setup_theme', [$this, 'activateModules']);
     }
 
     public function activateModules()
     {
-        $modules = static::$modules;
-        usort($modules, fn($a, $b) => $a::PRIORITY <=> $b::PRIORITY);
-        $registeredModules = array_reduce($modules, function ($carry, $module) {
-            $carry[$module::NAME ?? $module] = $module;
-
-            return $carry;
-        }, []);
-        $this->registeredModules = apply_filters('sitchco/modules/registered', $registeredModules);
-        $activeModules = apply_filters('sitchco/modules/active', $this->getDefaultList());
+        $this->registeredModules = $this->getModuleClassmap();
+        $activeModules = $this->getActiveList();
         foreach ($activeModules as $moduleName => $featureList) {
-            $module = $this->registeredModules[$moduleName];
-            $instance = new $module();
-            foreach ($featureList as $feature) {
-                if (method_exists($instance, $feature)) {
-                    call_user_func([$instance, $feature]);
+            $module = $this->registeredModules[$moduleName] ?? null;
+            if ($module && method_exists($module, 'init')) {
+                $instance = $module::init();
+                foreach ($featureList as $feature) {
+                    if (method_exists($instance, $feature)) {
+                        call_user_func([$instance, $feature]);
+                    }
                 }
             }
         }
@@ -38,7 +34,7 @@ class Registry
     {
         $list = [];
         foreach ($this->registeredModules as $module) {
-            $list[$module::NAME] = array_keys($module::FEATURES ?? []);
+            $list[$module::name()] = array_keys($module::FEATURES ?? []) ?: true;
         }
 
         return $list;
@@ -48,16 +44,40 @@ class Registry
     {
         $list = [];
         foreach ($this->registeredModules as $module) {
-            if ($module::ENABLED) {
-                $list[$module::NAME] = array_keys(array_filter($module::FEATURES ?? []));
+            if ($module::DEFAULT) {
+                $list[$module::name()] = array_keys(array_filter($module::FEATURES ?? [])) ?: true;
             }
         }
 
         return $list;
     }
 
-    public static function add($classname): void
+    protected function getActiveList(): array
     {
-        static::$modules[] = $classname;
+        // This integration is handled by JsonConfig but there may be a better way to establish this relationship.
+        return apply_filters('sitchco/modules/active', $this->getDefaultList());
+    }
+
+    protected function getModuleClassmap(): array
+    {
+        $modules = static::$moduleClassnames;
+        usort($modules, fn($a, $b) => $a::PRIORITY <=> $b::PRIORITY);
+        $registeredModules = array_reduce($modules, function ($carry, $module) {
+            $carry[$module::name()] = $module;
+
+            return $carry;
+        }, []);
+
+        return apply_filters('sitchco/modules/registered', $registeredModules);
+    }
+
+    /**
+     * @param array|string $classnames
+     *
+     * @return void
+     */
+    public static function add(array|string $classnames): void
+    {
+        static::$moduleClassnames = array_merge(static::$moduleClassnames, (array) $classnames);
     }
 }

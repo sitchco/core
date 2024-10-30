@@ -7,7 +7,8 @@ use Sitchco\Framework\Core\AbstractModule;
 class Cleanup extends AbstractModule
 {
     public const NAME = 'cleanup';
-    public const ENABLED = true;
+    public const CATEGORY = 'core';
+    public const DEFAULT = true;
     public const FEATURES = [
         'obscurity' => true,
         'cleanHtmlMarkup' => true,

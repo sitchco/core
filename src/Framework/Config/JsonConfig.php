@@ -1,10 +1,10 @@
 <?php
 
-namespace Sitchco\Framework\Adapters;
+namespace Sitchco\Framework\Config;
 
 use Sitchco\Framework\Core\Registry;
 
-class FilesystemAdapter
+class JsonConfig
 {
     private $registry;
 
@@ -14,8 +14,8 @@ class FilesystemAdapter
         if (wp_get_environment_type() === 'local' && is_admin()) {
             add_action('admin_init', [$this, 'saveModuleReference']);
         }
-        add_filter('sitchco/modules/active', [$this, 'activate']);
-        // TODO: hook into save permalinks and force regeneration of full reference.
+        add_filter('sitchco/modules/active', [$this, 'getActiveModules']);
+        add_action('sitchco/after_save_permalinks', fn() => $this->saveModuleReference(true));
     }
 
     public function saveModuleReference($force = false): void
@@ -28,8 +28,12 @@ class FilesystemAdapter
         }
     }
 
-    public function activate($modules): array
+    public function getActiveModules($modules): array
     {
+        // TODO: Consider implementing two separate lists for modules: 'activatedModules' and 'deactivatedModules'.
+        // This approach may seem more complex initially, but it offers the advantage of allowing new default features
+        //   introduced by the platform to be seamlessly integrated into existing projects without requiring manual
+        //   intervention to enable these features.
         $configPath = get_stylesheet_directory() . '/config/modules.json';
         if (!file_exists($configPath)) {
             wp_mkdir_p(dirname($configPath));
