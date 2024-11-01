@@ -1,6 +1,12 @@
 {
     "name": "sitchco/sitchco-core",
     "description": "Core Monorepo for Sitchco WordPress projects",
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/tabrisrp/wp-background-processing"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "Sitchco\\": "src/"
@@ -10,6 +16,7 @@
     "require": {
         "illuminate/support": "*",
         "php-di/php-di": "^7.0",
-        "timber/timber": "*"
+        "timber/timber": "*",
+        "deliciousbrains/wp-background-processing": "*"
     }
 }
