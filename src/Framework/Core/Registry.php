@@ -19,11 +19,13 @@ class Registry
         $activeModules = $this->getActiveList();
         foreach ($activeModules as $moduleName => $featureList) {
             $module = $this->registeredModules[$moduleName] ?? null;
-            if ($module && method_exists($module, 'init')) {
-                $instance = $module::init();
-                foreach ($featureList as $feature) {
-                    if (method_exists($instance, $feature)) {
-                        call_user_func([$instance, $feature]);
+            if(class_exists($module)) {
+                $instance = method_exists($module, 'init') ? $module::init() : new $module();
+                if(is_array($featureList)) {
+                    foreach ($featureList as $feature) {
+                        if (method_exists($instance, $feature)) {
+                            call_user_func([$instance, $feature]);
+                        }
                     }
                 }
             }
