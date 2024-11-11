@@ -11,11 +11,16 @@ trait Singleton
     final public function __sleep() {}
     final public function __wakeup() {}
 
-    final public static function init()
+    final public static function getInstance()
     {
         if (!isset(self::$instances[static::class])) {
             self::$instances[static::class] = new static();
         }
         return self::$instances[static::class];
+    }
+
+    public static function init()
+    {
+        return static::getInstance();
     }
 }

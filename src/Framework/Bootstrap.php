@@ -2,7 +2,7 @@
 
 namespace Sitchco\Framework;
 
-use Sitchco\Events\Hooks;
+use Sitchco\Events\SavePermalinksAsyncHook;
 use Sitchco\Framework\Config\JsonConfig;
 use Sitchco\Framework\Core\Registry;
 use Sitchco\Integration\Wordpress\Cleanup;
@@ -16,9 +16,7 @@ class Bootstrap
     ];
     public function __construct()
     {
-        Registry::add($this->modules);
-        $registry = Registry::init();
-        new JsonConfig($registry);
-        Hooks::init();
+        new JsonConfig(Registry::add($this->modules));
+        SavePermalinksAsyncHook::init();
     }
 }

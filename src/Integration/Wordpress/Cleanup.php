@@ -10,24 +10,24 @@ class Cleanup extends AbstractModule
     public const CATEGORY = 'core';
     public const DEFAULT = true;
     public const FEATURES = [
-        'obscurity' => true,
-        'cleanHtmlMarkup' => true,
-        'disableEmojis' => true,
-        'disableGutenbergBlockCss' => true,
-        'disableExtraRss' => true,
-        'disableRecentCommentsCss' => true,
-        'disableGalleryCss' => true,
-        'disableXmlRpc' => true,
-        'disableFeeds' => true,
-        'disableComments' => true,
-        'removeLanguageDropdown' => true,
-        'removeWordPressVersion' => true,
-        'disableRestEndpoints' => true,
-        'removeJpegCompression' => true,
-        'updateLoginPage' => true,
-        'removeGutenbergStyles' => true,
-        'removeScriptVersion' => true,
-        'removeRoles' => false,
+        'obscurity',
+        'cleanHtmlMarkup',
+        'disableEmojis',
+        'disableGutenbergBlockCss',
+        'disableExtraRss',
+        'disableRecentCommentsCss',
+        'disableGalleryCss',
+        'disableXmlRpc',
+        'disableFeeds',
+        'disableComments',
+        'removeLanguageDropdown',
+        'removeWordPressVersion',
+        'disableRestEndpoints',
+        'removeJpegCompression',
+        'updateLoginPage',
+        'removeGutenbergStyles',
+        'removeScriptVersion',
+        'removeRoles'
     ];
 
     /**

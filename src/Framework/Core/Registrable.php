@@ -13,16 +13,6 @@ trait Registrable
     public const NAME = '';
 
     /**
-     * Determines if this module should be enabled by default.
-     *
-     * If true, this module will add theme support automatically, but themes
-     * can override this by removing theme support for the module.
-     *
-     * @var bool
-     */
-    public const DEFAULT = false;
-
-    /**
      * An array of features provided by this module.
      *
      * Each feature is a key-value pair, where:
