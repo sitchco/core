@@ -27,7 +27,6 @@ class Cleanup extends AbstractModule
         'updateLoginPage',
         'removeGutenbergStyles',
         'removeScriptVersion',
-        'removeRoles'
     ];
 
     /**
@@ -381,23 +380,5 @@ class Cleanup extends AbstractModule
         }
 
         return $url;
-    }
-
-    /**
-     * Remove specific user roles.
-     */
-    public function removeRoles(): void
-    {
-        add_action('init', [$this, 'removeSpecifiedRoles']);
-    }
-
-    /**
-     * Remove contributor, subscriber, and author roles.
-     */
-    public function removeSpecifiedRoles(): void
-    {
-        remove_role('author');
-        remove_role('contributor');
-        remove_role('subscriber');
     }
 }
