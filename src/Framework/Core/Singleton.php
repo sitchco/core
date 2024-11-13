@@ -11,7 +11,7 @@ trait Singleton
     final public function __sleep() {}
     final public function __wakeup() {}
 
-    final public static function getInstance()
+    final public static function getInstance(): static
     {
         if (!isset(self::$instances[static::class])) {
             self::$instances[static::class] = new static();
@@ -19,7 +19,11 @@ trait Singleton
         return self::$instances[static::class];
     }
 
-    public static function init()
+    /**
+     * This can be used to perform additional initialization logic if needed.
+     * @return static
+     */
+    public static function init(): static
     {
         return static::getInstance();
     }

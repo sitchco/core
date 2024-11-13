@@ -14,9 +14,24 @@ class Bootstrap
         Cleanup::class,
         SearchRewrite::class,
     ];
+    protected array $extensions = [
+        SavePermalinksAsyncHook::class,
+    ];
+
     public function __construct()
     {
         new JsonConfig(Registry::add($this->modules));
-        SavePermalinksAsyncHook::init();
+        $this->initializeRequired();
+    }
+
+    protected function initializeRequired(): void
+    {
+        foreach ($this->extensions as $extension) {
+            if (method_exists($extension, 'init')) {
+                $extension::init();
+            } else {
+                new $extension();
+            }
+        }
     }
 }
