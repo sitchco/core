@@ -19,6 +19,7 @@ class Cleanup extends AbstractModule
         'disableGalleryCss',
         'disableXmlRpc',
         'disableFeeds',
+        'disableDefaultPosts',
         'disableComments',
         'removeLanguageDropdown',
         'removeWordPressVersion',
@@ -221,6 +222,13 @@ class Cleanup extends AbstractModule
         exit;
     }
 
+    public function disableDefaultPosts()
+    {
+        add_action('admin_menu', function(){
+            remove_menu_page('edit.php');
+        });
+    }
+
     /**
      * Disable comments globally.
      */
@@ -229,6 +237,9 @@ class Cleanup extends AbstractModule
         add_filter('comments_open', '__return_false', 20, 2);
         add_filter('pings_open', '__return_false', 20, 2);
         remove_action('admin_init', 'wp_comments_require_registration');
+        add_action('admin_menu', function () {
+            remove_menu_page('edit-comments.php');
+        });
     }
 
     /**
