@@ -33,7 +33,7 @@ class SavePermalinksAsyncHook extends \WP_Async_Request
     /**
      * @var string
      */
-    protected $action = 'onSavePermalinks';
+    protected $action = 'save_permalinks';
 
     protected function __construct()
     {
