@@ -47,7 +47,7 @@ class Registry
         foreach ($activeModules as $moduleName => $featureList) {
             $module = $this->registeredModules[$moduleName] ?? null;
             if (class_exists($module)) {
-                $instance = method_exists($module, 'init') ? $module::init() : new $module();
+                $instance = $module::getInstance();
                 if (is_array($featureList)) {
                     foreach ($featureList as $feature => $status) {
                         if (method_exists($instance, $feature)) {
@@ -82,7 +82,7 @@ class Registry
      * The filter receives an empty array and the full list of modules as arguments.
      * @return array<string, array<string, bool>|bool> List of active modules and their features.
      */
-    protected function getActiveList(): array
+    public function getActiveList(): array
     {
         return apply_filters('sitchco/modules/activate', [], $this->getFullList());
     }

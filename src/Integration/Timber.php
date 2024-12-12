@@ -12,13 +12,9 @@ class Timber extends AbstractModule
 
     public function __construct()
     {
-        add_action('setup_theme', [$this, 'init']);
-    }
-
-    public function init(): void
-    {
         if (class_exists('Timber\Timber')) {
             \Timber\Timber::init();
         }
     }
+
 }
