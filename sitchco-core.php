@@ -11,6 +11,7 @@ if (! defined('ABSPATH')) {
 
 const SITCHCO_CORE_DIR = __DIR__;
 const SITCHCO_CORE_SRC_DIR = SITCHCO_CORE_DIR . '/src';
+const SITCHCO_CORE_CONFIG_DIR = SITCHCO_CORE_DIR . '/config';
 
 add_action('plugins_loaded', static function () {
     new Bootstrap();

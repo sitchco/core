@@ -2,6 +2,7 @@
 
 namespace Sitchco\Framework\Config;
 
+use DI\ContainerBuilder;
 use Sitchco\Utils\ArrayUtil;
 
 /**
@@ -10,31 +11,31 @@ use Sitchco\Utils\ArrayUtil;
  * Integrates with the Registry to manage module activation and paths.
  * @package Sitchco\Framework\Config
  */
-class ContainerDefinitionConfigLoader implements ConfigLoader
+class ContainerDefinitionConfigLoader extends PhpConfigLoader
 {
-
-    public function load(): array
-    {
-        $paths_raw = array_merge(apply_filters('sitchco/container_definition_paths', []), $this->getContainerDefinitionPaths());
-        $paths = array_unique(array_map('trailingslashit', array_filter($paths_raw)));
-        $configs = array_filter(array_map(function ($path) {
-            $file = $path . 'container.php';
-            return file_exists($file) ? include_once($file) : false;
-        }, $paths));
-
-        return ArrayUtil::mergeRecursiveDistinct(...$configs);
-    }
+    protected ContainerBuilder $Builder;
 
     /**
-     *  Default config directories
-     *
-     * @return array<string> array of container definitions paths.
+     * @param ContainerBuilder $Builder
      */
-    protected function getContainerDefinitionPaths(): array
+    public function __construct(ContainerBuilder $Builder)
     {
-        return [
-            get_template_directory() . '/config',
-            get_stylesheet_directory() . '/config',
-        ];
+        $this->Builder = $Builder;
+    }
+
+
+    protected function getHookName(): string
+    {
+        return 'container';
+    }
+
+    protected function getConfigFileName(): string
+    {
+        return 'container.php';
+    }
+
+    protected function applyLoadedConfig(array $config): void
+    {
+        $this->Builder->addDefinitions($config);
     }
 }

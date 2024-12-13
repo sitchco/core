@@ -11,41 +11,30 @@ use Sitchco\Utils\ArrayUtil;
  * Integrates with the Registry to manage module activation and paths.
  * @package Sitchco\Framework\Config
  */
-class ModuleConfigLoader implements ConfigLoader
+class ModuleConfigLoader extends JsonConfigLoader
 {
-
-    public function __construct()
-    {
-    }
+    protected Registry $Registry;
 
     /**
-     * Retrieves the active modules by merging configurations from multiple JSON files.
-     * It collects module configurations from specified paths and merges them with the existing modules
-     *
-     * @return array<string, array<string, bool>|bool> The merged list of active modules.
+     * @param Registry $Registry
      */
-    public function load(): array
+    public function __construct(Registry $Registry)
     {
-        $paths_raw = array_merge(apply_filters('sitchco/module_paths', []), $this->getModulePaths());
-        $paths = array_unique(array_map('trailingslashit', array_filter($paths_raw)));
-        $configs = array_filter(array_map(function ($path) {
-            $file = $path . 'modules.json';
-            return file_exists($file) ? json_decode(file_get_contents($file), true) : false;
-        }, $paths));
-
-        return ArrayUtil::mergeRecursiveDistinct(...$configs);
+        $this->Registry = $Registry;
     }
 
-    /**
-     *  Default config directories
-     *
-     * @return array<string> array of module paths.
-     */
-    protected function getModulePaths(): array
+    protected function getConfigFileName(): string
     {
-        return [
-            get_template_directory() . '/config',
-            get_stylesheet_directory() . '/config',
-        ];
+        return 'modules.json';
+    }
+
+    protected function getHookName(): string
+    {
+        return 'modules';
+    }
+
+    protected function applyLoadedConfig(array $config): void
+    {
+        $this->Registry->activateModules($config);
     }
 }

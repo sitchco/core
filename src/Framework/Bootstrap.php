@@ -35,14 +35,11 @@ class Bootstrap
      */
     public function initialize(): void
     {
-        $builder = new ContainerBuilder();
-        $builder->addDefinitions(SITCHCO_CORE_SRC_DIR . '/container-config.php');
-        $ContainerDefinitionsLoader = new ContainerDefinitionConfigLoader();
-        $builder->addDefinitions($ContainerDefinitionsLoader->load());
-        $GLOBALS['SitchcoContainer'] = $container = $builder->build();
-        $Registry = $container->get(Registry::class);
-        $Registry->addModules($this->modules);
-        $ModuleLoader = new ModuleConfigLoader();
-        $Registry->activateModules($ModuleLoader->load());
+        $Builder = new ContainerBuilder();
+        $ContainerDefinitionLoader = new ContainerDefinitionConfigLoader($Builder);
+        $ContainerDefinitionLoader->load();
+        $GLOBALS['SitchcoContainer'] = $container = $Builder->build();
+        $container->get(Registry::class)->addModules($this->modules);
+        $container->get(ModuleConfigLoader::class)->load();
     }
 }
