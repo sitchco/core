@@ -10,8 +10,6 @@ namespace Sitchco\Framework\Core;
  */
 class Registry
 {
-    use Singleton;
-
     /**
      * @var array<string> List of registered module class names
      */
@@ -22,11 +20,6 @@ class Registry
      *     Associative array mapping module name to the activated module instance .
      */
     private array $activeModuleInstances = [];
-
-    protected function __construct()
-    {
-
-    }
 
     /**
      * Activates registered modules based on the active module configuration.

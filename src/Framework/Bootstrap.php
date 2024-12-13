@@ -2,7 +2,12 @@
 
 namespace Sitchco\Framework;
 
-use Sitchco\Framework\Config\JsonModuleConfigLoader;
+use DI\ContainerBuilder;
+use DI\DependencyException;
+use DI\NotFoundException;
+use Exception;
+use Sitchco\Framework\Config\ContainerDefinitionConfigLoader;
+use Sitchco\Framework\Config\ModuleConfigLoader;
 use Sitchco\Framework\Core\Registry;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Timber;
@@ -20,11 +25,24 @@ class Bootstrap
 
     public function __construct()
     {
-        add_action('after_setup_theme', function() {
-            $Registry = Registry::getInstance();
-            $Registry->addModules($this->modules);
-            $Loader = new JsonModuleConfigLoader();
-            $Registry->activateModules($Loader->getModuleConfigs());
-        }, 99);
+        add_action('after_setup_theme', [$this, 'initialize'], 99);
+    }
+
+    /**
+     * @throws DependencyException
+     * @throws NotFoundException
+     * @throws Exception
+     */
+    public function initialize(): void
+    {
+        $builder = new ContainerBuilder();
+        $builder->addDefinitions(SITCHCO_CORE_SRC_DIR . '/container-config.php');
+        $ContainerDefinitionsLoader = new ContainerDefinitionConfigLoader();
+        $builder->addDefinitions($ContainerDefinitionsLoader->load());
+        $GLOBALS['SitchcoContainer'] = $container = $builder->build();
+        $Registry = $container->get(Registry::class);
+        $Registry->addModules($this->modules);
+        $ModuleLoader = new ModuleConfigLoader();
+        $Registry->activateModules($ModuleLoader->load());
     }
 }

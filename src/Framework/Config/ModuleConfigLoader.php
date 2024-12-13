@@ -7,11 +7,11 @@ use Sitchco\Utils\ArrayUtil;
 
 /**
  * Class JsonModuleConfigLoader
- * Handles the configuration of modules using JSON files.
+ * Loads the configuration of modules using JSON files.
  * Integrates with the Registry to manage module activation and paths.
  * @package Sitchco\Framework\Config
  */
-class JsonModuleConfigLoader
+class ModuleConfigLoader implements ConfigLoader
 {
 
     public function __construct()
@@ -24,7 +24,7 @@ class JsonModuleConfigLoader
      *
      * @return array<string, array<string, bool>|bool> The merged list of active modules.
      */
-    public function getModuleConfigs(): array
+    public function load(): array
     {
         $paths_raw = array_merge(apply_filters('sitchco/module_paths', []), $this->getModulePaths());
         $paths = array_unique(array_map('trailingslashit', array_filter($paths_raw)));
