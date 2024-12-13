@@ -13,50 +13,55 @@ class Registry
     use Singleton;
 
     /**
-     * @var array<string> List of module class names to be registered.
+     * @var array<string> List of registered module class names
      */
-    private array $moduleClassnames = [];
+    private array $registeredModuleClassnames = [];
 
     /**
-     * @var array<string, string> Associative array mapping module names to their class names.
+     * @var array<string, AbstractModule>
+     *     Associative array mapping module name to the activated module instance .
      */
-    private array $registeredModules = [];
+    private array $activeModuleInstances = [];
 
-    /**
-     * Registry constructor.
-     * Initializes the Registry by hooking the activateModules method to the 'after_setup_theme' action.
-     */
     protected function __construct()
     {
-        add_action('after_setup_theme', [$this, 'activateModules']);
+
     }
 
     /**
-     * Activates registered modules based on the active module list.
+     * Activates registered modules based on the active module configuration.
      * Retrieves the module class map and the list of active modules.
      * For each active module, it checks if the class exists and instantiates it.
      * If features are specified, it invokes the corresponding methods on the module instance.
-     * @return void
+     *
+     * @param array<string, array<string, bool>|bool> $module_configs The merged list of module configuration.
+     *
+     * @return array<string, AbstractModule> Active module list
      */
-    public function activateModules()
+    public function activateModules(array $module_configs): array
     {
-        $this->registeredModules = $this->getModuleClassmap();
+        $registeredModulesSorted = $this->getModuleClassmap();
+
         $activeModules = array_filter(array_map(function ($features) {
             return is_array($features) ? array_filter($features) : $features;
-        }, $this->getActiveList()));
+        }, $module_configs));
         foreach ($activeModules as $moduleName => $featureList) {
-            $module = $this->registeredModules[$moduleName] ?? null;
-            if (class_exists($module)) {
-                $instance = $module::getInstance();
-                if (is_array($featureList)) {
-                    foreach ($featureList as $feature => $status) {
-                        if (method_exists($instance, $feature)) {
-                            call_user_func([$instance, $feature]);
-                        }
-                    }
+            $module = $registeredModulesSorted[$moduleName] ?? null;
+            if (!class_exists($module)) {
+                continue;
+            }
+            $instance = $module::getInstance();
+            $this->activeModuleInstances[$moduleName] = $instance;
+            if (!is_array($featureList)) {
+                continue;
+            }
+            foreach ($featureList as $feature => $status) {
+                if (method_exists($instance, $feature)) {
+                    call_user_func([$instance, $feature]);
                 }
             }
         }
+        return $this->activeModuleInstances;
     }
 
     /**
@@ -65,10 +70,10 @@ class Registry
      * where the keys are module names and the values are arrays of feature flags or boolean true.
      * @return array<string, array<string, bool>|bool> Full list of modules and their features.
      */
-    public function getFullList(): array
+    public function getModuleFeatures(): array
     {
         $list = [];
-        foreach ($this->registeredModules as $module) {
+        foreach ($this->registeredModuleClassnames as $module) {
             $features = (array_fill_keys($module::FEATURES ?: [], true)) ?: true;
             $list[$module::name()] = $features;
         }
@@ -82,9 +87,9 @@ class Registry
      * The filter receives an empty array and the full list of modules as arguments.
      * @return array<string, array<string, bool>|bool> List of active modules and their features.
      */
-    public function getActiveList(): array
+    public function getActiveModules(): array
     {
-        return apply_filters('sitchco/modules/activate', [], $this->getFullList());
+        return $this->activeModuleInstances;
     }
 
     /**
@@ -96,7 +101,7 @@ class Registry
      */
     protected function getModuleClassmap(): array
     {
-        $modules = $this->moduleClassnames;
+        $modules = $this->registeredModuleClassnames;
         usort($modules, fn($a, $b) => $a::PRIORITY <=> $b::PRIORITY);
         $registeredModules = array_reduce($modules, function ($carry, $module) {
             $carry[$module::name()] = $module;
@@ -117,7 +122,7 @@ class Registry
      */
     public function addModules(array|string $classnames): static
     {
-        $this->moduleClassnames = array_merge($this->moduleClassnames, (array)$classnames);
+        $this->registeredModuleClassnames = array_merge($this->registeredModuleClassnames, (array)$classnames);
 
         return $this;
     }

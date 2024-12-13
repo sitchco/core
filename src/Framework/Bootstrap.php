@@ -2,7 +2,7 @@
 
 namespace Sitchco\Framework;
 
-use Sitchco\Framework\Config\JsonConfig;
+use Sitchco\Framework\Config\JsonModuleConfigLoader;
 use Sitchco\Framework\Core\Registry;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Timber;
@@ -20,6 +20,11 @@ class Bootstrap
 
     public function __construct()
     {
-        new JsonConfig(Registry::add($this->modules));
+        add_action('after_setup_theme', function() {
+            $Registry = Registry::getInstance();
+            $Registry->addModules($this->modules);
+            $Loader = new JsonModuleConfigLoader();
+            $Registry->activateModules($Loader->getModuleConfigs());
+        }, 99);
     }
 }
