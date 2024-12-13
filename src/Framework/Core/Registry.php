@@ -2,10 +2,13 @@
 
 namespace Sitchco\Framework\Core;
 
+use DI\Container;
+use DI\DependencyException;
+use DI\NotFoundException;
+
 /**
  * Class Registry
  * Manages the registration and activation of modules within the framework.
- * Implements the Singleton pattern to ensure a single instance throughout the application.
  * @package Sitchco\Framework\Core
  */
 class Registry
@@ -16,10 +19,20 @@ class Registry
     private array $registeredModuleClassnames = [];
 
     /**
-     * @var array<string, AbstractModule>
+     * @var array<string, Module>
      *     Associative array mapping module name to the activated module instance .
      */
     private array $activeModuleInstances = [];
+
+    protected Container $Container;
+
+    /**
+     * @param Container $Container
+     */
+    public function __construct(Container $Container)
+    {
+        $this->Container = $Container;
+    }
 
     /**
      * Activates registered modules based on the active module configuration.
@@ -29,7 +42,7 @@ class Registry
      *
      * @param array<string, array<string, bool>|bool> $module_configs The merged list of module configuration.
      *
-     * @return array<string, AbstractModule> Active module list
+     * @return array<string, Module> Active module list
      */
     public function activateModules(array $module_configs): array
     {
@@ -43,16 +56,20 @@ class Registry
             if (!class_exists($module)) {
                 continue;
             }
-            $instance = $module::getInstance();
-            $this->activeModuleInstances[$moduleName] = $instance;
-            if (!is_array($featureList)) {
-                continue;
-            }
-            foreach ($featureList as $feature => $status) {
-                if (method_exists($instance, $feature)) {
-                    call_user_func([$instance, $feature]);
+            try {
+                $instance = $this->Container->get($module);
+                $this->activeModuleInstances[$moduleName] = $instance;
+                if (!is_array($featureList)) {
+                    continue;
                 }
+                foreach ($featureList as $feature => $status) {
+                    if (method_exists($instance, $feature)) {
+                        call_user_func([$instance, $feature]);
+                    }
+                }
+            } catch (DependencyException|NotFoundException) {
             }
+
         }
         return $this->activeModuleInstances;
     }
@@ -120,16 +137,4 @@ class Registry
         return $this;
     }
 
-    /**
-     * Static method to add modules to the registry.
-     * Retrieves the singleton instance and adds the provided class names to it.
-     *
-     * @param array<string>|string $classnames Array or single string of module class names to add.
-     *
-     * @return static Returns the singleton instance for method chaining.
-     */
-    public static function add(array|string $classnames): static
-    {
-        return static::getInstance()->addModules($classnames);
-    }
 }

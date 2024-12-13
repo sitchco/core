@@ -64,20 +64,6 @@ trait Registrable
      */
     public const BLOCKS = [];
 
-    /**
-     * Registers this module with the central Registry.
-     *
-     * This method should be called by each module to add itself to the Registry,
-     * which will then manage the initialization and configuration of the module
-     * based on theme support and conditions.
-     *
-     * @return void
-     */
-    public static function register(): void
-    {
-        Registry::add(static::class);
-    }
-
     public static function name(): string
     {
         return static::NAME ?: (new \ReflectionClass(static::class))->getShortName();

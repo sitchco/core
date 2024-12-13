@@ -2,13 +2,12 @@
 
 namespace Sitchco\Integration\Wordpress;
 
-use Sitchco\Framework\Core\AbstractModule;
+use Sitchco\Framework\Core\Module;
 
-class Cleanup extends AbstractModule
+class Cleanup extends Module
 {
     public const NAME = 'cleanup';
-    public const CATEGORY = 'core';
-    public const DEFAULT = true;
+
     public const FEATURES = [
         'obscurity',
         'cleanHtmlMarkup',

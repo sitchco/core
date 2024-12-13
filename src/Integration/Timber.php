@@ -2,9 +2,9 @@
 
 namespace Sitchco\Integration;
 
-use Sitchco\Framework\Core\AbstractModule;
+use Sitchco\Framework\Core\Module;
 
-class Timber extends AbstractModule
+class Timber extends Module
 {
     public const NAME = 'timber';
     public const CATEGORY = 'core';

@@ -12,10 +12,10 @@ namespace Sitchco\Framework\Core;
  * Each module can be conditionally enabled or configured based on theme support.
  * 
  */
-abstract class AbstractModule
+abstract class Module
 {
     // NOTE: use of a trait would allow registration of a class that uses a different parent class. For example, some services
     // extend \WP_Background_Process, this would allow those services to become a registrable module without requiring separate
     // wrappers to instantiate. We may rethink this if it's a poor design pattern.
-    use Registrable, Singleton;
+    use Registrable;
 }

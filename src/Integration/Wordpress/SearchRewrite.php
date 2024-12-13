@@ -2,36 +2,31 @@
 
 namespace Sitchco\Integration\Wordpress;
 
-use Sitchco\Framework\Core\AbstractModule;
+use Sitchco\Framework\Core\Module;
 
-class SearchRewrite extends AbstractModule
+class SearchRewrite extends Module
 {
-    //    public const NAME = 'search-rewrite';
-    //    public const ENABLED = true;
+    public const NAME = 'search_rewrite';
+
+    const FEATURES = [
+        'redirect',
+        'compatibility'
+    ];
 
     /**
      * The search query string.
      */
-    protected $query = '/?s=';
+    protected string $query = '/?s=';
 
     /**
      * The search slug.
      */
-    protected $slug = '/search/';
-
-    /**
-     * Constructor to initialize hooks.
-     */
-    public function __construct()
-    {
-        $this->handleRedirect();
-        $this->handleCompatibility();
-    }
+    protected string $slug = '/search/';
 
     /**
      * Redirect query string search results to the search slug.
      */
-    protected function handleRedirect()
+    public function redirect(): void
     {
         add_action('template_redirect', function () {
             global $wp_rewrite;
@@ -49,8 +44,8 @@ class SearchRewrite extends AbstractModule
 
             if (
                 is_search() &&
-                strpos($request, '/' . $wp_rewrite->search_base . '/') === false &&
-                strpos($request, '&') === false
+                !str_contains($request, '/' . $wp_rewrite->search_base . '/') &&
+                !str_contains($request, '&')
             ) {
                 wp_safe_redirect(get_search_link());
                 exit;
@@ -61,7 +56,7 @@ class SearchRewrite extends AbstractModule
     /**
      * Handle compatibility with third-party plugins.
      */
-    protected function handleCompatibility()
+    public function compatibility(): void
     {
         $this->handleYoastSeo();
     }
@@ -69,15 +64,18 @@ class SearchRewrite extends AbstractModule
     /**
      * Handle Yoast SEO compatibility.
      */
-    protected function handleYoastSeo()
+    protected function handleYoastSeo(): void
     {
         add_filter('wpseo_json_ld_search_url', [$this, 'rewriteUrl']);
     }
 
     /**
      * Rewrite the search query string to a slug.
+     *
+     * @param string $url
+     * @return array|string
      */
-    public function rewriteUrl($url)
+    public function rewriteUrl(string $url): array|string
     {
         return str_replace($this->getQuery(), $this->getSlug(), $url);
     }
@@ -85,7 +83,7 @@ class SearchRewrite extends AbstractModule
     /**
      * Get the search query string.
      */
-    protected function getQuery()
+    protected function getQuery(): string
     {
         return $this->query;
     }
@@ -93,7 +91,7 @@ class SearchRewrite extends AbstractModule
     /**
      * Get the search slug.
      */
-    protected function getSlug()
+    protected function getSlug(): string
     {
         return $this->slug;
     }

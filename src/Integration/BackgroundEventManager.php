@@ -2,10 +2,14 @@
 
 namespace Sitchco\Integration;
 
+use DI\Container;
+use DI\DependencyException;
+use DI\NotFoundException;
 use Sitchco\Events\SavePermalinksAsyncHook;
-use Sitchco\Framework\Core\AbstractModule;
+use Sitchco\Framework\Core\Module;
+use WP_Async_Request;
 
-class BackgroundEventManager extends AbstractModule
+class BackgroundEventManager extends Module
 {
     public const NAME = 'background_event_manager';
     public const CATEGORY = 'core';
@@ -14,8 +18,29 @@ class BackgroundEventManager extends AbstractModule
        'savePermalinks'
     ];
 
-    public function savePermalinks()
+    protected Container $Container;
+
+    /**
+     * @var WP_Async_Request[]
+     */
+    protected array $events;
+
+    /**
+     * @param Container $Container
+     */
+    public function __construct(Container $Container)
     {
-        SavePermalinksAsyncHook::init();
+        $this->Container = $Container;
+    }
+
+    /**
+     * @return void
+     * @throws DependencyException
+     * @throws NotFoundException
+     */
+    public function savePermalinks(): void
+    {
+        $event = $this->Container->get(SavePermalinksAsyncHook::class);
+        $this->events[$event::class] = $event;
     }
 }
