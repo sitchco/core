@@ -21,7 +21,7 @@ abstract class ConfigLoader
         $paths = array_unique(array_map('trailingslashit', array_filter($paths_raw)));
         $configs = array_filter(array_map(function ($path) {
             $file = $path . $this->getConfigFileName();
-            return file_exists($file) ? json_decode(file_get_contents($file), true) : false;
+            return file_exists($file) ? $this->loadFile($file) : false;
         }, $paths));
 
         $merged_config = ArrayUtil::mergeRecursiveDistinct(...$configs);

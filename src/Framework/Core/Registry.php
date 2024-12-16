@@ -46,6 +46,7 @@ class Registry
      */
     public function activateModules(array $module_configs): array
     {
+        $this->addModules(array_keys($module_configs));
         $registeredModulesSorted = $this->getModuleClassmap();
 
         $activeModules = array_filter(array_map(function ($features) {
@@ -57,12 +58,13 @@ class Registry
                 continue;
             }
             try {
-                $instance = $this->Container->get($module);
+                $instance = $this->Container->get($module); /* @var Module $instance */
                 $this->activeModuleInstances[$moduleName] = $instance;
-                if (!is_array($featureList)) {
-                    continue;
+                // default to activate all features
+                if (!is_array($featureList) && count($instance::FEATURES)) {
+                    $featureList = array_fill_keys($instance::FEATURES, true);
                 }
-                foreach ($featureList as $feature => $status) {
+                foreach ((array) $featureList as $feature => $status) {
                     if (method_exists($instance, $feature)) {
                         call_user_func([$instance, $feature]);
                     }
@@ -85,7 +87,7 @@ class Registry
         $list = [];
         foreach ($this->registeredModuleClassnames as $module) {
             $features = (array_fill_keys($module::FEATURES ?: [], true)) ?: true;
-            $list[$module::name()] = $features;
+            $list[$module] = $features;
         }
 
         return $list;
@@ -112,9 +114,9 @@ class Registry
     protected function getModuleClassmap(): array
     {
         $modules = $this->registeredModuleClassnames;
-        usort($modules, fn($a, $b) => $a::PRIORITY <=> $b::PRIORITY);
+        //usort($modules, fn($a, $b) => $a::PRIORITY <=> $b::PRIORITY);
         $registeredModules = array_reduce($modules, function ($carry, $module) {
-            $carry[$module::name()] = $module;
+            $carry[$module] = $module;
 
             return $carry;
         }, []);
@@ -132,7 +134,8 @@ class Registry
      */
     public function addModules(array|string $classnames): static
     {
-        $this->registeredModuleClassnames = array_merge($this->registeredModuleClassnames, (array)$classnames);
+        $valid_classnames = array_filter((array)$classnames, fn($c) => is_subclass_of($c, Module::class));
+        $this->registeredModuleClassnames = array_merge($this->registeredModuleClassnames, $valid_classnames);
 
         return $this;
     }

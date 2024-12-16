@@ -11,9 +11,6 @@ use WP_Async_Request;
 
 class BackgroundEventManager extends Module
 {
-    public const NAME = 'background_event_manager';
-    public const CATEGORY = 'core';
-    public const DEFAULT = true;
     public const FEATURES = [
        'savePermalinks'
     ];

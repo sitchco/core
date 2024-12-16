@@ -4,13 +4,6 @@ namespace Sitchco\Framework\Core;
 
 trait Registrable
 {
-    
-    /**
-     * The unique name of the module, used for theme support registration and identification.
-     *
-     * @var string
-     */
-    public const NAME = '';
 
     /**
      * An array of features provided by this module.
@@ -26,18 +19,6 @@ trait Registrable
      * @var array<string, bool>
      */
     public const FEATURES = [];
-
-    /**
-     * The priority of this module when multiple modules share the same NAME.
-     *
-     * Modules with the same NAME will be resolved based on priority. The module
-     * with the highest priority will be instantiated, while others will be ignored.
-     *
-     * This is a shorthand for deregister/re-register.
-     *
-     * @var int
-     */
-    public const PRIORITY = 10;
 
     /**
      * An array of Timber custom post classes associated with this module.
@@ -64,8 +45,4 @@ trait Registrable
      */
     public const BLOCKS = [];
 
-    public static function name(): string
-    {
-        return static::NAME ?: (new \ReflectionClass(static::class))->getShortName();
-    }
 }

@@ -6,8 +6,6 @@ use Sitchco\Framework\Core\Module;
 
 class Cleanup extends Module
 {
-    public const NAME = 'cleanup';
-
     public const FEATURES = [
         'obscurity',
         'cleanHtmlMarkup',

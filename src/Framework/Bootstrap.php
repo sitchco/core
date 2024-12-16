@@ -16,12 +16,6 @@ use Sitchco\Integration\Wordpress\SearchRewrite;
 
 class Bootstrap
 {
-    protected array $modules = [
-        Cleanup::class,
-        SearchRewrite::class,
-        BackgroundEventManager::class,
-        Timber::class
-    ];
 
     public function __construct()
     {
@@ -39,7 +33,6 @@ class Bootstrap
         $ContainerDefinitionLoader = new ContainerDefinitionConfigLoader($Builder);
         $ContainerDefinitionLoader->load();
         $GLOBALS['SitchcoContainer'] = $container = $Builder->build();
-        $container->get(Registry::class)->addModules($this->modules);
         $container->get(ModuleConfigLoader::class)->load();
     }
 }

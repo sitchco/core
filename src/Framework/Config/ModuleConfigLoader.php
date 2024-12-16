@@ -11,7 +11,7 @@ use Sitchco\Utils\ArrayUtil;
  * Integrates with the Registry to manage module activation and paths.
  * @package Sitchco\Framework\Config
  */
-class ModuleConfigLoader extends JsonConfigLoader
+class ModuleConfigLoader extends PhpConfigLoader
 {
     protected Registry $Registry;
 
@@ -25,7 +25,7 @@ class ModuleConfigLoader extends JsonConfigLoader
 
     protected function getConfigFileName(): string
     {
-        return 'modules.json';
+        return 'modules.php';
     }
 
     protected function getHookName(): string

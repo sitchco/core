@@ -6,8 +6,6 @@ use Sitchco\Framework\Core\Module;
 
 class SearchRewrite extends Module
 {
-    public const NAME = 'search_rewrite';
-
     const FEATURES = [
         'redirect',
         'compatibility'
