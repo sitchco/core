@@ -24,4 +24,17 @@ class ArrayUtil
         }
         return $merged;
     }
+
+    public static function arrayMapAssoc(callable $callback, array $array): array
+    {
+        return array_map(function($key) use ($callback, $array){
+            return $callback($key, $array[$key]);
+        }, array_keys($array));
+    }
+
+    public static function arrayMapFlat(callable $callback, array $array): array
+    {
+        return array_merge(...array_map($callback, $array));
+    }
+
 }

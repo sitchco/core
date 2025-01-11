@@ -4,6 +4,15 @@ namespace Sitchco\Framework\Core;
 
 trait Registrable
 {
+    /**
+     * An array of other modules that this module depends on to function.
+     * These modules will automatically be registered immediately before this module and configured to activate.
+     * Each key is the fully-qualified class name of the module
+     *
+     * @example [OtherModule1::class, OtherModule2::class]
+     *
+     */
+    public const DEPENDENCIES = [];
 
     /**
      * An array of features provided by this module.

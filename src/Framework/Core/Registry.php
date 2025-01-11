@@ -5,6 +5,7 @@ namespace Sitchco\Framework\Core;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
+use Sitchco\Utils\ArrayUtil;
 
 /**
  * Class Registry
@@ -34,6 +35,29 @@ class Registry
         $this->Container = $Container;
     }
 
+    protected function activateModule(array|bool &$featureList, string $module): void
+    {
+        if (!class_exists($module)) {
+            return;
+        }
+        try {
+            $dependencies = array_fill_keys($module::DEPENDENCIES, true);
+            array_walk($dependencies, [$this, 'activateModule']);
+            $instance = $this->Container->get($module); /* @var Module $instance */
+            $this->activeModuleInstances[$module] = $instance;
+            // default to activate all features
+            if (!is_array($featureList) && count($instance::FEATURES)) {
+                $featureList = array_fill_keys($instance::FEATURES, true);
+            }
+            foreach ((array) $featureList as $feature => $status) {
+                if (method_exists($instance, $feature)) {
+                    call_user_func([$instance, $feature]);
+                }
+            }
+        } catch (DependencyException|NotFoundException) {
+        }
+    }
+
     /**
      * Activates registered modules based on the active module configuration.
      * Retrieves the module class map and the list of active modules.
@@ -47,32 +71,11 @@ class Registry
     public function activateModules(array $module_configs): array
     {
         $this->addModules(array_keys($module_configs));
-        $registeredModulesSorted = $this->getModuleClassmap();
 
         $activeModules = array_filter(array_map(function ($features) {
             return is_array($features) ? array_filter($features) : $features;
         }, $module_configs));
-        foreach ($activeModules as $moduleName => $featureList) {
-            $module = $registeredModulesSorted[$moduleName] ?? null;
-            if (!class_exists($module)) {
-                continue;
-            }
-            try {
-                $instance = $this->Container->get($module); /* @var Module $instance */
-                $this->activeModuleInstances[$moduleName] = $instance;
-                // default to activate all features
-                if (!is_array($featureList) && count($instance::FEATURES)) {
-                    $featureList = array_fill_keys($instance::FEATURES, true);
-                }
-                foreach ((array) $featureList as $feature => $status) {
-                    if (method_exists($instance, $feature)) {
-                        call_user_func([$instance, $feature]);
-                    }
-                }
-            } catch (DependencyException|NotFoundException) {
-            }
-
-        }
+        array_walk($activeModules, [$this, 'activateModule']);
         return $this->activeModuleInstances;
     }
 
@@ -105,26 +108,6 @@ class Registry
     }
 
     /**
-     * Builds and retrieves the module class map after sorting and applying filters.
-     * Sorts the modules based on their PRIORITY constant.
-     * Constructs an associative array mapping module names to their class names.
-     * Applies the 'sitchco/modules/registered' filter to allow modifications to the registered modules.
-     * @return array<string, string> Associative array of registered modules.
-     */
-    protected function getModuleClassmap(): array
-    {
-        $modules = $this->registeredModuleClassnames;
-        //usort($modules, fn($a, $b) => $a::PRIORITY <=> $b::PRIORITY);
-        $registeredModules = array_reduce($modules, function ($carry, $module) {
-            $carry[$module] = $module;
-
-            return $carry;
-        }, []);
-
-        return apply_filters('sitchco/modules/registered', $registeredModules);
-    }
-
-    /**
      * Adds modules to the registry.
      * Merges the provided class names with the existing list of module class names.
      *
@@ -135,6 +118,10 @@ class Registry
     public function addModules(array|string $classnames): static
     {
         $valid_classnames = array_filter((array)$classnames, fn($c) => is_subclass_of($c, Module::class));
+        $dependency_classnames = ArrayUtil::arrayMapFlat(fn($c) => $c::DEPENDENCIES, $valid_classnames);
+        if (count($dependency_classnames)) {
+            $this->addModules($dependency_classnames);
+        }
         $this->registeredModuleClassnames = array_merge($this->registeredModuleClassnames, $valid_classnames);
 
         return $this;
