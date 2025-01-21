@@ -45,6 +45,8 @@ class Registry
             array_walk($dependencies, [$this, 'activateModule']);
             $instance = $this->Container->get($module); /* @var Module $instance */
             $this->activeModuleInstances[$module] = $instance;
+            // default init feature
+            $instance->init();
             // default to activate all features
             if (!is_array($featureList) && count($instance::FEATURES)) {
                 $featureList = array_fill_keys($instance::FEATURES, true);

@@ -54,4 +54,11 @@ trait Registrable
      */
     public const BLOCKS = [];
 
+    /**
+     * Default initialization feature that is always called when module is activated
+     *
+     * @return void
+     */
+    public function init() {}
+
 }

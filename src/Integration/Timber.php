@@ -6,7 +6,7 @@ use Sitchco\Framework\Core\Module;
 
 class Timber extends Module
 {
-    public function __construct()
+    public function init()
     {
         if (class_exists('Timber\Timber')) {
             \Timber\Timber::init();
