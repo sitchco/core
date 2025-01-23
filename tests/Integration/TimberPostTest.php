@@ -22,9 +22,7 @@ class TimberPostTest extends TestCase
         \add_filter('the_title', function ($title, $post_id) {
             return "Filtered: $title";
         }, 10, 2);
-
         $this->assertEquals('Filtered: Mock Post Title', $post->title());
-
         \remove_all_filters('the_title');
     }
 
@@ -53,127 +51,256 @@ class TimberPostTest extends TestCase
 
     public function test_link_method()
     {
-        // Set up a real WordPress post in the test environment
         $post_id = $this->factory()->post->create([
-            'post_title'   => 'Test Post'
+            'post_title' => 'Test Post'
         ]);
-
-        // Retrieve the post using Timber::get_post()
         $post = Timber::get_post($post_id);
 
         // Test 1: When _permalink is already set (via caching or other means)
-        // Use reflection to simulate the _permalink being set.
         $reflection = new ReflectionClass(get_class($post));
         $property = $reflection->getProperty('_permalink');
-        $property->setAccessible(true);  // Make the property accessible
-        $property->setValue($post, 'https://mock-link.com');  // Set the cached permalink
-
-        // Assert that the link method returns the cached permalink
+        $property->setAccessible(true);
+        $property->setValue($post, 'https://mock-link.com');
         $this->assertEquals('https://mock-link.com', $post->link());
 
         // Test 2: When _permalink is not set, it should call get_permalink() and return the permalink
-        // Reset the _permalink value using reflection again
-        $property->setValue($post, null);  // Simulate a scenario where _permalink is not set
-
-        // Assert that the link method fetches the permalink from WordPress
+        $property->setValue($post, null);
         $expected_permalink = get_permalink($post_id);
         $this->assertEquals($expected_permalink, $post->link());
     }
 
-//    public function test_content_method()
-//    {
-//        $mockPost = $this->getMockBuilder(Post::class)
-//            ->disableOriginalConstructor()
-//            ->onlyMethods([])
-//            ->getMock();
-//        $mockPost->post_content = 'Mock Post Content';
-//
-//        // Add a filter to modify content (if any)
-//        \add_filter('the_content', function ($content) {
-//            return "Filtered: $content";
-//        });
-//
-//        // Temporarily disable wpautop filter
-//        remove_filter('the_content', 'wpautop');
-//
-//        // Now assert without wpautop wrapping
-//        $this->assertEquals('Filtered: Mock Post Content', $mockPost->content());
-//
-//        // Add wpautop back if needed
-//        add_filter('the_content', 'wpautop');
-//
-//        // Remove all filters after the test
-//        \remove_all_filters('the_content');
-//    }
-//
-//    public function test_content_pagination()
-//    {
-//        $mockPost = $this->getMockBuilder(Post::class)
-//            ->disableOriginalConstructor()
-//            ->onlyMethods([])
-//            ->getMock();
-//        $mockPost->post_content = 'Page 1 content <!--nextpage--> Page 2 content <!--nextpage--> Page 3 content';
-//
-//        // Test getting the first page
-//        $this->assertEquals('Page 1 content', $mockPost->content(1));
-//
-//        // Test getting the second page
-//        $this->assertEquals('Page 2 content', $mockPost->content(2));
-//
-//        // Test getting the third page
-//        $this->assertEquals('Page 3 content', $mockPost->content(3));
-//    }
+    public function test_date_method()
+    {
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Test Post',
+            'post_date' => '2025-01-23 12:00:00', // Set a fixed post date for testing
+        ]);
+        $post = Timber::get_post($post_id);
 
-    //    public function test_get_post()
-//    {
-//        // Create a stub for the Timber\Post class
-//        $mockPost = $this->createStub(Post::class);
-//
-//        // Set property values directly on the stub
-//        $mockPost->ID = 123;
-//        $mockPost->post_title = 'Mock Post Title';
-//        $mockPost->content = 'This is a test post content.';
-//
-//        // Create a partial mock for the test class
-//        $mockTest = $this->getMockBuilder(self::class)
-//            ->onlyMethods(['get_post'])
-//            ->getMock();
-//
-//        // Mock the get_post method
-//        $mockTest->method('get_post')->with(123)->willReturn($mockPost);
-//
-//        // Call the mocked wrapper method
-//        $post = $mockTest->get_post(123);
-//
-//        // Assertions
-//        $this->assertInstanceOf(Post::class, $post);
-//        $this->assertEquals('Mock Post Title', $post->post_title);
-//        $this->assertEquals(123, $post->ID);
-//    }
+        // Test 1: When no date format is provided, it should use the default WordPress date format
+        $default_date_format = get_option('date_format');
+        $expected_default_date = wp_date($default_date_format, $post->timestamp());
+        $this->assertEquals($expected_default_date, $post->date());
 
-//
-//    /**
-//     * Test getting the post content.
-//     */
-//    public function test_get_post_content()
-//    {
-//        $post = new Post();
-//        $post->content = 'This is a test post content.';
-//        $this->assertEquals('This is a test post content.', $post->get_content());
-//    }
-//
-//    /**
-//     * Test getting post permalink.
-//     */
-//    public function test_get_post_permalink()
-//    {
-//        $post = new Post();
-//        $post->ID = 1;
-//        $post->slug = 'test-post';
-//        $post->post_type = 'post';
-//        $expected_permalink = 'http://example.com/test-post';
-//        $this->assertEquals($expected_permalink, $post->get_permalink());
-//    }
+        // Test 2: When a custom date format is provided, it should use the custom format
+        $custom_format = 'Y-m-d H:i:s';
+        $expected_custom_date = wp_date($custom_format, $post->timestamp());
+        $this->assertEquals($expected_custom_date, $post->date($custom_format));
+
+        // Test 3: Ensure the get_the_date filter is applied to the date
+        \add_filter('get_the_date', function ($date) {
+            return "Modified: $date";
+        });
+        $modified_date = $post->date();
+        $this->assertEquals("Modified: $expected_default_date", $modified_date);
+        \remove_filter('get_the_date', 'my_custom_get_the_date_filter');
+    }
+
+    public function test_modified_date()
+    {
+        \update_option('date_format', 'F j, Y');
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Modified Date Test Post',
+            'post_content' => 'This is a test for the modified_date method.',
+            'post_date' => '2023-01-01 10:00:00',
+        ]);
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->posts,
+            ['post_modified' => '2023-01-05 15:30:00', 'post_modified_gmt' => '2023-01-05 15:30:00'],
+            ['ID' => $post_id]
+        );
+        \clean_post_cache($post_id);
+        $post = Timber::get_post($post_id);
+
+        // Test 1: Default date format.
+        $expected_date = 'January 5, 2023';
+        $modified_date = $post->modified_date();
+        $this->assertEquals($expected_date, $modified_date);
+
+        // Test 2: Custom date format.
+        $custom_format = 'Y-m-d H:i:s';
+        $expected_custom_date = '2023-01-05 15:30:00';
+        $custom_modified_date = $post->modified_date($custom_format);
+        $this->assertEquals($expected_custom_date, $custom_modified_date);
+
+        // Test 3: Ensure the `get_the_modified_date` filter is applied.
+        \add_filter('get_the_modified_date', function ($date, $format, $post) {
+            return "Filtered: $date";
+        }, 10, 3);
+
+        $filtered_date = $post->modified_date();
+        $this->assertEquals("Filtered: January 5, 2023", $filtered_date);
+
+        // Remove the filter to avoid side effects in other tests.
+        \remove_filter('get_the_modified_date', '__return_false');
+    }
+
+    public function test_type_method()
+    {
+        $post_type = 'custom_post_type';
+        register_post_type($post_type, ['label' => 'Custom Post Type']);
+
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Test Post',
+            'post_type' => $post_type,
+        ]);
+        $post = Timber::get_post($post_id);
+
+        // Test 1: Verify the returned type is an instance of PostType
+        $type = $post->type();
+        $this->assertInstanceOf(\Timber\PostType::class, $type);
+
+        // Test 2: Verify the post type slug is correct
+        $this->assertEquals($post_type, (string)$type);
+
+        // Test 3: Verify the same instance is returned on subsequent calls
+        $type_second_call = $post->type();
+        $this->assertSame($type, $type_second_call);
+        unregister_post_type($post_type);
+    }
+
+    public function test_wp_object_method()
+    {
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Test Post',
+            'post_content' => 'This is test post content.',
+        ]);
+        $post = Timber::get_post($post_id);
+
+        // Test 1: Verify that wp_object() returns a WP_Post object
+        $wp_post = $post->wp_object();
+        $this->assertInstanceOf(\WP_Post::class, $wp_post);
+
+        // Test 2: Verify that the ID of the WP_Post matches the original post ID
+        $this->assertEquals($post_id, $wp_post->ID);
+
+        // Test 3: Verify that the title of the WP_Post matches the original post title
+        $this->assertEquals('Test Post', $wp_post->post_title);
+
+        // Test 4: Verify that the content of the WP_Post matches the original post content
+        $this->assertEquals('This is test post content.', $wp_post->post_content);
+    }
+
+    public function test_meta_method()
+    {
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Meta Test Post',
+            'post_content' => 'This post is for testing meta fields.',
+        ]);
+        \update_post_meta($post_id, 'custom_field_1', 'Value 1');
+        \update_post_meta($post_id, 'custom_field_2', 'Value 2');
+        $post = Timber::get_post($post_id);
+
+        // Test 1: Get a single meta value
+        $meta_value_1 = $post->meta('custom_field_1');
+        $this->assertEquals('Value 1', $meta_value_1);
+
+        // Test 2: Get another single meta value
+        $meta_value_2 = $post->meta('custom_field_2');
+        $this->assertEquals('Value 2', $meta_value_2);
+
+        // Test 3: Get all meta values
+        $all_meta = $post->meta();
+        $this->assertIsArray($all_meta);
+        $this->assertArrayHasKey('custom_field_1', $all_meta);
+        $this->assertArrayHasKey('custom_field_2', $all_meta);
+        $this->assertEquals('Value 1', $all_meta['custom_field_1']);
+        $this->assertEquals('Value 2', $all_meta['custom_field_2']);
+
+        // Test 4: Get a meta field that doesn’t exist (should return an empty string)
+        $nonexistent_meta = $post->meta('nonexistent_field');
+        $this->assertSame('', $nonexistent_meta);
+    }
+
+    public function test_thumbnail_methods()
+    {
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Thumbnail Test Post',
+            'post_content' => 'Testing thumbnail methods.',
+        ]);
+
+        // Create an attachment (e.g., image) and set it as the post's featured image.
+        $attachment_id = $this->factory()->attachment->create_upload_object(
+            SITCHCO_CORE_DIR . '/tests/assets/sample-image.jpg',
+            $post_id
+        );
+        \update_post_meta($post_id, '_thumbnail_id', $attachment_id);
+        $post = Timber::get_post($post_id);
+
+        // Test 1: Verify the thumbnail ID.
+        $this->assertEquals($attachment_id, $post->thumbnail_id(), 'The thumbnail ID should match the attachment ID.');
+
+        // Test 2: Verify the thumbnail object.
+        $thumbnail = $post->thumbnail();
+        $this->assertInstanceOf(\Timber\Image::class, $thumbnail, 'The thumbnail method should return a Timber\Image object.');
+        $this->assertEquals($attachment_id, $thumbnail->ID, 'The ID of the thumbnail object should match the attachment ID.');
+
+        // Test 3: Ensure `thumbnail()` returns null if no thumbnail is set.
+        $no_thumbnail_post_id = $this->factory()->post->create([
+            'post_title' => 'No Thumbnail Test Post',
+            'post_content' => 'This post has no thumbnail.',
+        ]);
+
+        $no_thumbnail_post = Timber::get_post($no_thumbnail_post_id);
+        $this->assertNull($no_thumbnail_post->thumbnail(), 'The thumbnail method should return null if no thumbnail is set.');
+    }
+
+    public function test_excerpt_method()
+    {
+        // Test 1: Post with content and a manual excerpt.
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Test Post',
+            'post_content' => 'This is a test post content. It is designed to check the excerpt functionality.',
+            'post_excerpt' => 'This is a manual excerpt.',
+        ]);
+        $post = Timber::get_post($post_id);
+
+        $default_excerpt = $post->excerpt();
+        $this->assertEquals('This is a manual excerpt.', substr((string)$default_excerpt, 0, strlen('This is a manual excerpt.')), 'Default excerpt should use the manual excerpt.');
+
+        // Check if "Read More" link is included in the excerpt
+        $this->assertStringContainsString('<a href="http://example.org/?p=' . $post_id . '" class="read-more">Read More</a>', (string)$default_excerpt, 'Excerpt should include "Read More" link.');
+
+        // Test 2: Post without a manual excerpt (should generate excerpt from content).
+        $no_excerpt_post_id = $this->factory()->post->create([
+            'post_title' => 'No Excerpt Post',
+            'post_content' => 'This is a test post content. It is designed to check the excerpt functionality.',
+            'post_excerpt' => '' // if left empty, auto string generated "Post excerpt 0000028"
+        ]);
+        $no_excerpt_post = Timber::get_post($no_excerpt_post_id);
+        $content_excerpt = $no_excerpt_post->excerpt(['words' => 10]);
+        $excerpt_string = (string)$content_excerpt;
+        $this->assertStringContainsString('This is a test post content', $excerpt_string, 'Excerpt should be generated from content when no manual excerpt is set.');
+        $this->assertStringContainsString('<a href="http://example.org/?p=' . $no_excerpt_post_id . '" class="read-more">Read More</a>', $excerpt_string, 'Excerpt should include "Read More" link when limited to a specified number of words.');
+
+        // Test 3: Limit excerpt to a specific number of words (manual excerpt).
+        $word_limited_excerpt = $post->excerpt(['words' => 5, 'read_more' => false]);
+        $this->assertEquals('This is a manual excerpt.', (string)$word_limited_excerpt, 'Excerpt should be limited to the specified number of words.');
+
+        // Test 4: Limit excerpt to a specific number of characters (content-based excerpt).
+        $char_limited_excerpt = $no_excerpt_post->excerpt(['chars' => 30, 'read_more' => false]);
+        $this->assertEquals('This is a test post content. I&hellip;', (string)$char_limited_excerpt, 'Excerpt should be limited to the specified number of characters.');
+
+        // Test 5: Custom end string for the excerpt (content-based excerpt).
+        $custom_end_excerpt = $no_excerpt_post->excerpt(['chars' => 30, 'end' => '...', 'read_more' => false]);
+        $this->assertEquals('This is a test post content. I...', (string)$custom_end_excerpt, 'Excerpt should use the custom end string.');
+
+        // Test 6: Strip HTML tags from the excerpt.
+        $html_post_id = $this->factory()->post->create([
+            'post_title' => 'HTML Post',
+            'post_content' => '<p>This is <strong>HTML</strong> content.</p>',
+            'post_excerpt' => '' // if left empty, auto string generated "Post excerpt 0000028"
+        ]);
+        $html_post = Timber::get_post($html_post_id);
+        $stripped_excerpt = $html_post->excerpt(['strip' => true, 'read_more' => false]);
+        $this->assertEquals('This is HTML content.', (string)$stripped_excerpt, 'Excerpt should strip HTML tags when the "strip" option is set to true.');
+
+        // Test 7: Append a custom "Read More" text to the excerpt.
+        $read_more_excerpt = $html_post->excerpt(['read_more' => 'Continue reading']);
+        $this->assertStringContainsString('Continue reading', (string)$read_more_excerpt, 'Excerpt should include the custom "Read More" text.');
+    }
+
 //
 //    /**
 //     * Test saving a post.
