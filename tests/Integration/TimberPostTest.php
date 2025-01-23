@@ -4,6 +4,7 @@ namespace Test\Timber;
 
 use ReflectionClass;
 use Timber\Timber;
+use Timber\User;
 use WPTest\Test\TestCase;
 
 /**
@@ -300,6 +301,121 @@ class TimberPostTest extends TestCase
         $read_more_excerpt = $html_post->excerpt(['read_more' => 'Continue reading']);
         $this->assertStringContainsString('Continue reading', (string)$read_more_excerpt, 'Excerpt should include the custom "Read More" text.');
     }
+
+    public function test_author_method()
+    {
+        $user_id = $this->factory()->user->create([
+            'user_login' => 'testuser',
+            'user_email' => 'testuser@example.com',
+            'first_name' => 'Test',
+            'last_name' => 'User',
+        ]);
+        // Test 1: Test a post that has an author
+        $post_id = $this->factory()->post->create([
+            'post_title'   => 'Test Post',
+            'post_content' => 'This is a test post content.',
+            'post_author'  => $user_id,
+        ]);
+        $post = Timber::get_post($post_id);
+        $author = $post->author();
+        $this->assertInstanceOf(User::class, $author);
+        $wp_user = get_user_by('id', $user_id);
+        $this->assertEquals($wp_user->ID, $author->ID);
+
+        // Test 2: Test with a post that has no author
+        $post_id = $this->factory()->post->create([
+            'post_title'   => 'Test Post',
+            'post_content' => 'This is a test post content.',
+            'post_author'  => '',
+        ]);
+        $post_no_author = Timber::get_post($post_id);
+        $this->assertNull($post_no_author->author());
+    }
+
+    public function test_terms_method()
+    {
+        $category1 = $this->factory()->term->create([
+            'taxonomy' => 'category',
+            'name'     => 'Cheese',
+        ]);
+        $category2 = $this->factory()->term->create([
+            'taxonomy' => 'category',
+            'name'     => 'Food',
+        ]);
+        $post_id = $this->factory()->post->create([
+            'post_title'   => 'Test Post with Terms',
+            'post_content' => 'This post has multiple categories.',
+            'post_category' => [$category1, $category2],
+        ]);
+        $post = Timber::get_post($post_id);
+
+        // Test the terms() method with a single taxonomy argument (category)
+        $terms = $post->terms('category');
+        $this->assertIsArray($terms);
+        $this->assertCount(2, $terms);
+        $this->assertEquals('Cheese', $terms[0]->name);
+        $this->assertEquals('Food', $terms[1]->name);
+
+        // Test the terms() method with multiple taxonomy arguments (category, post_tag)
+        $terms_multiple = $post->terms(['category', 'post_tag']);
+        $this->assertIsArray($terms_multiple);
+
+        // Verify that category terms are included
+        $category_terms = array_filter($terms_multiple, function($term) {
+            return $term->taxonomy === 'category';
+        });
+        $this->assertCount(2, $category_terms);
+
+        // Verify that no post_tag terms are included (since they were not assigned)
+        $post_tag_terms = array_filter($terms_multiple, function($term) {
+            return $term->taxonomy === 'post_tag';
+        });
+        $this->assertCount(0, $post_tag_terms);
+
+        // Test with query arguments for ordering terms
+        $terms_ordered = $post->terms([
+            'taxonomy' => 'category',
+            'orderby'  => 'name',
+            'order'    => 'ASC'
+        ]);
+        $this->assertIsArray($terms_ordered);
+        $this->assertEquals('Cheese', $terms_ordered[0]->name);
+        $this->assertEquals('Food', $terms_ordered[1]->name);
+
+        // Test merge option (false means separate arrays for each taxonomy)
+        $terms_separate = $post->terms([
+            'taxonomy' => 'category',
+            'orderby'  => 'name',
+            'order'    => 'ASC'
+        ], ['merge' => false]);
+        $this->assertIsArray($terms_separate);
+        $this->assertArrayHasKey('category', $terms_separate);
+        $this->assertCount(2, $terms_separate['category']);
+    }
+
+    public function test_terms_method_no_assigned_terms()
+    {
+        $post_id = $this->factory()->post->create([
+            'post_title'   => 'Post without terms',
+            'post_content' => 'This post has no terms.',
+        ]);
+        $post = Timber::get_post($post_id);
+        $terms = $post->terms('category');
+        $this->assertNotEmpty($terms);
+        $uncategorized = array_filter($terms, function($term) {
+            return $term->name === 'Uncategorized';
+        });
+        $this->assertCount(1, $uncategorized);
+        $this->assertEquals('Uncategorized', $uncategorized[0]->name);
+    }
+
+
+
+
+
+
+
+
 
 //
 //    /**
