@@ -2,8 +2,7 @@
 
 namespace Test\Timber;
 
-use DI\DependencyException;
-use DI\NotFoundException;
+use Sitchco\Model\Post;
 use Timber\Timber;
 use WPTest\Test\TestCase;
 
@@ -18,10 +17,17 @@ class TimberTest extends TestCase
         $post_id = $this->factory()->post->create([
             'post_title' => 'Mock Post Title',
         ]);
-        $post = Timber::get_post($post_id);
+        $Post = Timber::get_post($post_id);
 
-        $this->assertInstanceOf(\Timber\Post::class, $post);
-        $this->assertEquals('Mock Post Title', $post->post_title);
-        $this->assertEquals($post_id, $post->ID);
+        // Test 1: Test that custom mapping is working
+        $this->assertInstanceOf(Post::class, $Post);
+
+        // Test 2: Test an invalid custom mapping
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Mock Post Title',
+            'post_type' => 'event'
+        ]);
+        $EventPost = Timber::get_post($post_id);
+        $this->assertNotInstanceOf(Post::class, $EventPost);
     }
 }

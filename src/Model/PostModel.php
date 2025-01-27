@@ -10,4 +10,9 @@ class PostModel extends Module
     public const DEPENDENCIES = [
         Timber::class
     ];
+
+//    public const POST_CLASSES = [
+//        Post::class,
+//        Page::class,
+//    ];
 }
