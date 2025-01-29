@@ -14,7 +14,7 @@ use Sitchco\Repository\Support\Repository;
 class PostRepository implements Repository
 {
     protected string $model_class = PostBase::class;
-    protected bool $exclude_current_singular_post = true;
+//    protected bool $exclude_current_singular_post = true;
     protected string $collection_class = Collection::class;
 
     public function find($query) {}
@@ -38,11 +38,10 @@ class PostRepository implements Repository
             }
         }
 
-//        $object->ID = $post_id;
+        $object->ID = $post_id;
 //        foreach ($object->allTermIdsByTaxonomy() as $taxonomy => $term_ids) {
 //            wp_set_object_terms($object->ID, $term_ids, $taxonomy);
 //        }
-//        $this->attachThumbnail($object);
         $object->refresh(true);
         return true;
     }
