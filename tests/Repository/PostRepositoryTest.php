@@ -22,22 +22,19 @@ class PostRepositoryTest extends TestCase
         });
     }
 
-//    public function test_create_post()
-//    {
-//        $title = 'Created Post';
-//        $createdPost = Post::create();
-//        $this->assertInstanceOf(PostTester::class, $createdPost);
-//
-//        $createdPost->wp_object()->post_title = $title;
-//        (new PostRepository())->add($createdPost);
-//        error_log(var_export($createdPost, true));
-//
-////        $returnedPost = Timber::get_post($createdPost->wp_object()->ID);
-////        error_log(var_export($returnedPost, true));
-//
-////        $this->assertEquals($createdPost->wp_object()->ID, $returnedPost->wp_object()->ID);
-////        $this->assertEquals($title, $returnedPost->post_title);
-//    }
+    public function test_create_post()
+    {
+        $title = 'Created Post';
+        $createdPost = PostTester::create();
+        $this->assertInstanceOf(PostTester::class, $createdPost);
+
+        $createdPost->wp_object()->post_title = $title;
+        (new PostRepository())->add($createdPost);
+
+        $returnedPost = Timber::get_post($createdPost->ID);
+        $this->assertEquals($createdPost->wp_object()->ID, $returnedPost->wp_object()->ID);
+        $this->assertEquals($title, $returnedPost->post_title);
+    }
 
     public function test_update_post()
     {

@@ -66,7 +66,10 @@ class PostBase extends Post
 
     public function wp_object(): ?\WP_Post
     {
-        if (empty($this->_wp_object)) {
+        // Account for PostBase::create() scenario
+        if (empty($this->_wp_object) && !empty($this->ID)) {
+            $this->_wp_object = get_post($this->ID);
+        } else if (empty($this->_wp_object) && empty($this->ID)) {
             $this->_wp_object = !is_null(parent::wp_object()) ? parent::wp_object() : new \WP_Post((object)['ID' => null, 'post_type' => static::POST_TYPE]);
         }
         return $this->_wp_object;

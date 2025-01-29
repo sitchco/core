@@ -38,7 +38,7 @@ class PostRepository implements Repository
             }
         }
 
-        $object->ID = $post_id;
+        $object->ID = $object->id = $post_id;
 //        foreach ($object->allTermIdsByTaxonomy() as $taxonomy => $term_ids) {
 //            wp_set_object_terms($object->ID, $term_ids, $taxonomy);
 //        }
