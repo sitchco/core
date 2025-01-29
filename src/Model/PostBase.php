@@ -4,14 +4,17 @@ namespace Sitchco\Model;
 
 use Sitchco\Utils\Acf;
 use Sitchco\Utils\Method;
+use Sitchco\Utils\Str;
 use Timber\Post;
+use Timber\Timber;
 use \WP_Post;
 
 /**
  * class PostBase
  * @package Sitchco\Model
- *
  * @property string $post_title
+ *
+ * TODO: work in some better error handling around checking if POST_TYPE is correct, is a better place for this in the repository
  */
 class PostBase extends Post
 {
@@ -52,16 +55,15 @@ class PostBase extends Post
             $value = $this->$name;
         }
 
-//         TODO: get this integrated!
-//        if ($taxonomy = $this->getTaxonomyFromProperty($name)) {
-////            $this->_terms[$taxonomy] = array_map(function($value) use ($taxonomy) {
-////                return is_string($value) ?
-////                    get_term_by('slug', $value, $taxonomy) :
-////                    get_term($value, $taxonomy);
-////            }, (array) $value);
-////            return '';
-////        }
-            $this->_fields[$name] = $value;
+        if ($taxonomy = $this->getTaxonomyFromProperty($name)) {
+            $this->_terms[$taxonomy] = array_map(function($value) use ($taxonomy) {
+                return is_string($value) ?
+                    Timber::get_term_by('slug', $value, $taxonomy) :
+                    Timber::get_term($value);
+            }, (array) $value);
+        }
+
+        $this->_fields[$name] = $value;
     }
 
     public function wp_object(): ?\WP_Post
@@ -80,6 +82,7 @@ class PostBase extends Post
         if (empty($this->_fields[$field])) {
              $field = get_field($field, $this->wp_object()->ID);
             if (in_array($field, $this->_date_field_names)) {
+                // TODO: work in a try/catch here
                 $field = $field ? new \DateTime($field, $this->_default_date_format) : null;
             }
             $this->_fields[$field] = $field;
@@ -119,21 +122,15 @@ class PostBase extends Post
         return new static();
     }
 
-//    public function allTermIdsByTaxonomy(): array
-//    {
-//        $taxonomies = get_object_taxonomies($this->type(), 'objects');
-//        foreach ($taxonomies as $name => &$term_ids) {
-//            $term_ids = array_map(function(\WP_Term $term) {
-//                return $term->term_id;
-//            }, $this->terms($name));
-//        }
-//        return $taxonomies;
-//    }
+    public function termsByTaxonomy(): array
+    {
+        return $this->_terms;
+    }
 
-//    private function getTaxonomyFromProperty($name): false|string
-//    {
-//        if (taxonomy_exists($name)) return $name;
-//        $singular_name = Str::singular($name);
-//        return taxonomy_exists($singular_name) ? $singular_name : false;
-//    }
+    private function getTaxonomyFromProperty($name): false|string
+    {
+        if (taxonomy_exists($name)) return $name;
+        $singular_name = Str::singular($name);
+        return taxonomy_exists($singular_name) ? $singular_name : false;
+    }
 }

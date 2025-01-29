@@ -28,11 +28,27 @@ class PostRepositoryTest extends TestCase
         $createdPost = PostTester::create();
         $this->assertInstanceOf(PostTester::class, $createdPost);
 
+        $test_term_id = $this->factory()->term->create([
+            'taxonomy' => 'category',
+            'name' => 'Test Category',
+        ]);
+
+        $second_test_term_id = $this->factory()->term->create([
+            'taxonomy' => 'category',
+            'name' => 'Second Test Category',
+        ]);
+
         $createdPost->wp_object()->post_title = $title;
+        $createdTerms = [$test_term_id, $second_test_term_id];
+        $createdPost->categories = $createdTerms;
         (new PostRepository())->add($createdPost);
 
         $returnedPost = Timber::get_post($createdPost->ID);
         $this->assertEquals($createdPost->wp_object()->ID, $returnedPost->wp_object()->ID);
+
+        // TODO: look into possibly not needing array_reverse
+        $this->assertEquals(array_column($returnedPost->terms(['taxonomy' => 'category']), 'term_id'), array_reverse($createdTerms));
+
         $this->assertEquals($title, $returnedPost->post_title);
     }
 

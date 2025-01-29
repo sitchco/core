@@ -2,7 +2,7 @@
 
 namespace Sitchco\Repository;
 
-use Illuminate\Support\Collection;
+//use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Sitchco\Model\PostBase;
 use Sitchco\Repository\Support\Repository;
@@ -15,7 +15,7 @@ class PostRepository implements Repository
 {
     protected string $model_class = PostBase::class;
 //    protected bool $exclude_current_singular_post = true;
-    protected string $collection_class = Collection::class;
+//    protected string $collection_class = Collection::class;
 
     public function find($query) {}
     public function findAll() {}
@@ -24,6 +24,7 @@ class PostRepository implements Repository
 
     public function add($object): true|\WP_Error|int
     {
+        /** @var PostBase $object */
         $post_arr = get_object_vars($object->wp_object());
         $post_id = $object->ID ? wp_update_post($post_arr, true) : wp_insert_post($post_arr, true);
 
@@ -38,10 +39,15 @@ class PostRepository implements Repository
             }
         }
 
+        // $object->wp_object()->ID gets updated in $object->refresh()
         $object->ID = $object->id = $post_id;
-//        foreach ($object->allTermIdsByTaxonomy() as $taxonomy => $term_ids) {
-//            wp_set_object_terms($object->ID, $term_ids, $taxonomy);
-//        }
+
+        // add/update terms on the post
+        foreach ($object->termsByTaxonomy() as $taxonomy => $term_ids) {
+            wp_set_object_terms($object->ID, $term_ids, $taxonomy);
+        }
+
+        // fetch/refresh data
         $object->refresh(true);
         return true;
     }
