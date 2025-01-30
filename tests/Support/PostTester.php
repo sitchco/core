@@ -10,12 +10,8 @@ use Sitchco\Model\Post;
  */
 class PostTester extends Post
 {
-    public function setSomeCustomKey(string $value): void
-    {
-        $this->some_custom_key = "Custom Setter: $value";
-    }
 
-    public function getTestCustomValue(): string
+    public function test_custom_value(): string
     {
         return "Custom Getter: Test Custom Value";
     }

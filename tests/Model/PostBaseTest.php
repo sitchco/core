@@ -71,21 +71,4 @@ class PostBaseTest extends TestCase
         $this->assertEquals("Custom Getter: Test Custom Value", $post->test_custom_value);
     }
 
-    /**
-     * This test simply checks if the set override is working as expected.
-     *
-     * Tests for PostBase::__set() exist in the PostRepositoryTest class, as PostRepository->add() is needed to deep store the data.
-     */
-    public function test_set_method_override()
-    {
-        $post_id = $this->factory()->post->create([
-            'post_title' => 'Test Post',
-        ]);
-        $post = Timber::get_post($post_id);
-        $this->assertInstanceOf(PostTester::class, $post);
-
-        $some_custom_value = 'Testing';
-        $post->some_custom_key = $some_custom_value;
-        $this->assertEquals("Custom Setter: {$some_custom_value}", $post->some_custom_key);
-    }
 }
