@@ -3,6 +3,7 @@
 namespace Sitchco\Model;
 
 use Timber\Term;
+use \WP_Term;
 
 /**
  * class TermBase
@@ -10,16 +11,9 @@ use Timber\Term;
  */
 class TermBase extends Term
 {
-//    const TAXONOMY = null;
-//    protected array $_fields = [];
+    protected array $_fields = [];
 
-    // TODO: leverage $_wp_object
-//    private ?WP_Term $_wp_term;
-
-//    public function taxonomy(): string
-//    {
-//        return static::TAXONOMY ?: $this->term()->taxonomy;
-//    }
+    protected ?WP_Term $wp_object;
 
 //    public function field($field)
 //    {

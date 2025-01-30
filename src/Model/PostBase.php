@@ -18,9 +18,10 @@ use \WP_Post;
  */
 class PostBase extends Post
 {
+    // TODO: replace with __type (PostType object!)
     const POST_TYPE = '';
 
-    private ?WP_Post $_wp_object;
+    protected ?WP_Post $_wp_object;
     private array $_fields = [];
     private array $_terms = [];
 
@@ -124,6 +125,7 @@ class PostBase extends Post
 
     public function termsByTaxonomy(): array
     {
+        // TODO: add if (empty($this->_terms)) check
         return $this->_terms;
     }
 
