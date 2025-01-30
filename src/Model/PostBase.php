@@ -3,11 +3,7 @@
 namespace Sitchco\Model;
 
 use Sitchco\Utils\Acf;
-use Sitchco\Utils\Method;
-use Sitchco\Utils\Str;
 use Timber\Post;
-use Timber\Timber;
-use \WP_Post;
 
 /**
  * class PostBase
@@ -55,7 +51,6 @@ class PostBase extends Post
 
     public function wp_object(): ?\WP_Post
     {
-        // Account for PostBase::create() scenario
         if (empty($this->wp_object)) {
             return $this->wp_object = new \WP_Post((object)['ID' => null, 'post_type' => static::POST_TYPE]);
         }
@@ -74,14 +69,11 @@ class PostBase extends Post
 
     public function refresh($fetch = false): void
     {
-        $this->_wp_object = $this->_permalink = null;
-        $this->_local_meta_reference = $this->_terms = [];
+        $this->wp_object = $this->_permalink = null;
+        $this->_local_meta_reference = $this->_local_terms_reference = [];
         Acf::clearPostStore($this->ID);
         if ($fetch) {
             $this->wp_object();
-            $this->fields();
-            // TODO: still need to flesh this out
-//            $this->allTermIdsByTaxonomy();
             $this->link();
         }
     }

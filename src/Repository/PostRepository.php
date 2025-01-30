@@ -29,7 +29,7 @@ class PostRepository implements Repository
         $post_id = $object->ID ? wp_update_post($post_arr, true) : wp_insert_post($post_arr, true);
 
         // update custom fields
-        if (!empty($fields = $object->fields())) {
+        if (!empty($fields = $object->getLocalMetaReference())) {
             foreach ($fields as $key => $value) {
                 if ($key === 'thumbnail_id') {
                     set_post_thumbnail($post_id, $value);
@@ -39,15 +39,14 @@ class PostRepository implements Repository
             }
         }
 
-        // $object->wp_object()->ID gets updated in $object->refresh()
         $object->ID = $object->id = $post_id;
 
-        // add/update terms on the post
-        foreach ($object->termsByTaxonomy() as $taxonomy => $term_ids) {
-            wp_set_object_terms($object->ID, $term_ids, $taxonomy);
+        if (!empty($local_terms = $object->getLocalTermsReference())) {
+            foreach ($local_terms as $taxonomy => $term_ids) {
+                wp_set_object_terms($object->ID, $term_ids, $taxonomy);
+            }
         }
 
-        // fetch/refresh data
         $object->refresh(true);
         return true;
     }
