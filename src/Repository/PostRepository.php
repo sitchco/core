@@ -53,7 +53,6 @@ class PostRepository implements Repository
 
     public function add($object): true|int
     {
-        // TODO: add checkBoundModelType check inside of test for this method.
         /** @var PostBase $object */
         $this->checkBoundModelType($object);
         $post_arr = get_object_vars($object->wp_object());
