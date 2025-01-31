@@ -74,13 +74,14 @@ class PostRepository implements Repository
         }
 
         $object->ID = $object->id = $post_id;
-        if (!empty($local_terms = $object->getLocalTermsReference())) {
-            foreach ($local_terms as $taxonomy => $term_ids) {
-                wp_set_object_terms($object->ID, $term_ids, $taxonomy);
+        if (!empty($local_taxonomies = $object->getLocalTaxonomies())) {
+            foreach ($local_taxonomies as $taxonomy) {
+                $terms = $object->getMergedExistingAndLocalTerms($taxonomy);
+                wp_set_object_terms($object->ID, array_column($terms, 'term_id'), $taxonomy);
             }
         }
 
-        $object->refresh(true);
+        $object->refresh();
         return true;
     }
 

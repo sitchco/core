@@ -40,19 +40,16 @@ class PostRepositoryTest extends TestCase
         ]);
 
         $createdPost->wp_object()->post_title = $title;
-        $createdTerms = [$test_term_id, $second_test_term_id];
-        $terms = $createdPost->terms();
-//        $terms = $createdPost->getLocalTermsReference();
-        $terms[] = $test_term_id;
-        $terms[] = $second_test_term_id;
+        $createdPost->addTerm($test_term_id)->addTerm($second_test_term_id);
         (new PostRepository())->add($createdPost);
 
         $returnedPost = Timber::get_post($createdPost->ID);
         $this->assertEquals($createdPost->ID, $returnedPost->wp_object()->ID);
         $this->assertEquals($title, $returnedPost->post_title);
         $returnedCategories = $returnedPost->terms(['taxonomy' => 'category']);
-//        $this->assertInstanceOf(Category::class, $returnedCategories[0]);
-        $this->assertEquals(array_column($returnedCategories, 'term_id'), $createdTerms);
+        $this->assertInstanceOf(Category::class, $returnedCategories[0]);
+        $this->assertEquals(array_column($returnedCategories, 'term_id'), [$second_test_term_id, $test_term_id, 1]);
+
     }
 
 //    public function test_update_post()
