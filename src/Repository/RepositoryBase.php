@@ -53,6 +53,11 @@ class RepositoryBase implements Repository
         return $posts[0] ?? null;
     }
 
+    public function findOneBySlug($name)
+    {
+        return $this->findOne(compact('name'));
+    }
+
     public function add($object): true|int
     {
         /** @var PostBase $object */
@@ -123,11 +128,6 @@ class RepositoryBase implements Repository
             throw new InvalidArgumentException('Model Class is not an instance of :' . $this->model_class);
         }
     }
-
-//    public function findOneBySlug($name)
-//    {
-//        return $this->findOne(compact('name'));
-//    }
 //
 //    public function findOneByAuthor($author)
 //    {
@@ -182,42 +182,6 @@ class RepositoryBase implements Repository
 //                ]
 //            ]
 //        ]);
-//    }
-
-//    protected function addFields(PostBase $post): void
-//    {
-//        foreach ($post->fields(false) as $key => $value) {
-//            $field_ids = $this->getFieldIds($post);
-//            $value = $this->prepareFieldValue($key, $value);
-//            if (isset($field_ids[$key])) {
-//                update_field($field_ids[$key], $value, $post->ID);
-//            } else {
-//                update_post_meta($post->ID, $key, $value);
-//            }
-//        }
-//    }
-
-//    protected function getFieldIds(PostBase $post)
-//    {
-//        if (empty($this->field_ids)) {
-//            foreach (acf_get_field_groups(['post_type' => $post::POST_TYPE]) as $group) {
-//                foreach (acf_get_fields($group) as $field) {
-//                    $this->field_ids[$field['name']] = $field['key'];
-//                }
-//            }
-//        }
-//        return $this->field_ids;
-//    }
-
-//    protected function prepareFieldValue($key, $value)
-//    {
-//        if (method_exists($this, "prepare_$key")) {
-//            $value = $this->{"prepare_$key"}($value);
-//        }
-//        if ($value instanceof Field) {
-//            $value = $value->getValue();
-//        }
-//        return $value;
 //    }
 
 }

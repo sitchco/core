@@ -5,10 +5,10 @@ namespace Sitchco\Tests\Support;
 use Sitchco\Model\PostBase;
 
 /**
- * class EventPost
+ * class EventPostTester
  * @package Sitchco\Tests\Support
  */
-class EventPost extends PostBase
+class EventPostTester extends PostBase
 {
     const POST_TYPE = 'event';
 }

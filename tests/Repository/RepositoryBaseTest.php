@@ -2,9 +2,11 @@
 
 namespace Sitchco\Tests;
 
+use InvalidArgumentException;
 use Sitchco\Model\Category;
 use Sitchco\Repository\PostRepository;
-use Sitchco\Tests\Support\EventRepository;
+use Sitchco\Tests\Support\EventPostTester;
+use Sitchco\Tests\Support\EventRepositoryTester;
 use Sitchco\Tests\Support\PostTester;
 use Timber\PostCollectionInterface;
 use Timber\Timber;
@@ -21,6 +23,7 @@ class RepositoryBaseTest extends TestCase
         parent::setUp();
         add_filter('timber/post/classmap', function($classmap) {
             $classmap['post'] = PostTester::class;
+            $classmap['event'] = EventPostTester::class;
             return $classmap;
         });
     }
@@ -53,7 +56,7 @@ class RepositoryBaseTest extends TestCase
         // Test checkBoundModelType()
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Model Class is not an instance of :Sitchco\Tests\Support\EventPost');
-        (new EventRepository())->add($createdPost);
+        (new EventRepositoryTester())->add($createdPost);
 
         (new PostRepository())->add($createdPost);
         $returnedPost = Timber::get_post($createdPost->ID);
@@ -111,6 +114,33 @@ class RepositoryBaseTest extends TestCase
         // Check if the thumbnail was set
         $this->assertEquals($thumbnail_id, $returnedPost->thumbnail_id());
     }
+
+    public function test_remove_post()
+    {
+        $repository = new PostRepository();
+
+        // Scenario 1: Deleting an existing post
+        $post_id = $this->factory()->post->create(['post_title' => 'Post to be deleted']);
+        $event_post_id = $this->factory()->post->create(['post_title' => 'Post to be deleted', 'post_type' => 'event']);
+        $post = Timber::get_post($post_id);
+
+        // Ensure post exists before deletion
+        $this->assertNotNull($post);
+        $this->assertEquals($post_id, $post->ID);
+
+        // Delete the post and verify
+        $result = $repository->remove($post);
+        $this->assertTrue($result);
+        $this->assertEquals('trash', get_post_status($post_id));
+
+        // Scenario 2: Trying to delete a post of a different post_type
+        $event_post = Timber::get_post($event_post_id);
+
+        // Attempt to delete and check response
+        $this->expectException(InvalidArgumentException::class);
+        $repository->remove($event_post);
+    }
+
 
     public function test_find_method()
     {
@@ -178,10 +208,9 @@ class RepositoryBaseTest extends TestCase
 
     public function test_find_one_method()
     {
-        // Step 1: Create multiple posts
         $first_post_id = $this->factory()->post->create(['post_title' => 'First Post', 'post_status' => 'pending']);
-        $second_post_id = $this->factory()->post->create(['post_title' => 'Second Post', 'post_status' => 'draft']);
-        $third_post_id = $this->factory()->post->create(['post_title' => 'Third Post', 'post_status' => 'draft']);
+        $this->factory()->post->create(['post_title' => 'Second Post', 'post_status' => 'draft']);
+        $this->factory()->post->create(['post_title' => 'Third Post', 'post_status' => 'draft']);
 
         // Step 2: Use findOne() to get the first post by title
         $repository = new PostRepository();
@@ -196,5 +225,32 @@ class RepositoryBaseTest extends TestCase
         $non_existent_post = $repository->findOne(['title' => 'Non-existent Post']);
         $this->assertNull($non_existent_post);
     }
+
+    public function test_find_one_by_slug_method()
+    {
+        $first_post_id = $this->factory()->post->create([
+            'post_title' => 'First Post',
+            'post_name' => 'first-post',
+        ]);
+
+        $this->factory()->post->create([
+            'post_title' => 'Second Post',
+            'post_name' => 'second-post',
+        ]);
+
+        // Step 2: Use findOneBySlug() to retrieve the first post
+        $repository = new PostRepository();
+        $found_post = $repository->findOneBySlug('first-post');
+
+        // Step 3: Assert that the retrieved post is correct
+        $this->assertInstanceOf(PostTester::class, $found_post);
+        $this->assertEquals($first_post_id, $found_post->ID);
+        $this->assertEquals('first-post', $found_post->post_name);
+
+        // Step 4: Test with a non-existent slug
+        $non_existent_post = $repository->findOneBySlug('non-existent-post');
+        $this->assertNull($non_existent_post);
+    }
+
 
 }
