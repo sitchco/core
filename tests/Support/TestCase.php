@@ -2,6 +2,15 @@
 
 namespace Sitchco\Tests\Support;
 
-class TestCase extends \WPTest\Test\TestCase {
+use DI\Container;
 
+abstract class TestCase extends \WPTest\Test\TestCase {
+
+    protected Container $container;
+
+    protected function setUp(): void
+    {
+        $this->container = $GLOBALS['SitchcoContainer'];
+        parent::setUp();
+    }
 }

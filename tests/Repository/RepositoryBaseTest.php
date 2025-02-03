@@ -56,9 +56,9 @@ class RepositoryBaseTest extends TestCase
         // Test checkBoundModelType()
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Model Class is not an instance of :Sitchco\Tests\Support\EventPost');
-        (new EventRepositoryTester())->add($createdPost);
+        $this->container->get(EventRepositoryTester::class)->add($createdPost);
 
-        (new PostRepository())->add($createdPost);
+        $this->container->get(PostRepository::class)->add($createdPost);
         $returnedPost = Timber::get_post($createdPost->ID);
         $this->assertEquals($createdPost->ID, $returnedPost->wp_object()->ID);
         $this->assertEquals($title, $returnedPost->post_title);
@@ -106,7 +106,7 @@ class RepositoryBaseTest extends TestCase
         $createdPost->thumbnail_id = $thumbnail_id;
         $createdPost->setTerms([$test_term_id, $second_test_term_id], 'category');
 
-        (new PostRepository())->add($createdPost);
+        $this->container->get(PostRepository::class)->add($createdPost);
 
         $returnedPost = Timber::get_post($post_id);
         $this->assertEquals($modified_title, $returnedPost->post_title);
@@ -122,7 +122,7 @@ class RepositoryBaseTest extends TestCase
 
     public function test_remove_post()
     {
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
 
         // Scenario 1: Deleting an existing post
         $post_id = $this->factory()->post->create(['post_title' => 'Post to be deleted']);
@@ -164,7 +164,7 @@ class RepositoryBaseTest extends TestCase
         // Ensure get_the_ID() works by setting the global post
         $GLOBALS['post'] = $wp_query->queried_object;
         setup_postdata($GLOBALS['post']);
-        $found_posts = (new PostRepository())->find();
+        $found_posts = $this->container->get(PostRepository::class)->find();
 
         $this->assertInstanceOf(PostCollectionInterface::class, $found_posts);
         $this->assertCount(1, $found_posts);
@@ -179,7 +179,7 @@ class RepositoryBaseTest extends TestCase
         $first_post_id = $this->factory()->post->create(['post_title' => 'Post 1']);
         $second_post_id = $this->factory()->post->create(['post_title' => 'Post 2']);
         $third_post_id = $this->factory()->post->create(['post_title' => 'Post 3']);
-        $found_posts = (new PostRepository())->findAll();
+        $found_posts = $this->container->get(PostRepository::class)->findAll();
         $this->assertInstanceOf(PostCollectionInterface::class, $found_posts);
         $this->assertCount(3, $found_posts);
         $this->assertEquals([$first_post_id, $second_post_id, $third_post_id], array_column($found_posts->to_array(), 'ID'));
@@ -191,7 +191,7 @@ class RepositoryBaseTest extends TestCase
         $post_id = $this->factory()->post->create(['post_title' => 'Test Post']);
 
         // Step 2: Call findById() with a valid ID
-        $found_post = (new PostRepository())->findById($post_id);
+        $found_post = $this->container->get(PostRepository::class)->findById($post_id);
 
         // Step 3: Assert the post is correctly retrieved
         $this->assertInstanceOf(PostTester::class, $found_post);
@@ -199,15 +199,15 @@ class RepositoryBaseTest extends TestCase
         $this->assertEquals('Test Post', $found_post->post_title);
 
         // Step 4: Call findById() with an invalid ID
-        $invalid_post = (new PostRepository())->findById(999999);
+        $invalid_post = $this->container->get(PostRepository::class)->findById(999999);
         $this->assertNull($invalid_post);
 
         // Step 5: Call findById() with null
-        $null_post = (new PostRepository())->findById(null);
+        $null_post = $this->container->get(PostRepository::class)->findById(null);
         $this->assertNull($null_post);
 
         // Step 6: Call findById() with an empty string
-        $empty_post = (new PostRepository())->findById('');
+        $empty_post = $this->container->get(PostRepository::class)->findById('');
         $this->assertNull($empty_post);
     }
 
@@ -218,7 +218,7 @@ class RepositoryBaseTest extends TestCase
         $this->factory()->post->create(['post_title' => 'Third Post', 'post_status' => 'draft']);
 
         // Step 2: Use findOne() to get the first post by title
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
         $found_post = $repository->findOne(['post_status' => 'pending']);
 
         // Step 3: Assert the retrieved post is the first one
@@ -244,7 +244,7 @@ class RepositoryBaseTest extends TestCase
         ]);
 
         // Step 2: Use findOneBySlug() to retrieve the first post
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
         $found_post = $repository->findOneBySlug('first-post');
 
         // Step 3: Assert that the retrieved post is correct
@@ -259,7 +259,7 @@ class RepositoryBaseTest extends TestCase
 
     public function test_find_one_by_author_method()
     {
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
 
         // Scenario 1: Finding a post by author ID
         $author_id = $this->factory()->user->create(['user_login' => 'author1']);
@@ -293,7 +293,7 @@ class RepositoryBaseTest extends TestCase
 
     public function test_find_all_by_author_method()
     {
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
 
         // Scenario 1: Finding posts by author ID
         $author_id = $this->factory()->user->create(['user_login' => 'author1']);
@@ -330,7 +330,7 @@ class RepositoryBaseTest extends TestCase
 
     public function test_find_all_drafts_method()
     {
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
 
         // Scenario 1: Creating drafts
         $draft_post_id_1 = $this->factory()->post->create([
@@ -360,7 +360,7 @@ class RepositoryBaseTest extends TestCase
 
     public function test_find_with_ids_method()
     {
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
 
         // Scenario 1: Creating posts
         $post_ids = [
@@ -397,7 +397,7 @@ class RepositoryBaseTest extends TestCase
 
     public function test_find_with_term_ids_method()
     {
-        $repository = new PostRepository();
+        $repository = $this->container->get(PostRepository::class);
 
         // Scenario 1: Creating terms and posts
         $category_1 = $this->factory()->term->create(['name' => 'Category 1', 'taxonomy' => 'category']);

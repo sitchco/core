@@ -13,14 +13,13 @@ use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
-use WPTest\Test\TestCase;
+use Sitchco\Tests\Support\TestCase;
 
 class CoreMuPluginTest extends TestCase
 {
     function test_registers_and_activates_core_modules()
     {
-        global $SitchcoContainer;
-        $Loader = $SitchcoContainer->get(ModuleConfigLoader::class);
+        $Loader = $this->container->get(ModuleConfigLoader::class);
         $this->assertEquals([
             Cleanup::class => true,
             SearchRewrite::class => true,
@@ -28,7 +27,7 @@ class CoreMuPluginTest extends TestCase
             PostModel::class => true,
             TermModel::class => true
         ], $Loader->load());
-        $full_feature_list = $SitchcoContainer->get(Registry::class)->getModuleFeatures();
+        $full_feature_list = $this->container->get(Registry::class)->getModuleFeatures();
         $this->assertEquals(
             [
                 Cleanup::class => [
@@ -72,19 +71,18 @@ class CoreMuPluginTest extends TestCase
      */
     function test_active_modules_initialized()
     {
-        global $SitchcoContainer;
-        $active_modules = $SitchcoContainer->get(Registry::class)->getActiveModules();
+        $active_modules = $this->container->get(Registry::class)->getActiveModules();
         $this->assertEquals([
-            Cleanup::class => $SitchcoContainer->get(Cleanup::class),
-            SearchRewrite::class => $SitchcoContainer->get(SearchRewrite::class),
-            BackgroundEventManager::class => $SitchcoContainer->get(BackgroundEventManager::class),
-            Timber::class => $SitchcoContainer->get(Timber::class),
-            PostModel::class => $SitchcoContainer->get(PostModel::class),
-            TermModel::class => $SitchcoContainer->get(TermModel::class)
+            Cleanup::class => $this->container->get(Cleanup::class),
+            SearchRewrite::class => $this->container->get(SearchRewrite::class),
+            BackgroundEventManager::class => $this->container->get(BackgroundEventManager::class),
+            Timber::class => $this->container->get(Timber::class),
+            PostModel::class => $this->container->get(PostModel::class),
+            TermModel::class => $this->container->get(TermModel::class)
         ], $active_modules);
-        $this->assertHasFilter('body_class', $SitchcoContainer->get(Cleanup::class), 'bodyClass');
-        $this->assertHasFilter('wpseo_json_ld_search_url', $SitchcoContainer->get(SearchRewrite::class), 'rewriteUrl');
-        $this->assertHasAction('current_screen', $SitchcoContainer->get(SavePermalinksAsyncHook::class), 'onSavePermalinks');
+        $this->assertHasFilter('body_class', $this->container->get(Cleanup::class), 'bodyClass');
+        $this->assertHasFilter('wpseo_json_ld_search_url', $this->container->get(SearchRewrite::class), 'rewriteUrl');
+        $this->assertHasAction('current_screen', $this->container->get(SavePermalinksAsyncHook::class), 'onSavePermalinks');
         $this->assertTrue(TIMBER_LOADED);
     }
 
