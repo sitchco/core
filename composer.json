@@ -4,7 +4,7 @@
     "autoload": {
         "psr-4": {
             "Sitchco\\": "src/",
-            "Sitchco\\Test\\": "tests/"
+            "Sitchco\\Tests\\": "tests/"
         }
     },
     "type": "wordpress-muplugin",
