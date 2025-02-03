@@ -3,12 +3,14 @@
     "description": "Core Monorepo for Sitchco WordPress projects",
     "autoload": {
         "psr-4": {
-            "Sitchco\\": "src/"
+            "Sitchco\\": "src/",
+            "Sitchco\\Tests\\": "tests/"
         }
     },
     "type": "wordpress-muplugin",
     "require": {
         "illuminate/support": "*",
+        "illuminate/collections": "*",
         "php-di/php-di": "^7.0",
         "timber/timber": "*",
         "deliciousbrains/wp-background-processing": "*"

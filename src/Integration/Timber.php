@@ -4,6 +4,10 @@ namespace Sitchco\Integration;
 
 use Sitchco\Framework\Core\Module;
 
+/**
+ * class Timber
+ * @package Sitchco\Integration
+ */
 class Timber extends Module
 {
     public function init()
@@ -12,5 +16,4 @@ class Timber extends Module
             \Timber\Timber::init();
         }
     }
-
 }
