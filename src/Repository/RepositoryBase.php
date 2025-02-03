@@ -45,7 +45,8 @@ class RepositoryBase implements Repository
 
         return Timber::get_post($id);
     }
-    public function findOne(array $query)
+
+    public function findOne(array $query = [])
     {
         $query['posts_per_page'] = 1;
         $posts = $this->find($query);

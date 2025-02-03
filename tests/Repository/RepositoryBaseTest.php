@@ -4,7 +4,6 @@ namespace Sitchco\Tests;
 
 use Sitchco\Model\Category;
 use Sitchco\Repository\PostRepository;
-use Sitchco\Repository\RepositoryBase;
 use Sitchco\Tests\Support\EventRepository;
 use Sitchco\Tests\Support\PostTester;
 use Timber\PostCollectionInterface;
@@ -12,10 +11,10 @@ use Timber\Timber;
 use WPTest\Test\TestCase;
 
 /**
- * class PostRepositoryTest
+ * class RepositoryBaseTest
  * @package Sitchco\Tests
  */
-class PostRepositoryTest extends TestCase
+class RepositoryBaseTest extends TestCase
 {
     protected function setUp(): void
     {
@@ -130,7 +129,7 @@ class PostRepositoryTest extends TestCase
         // Ensure get_the_ID() works by setting the global post
         $GLOBALS['post'] = $wp_query->queried_object;
         setup_postdata($GLOBALS['post']);
-        $found_posts = (new PostRepository())->find([]);
+        $found_posts = (new PostRepository())->find();
 
         $this->assertInstanceOf(PostCollectionInterface::class, $found_posts);
         $this->assertCount(1, $found_posts);
@@ -145,11 +144,57 @@ class PostRepositoryTest extends TestCase
         $first_post_id = $this->factory()->post->create(['post_title' => 'Post 1']);
         $second_post_id = $this->factory()->post->create(['post_title' => 'Post 2']);
         $third_post_id = $this->factory()->post->create(['post_title' => 'Post 3']);
-        $found_posts = (new PostRepository())->findAll([]);
+        $found_posts = (new PostRepository())->findAll();
         $this->assertInstanceOf(PostCollectionInterface::class, $found_posts);
         $this->assertCount(3, $found_posts);
         $this->assertEquals([$first_post_id, $second_post_id, $third_post_id], array_column($found_posts->to_array(), 'ID'));
     }
 
+    public function test_find_by_id_method()
+    {
+        // Step 1: Create a test post
+        $post_id = $this->factory()->post->create(['post_title' => 'Test Post']);
+
+        // Step 2: Call findById() with a valid ID
+        $found_post = (new PostRepository())->findById($post_id);
+
+        // Step 3: Assert the post is correctly retrieved
+        $this->assertInstanceOf(PostTester::class, $found_post);
+        $this->assertEquals($post_id, $found_post->ID);
+        $this->assertEquals('Test Post', $found_post->post_title);
+
+        // Step 4: Call findById() with an invalid ID
+        $invalid_post = (new PostRepository())->findById(999999);
+        $this->assertNull($invalid_post);
+
+        // Step 5: Call findById() with null
+        $null_post = (new PostRepository())->findById(null);
+        $this->assertNull($null_post);
+
+        // Step 6: Call findById() with an empty string
+        $empty_post = (new PostRepository())->findById('');
+        $this->assertNull($empty_post);
+    }
+
+    public function test_find_one_method()
+    {
+        // Step 1: Create multiple posts
+        $first_post_id = $this->factory()->post->create(['post_title' => 'First Post', 'post_status' => 'pending']);
+        $second_post_id = $this->factory()->post->create(['post_title' => 'Second Post', 'post_status' => 'draft']);
+        $third_post_id = $this->factory()->post->create(['post_title' => 'Third Post', 'post_status' => 'draft']);
+
+        // Step 2: Use findOne() to get the first post by title
+        $repository = new PostRepository();
+        $found_post = $repository->findOne(['post_status' => 'pending']);
+
+        // Step 3: Assert the retrieved post is the first one
+        $this->assertInstanceOf(PostTester::class, $found_post);
+        $this->assertEquals($first_post_id, $found_post->ID);
+        $this->assertEquals('First Post', $found_post->post_title);
+
+        // Step 4: Test with a non-existent title
+        $non_existent_post = $repository->findOne(['title' => 'Non-existent Post']);
+        $this->assertNull($non_existent_post);
+    }
 
 }

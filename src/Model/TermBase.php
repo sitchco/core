@@ -11,7 +11,7 @@ use \WP_Term;
  */
 class TermBase extends Term
 {
-    protected array $_fields = [];
+    private array $_local_meta_reference = [];
 
     protected ?WP_Term $wp_object;
 
