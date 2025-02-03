@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Tests;
+namespace Sitchco\Tests\Repository;
 
 use InvalidArgumentException;
 use Sitchco\Model\Category;
@@ -10,7 +10,7 @@ use Sitchco\Tests\Support\EventRepositoryTester;
 use Sitchco\Tests\Support\PostTester;
 use Timber\PostCollectionInterface;
 use Timber\Timber;
-use WPTest\Test\TestCase;
+use Sitchco\Tests\Support\TestCase;
 
 /**
  * class RepositoryBaseTest
@@ -84,12 +84,17 @@ class RepositoryBaseTest extends TestCase
             'name' => 'Second Test Category',
             'taxonomy' => 'category',
         ]);
+        $third_test_term_id = $this->factory()->term->create([
+            'name' => 'Third Test Category',
+            'taxonomy' => 'category',
+        ]);
 
         // Set a thumbnail (note: this does not set the thumbnail, instead just attaches to the post)
         $thumbnail_id = $this->factory()->attachment->create_upload_object(
             SITCHCO_CORE_DIR . '/tests/assets/sample-image.jpg',
             $post_id
         );
+        wp_set_post_terms($post_id, [$third_test_term_id], 'category');
 
         $createdPost = Timber::get_post($post_id);
         $this->assertInstanceOf(PostTester::class, $createdPost);
@@ -99,7 +104,7 @@ class RepositoryBaseTest extends TestCase
         $createdPost->custom_string_key = 'some string';
         $createdPost->custom_number_key = 123;
         $createdPost->thumbnail_id = $thumbnail_id;
-        $createdPost->addTerm($test_term_id)->addTerm($second_test_term_id)->removeTerm(1);
+        $createdPost->setTerms([$test_term_id, $second_test_term_id], 'category');
 
         (new PostRepository())->add($createdPost);
 

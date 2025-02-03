@@ -3,6 +3,7 @@
 namespace Sitchco\Model;
 
 use Sitchco\Utils\Acf;
+use Sitchco\Utils\ArrayUtil;
 use Timber\Factory\PostFactory;
 use Timber\Post;
 use Timber\Term;
@@ -35,6 +36,36 @@ class PostBase extends Post
         $this->$name = $value;
     }
 
+    /**
+     * @param array<\WP_Term|Term|string|int> $terms
+     * @param string $taxonomy
+     * @return $this
+     */
+    public function setTerms(array $terms, string $taxonomy): static
+    {
+        $existing_terms = $this->terms(compact('taxonomy'));
+        $this->removeTerms($existing_terms, $taxonomy);
+        return $this->addTerms($terms, $taxonomy);
+    }
+
+    /**
+     * @param array<\WP_Term|Term|string|int> $terms
+     * @param string|null $taxonomy
+     * @return $this
+     */
+    public function addTerms(array $terms, string $taxonomy = null): static
+    {
+        foreach ($terms as $term) {
+            $this->addTerm($term, $taxonomy);
+        }
+        return $this;
+    }
+
+    /**
+     * @param \WP_Term|Term|string|int $term
+     * @param string|null $taxonomy
+     * @return $this
+     */
     public function addTerm(\WP_Term|Term|string|int $term, string $taxonomy = null): static
     {
         $term = $this->normalizeTerm($term, $taxonomy);
@@ -43,6 +74,24 @@ class PostBase extends Post
         return $this;
     }
 
+    /**
+     * @param array<\WP_Term|Term|string|int> $terms
+     * @param string|null $taxonomy
+     * @return $this
+     */
+    public function removeTerms(array $terms, string $taxonomy = null): static
+    {
+        foreach ($terms as $term) {
+            $this->removeTerm($term, $taxonomy);
+        }
+        return $this;
+    }
+
+    /**
+     * @param \WP_Term|Term|string|int $term
+     * @param string|null $taxonomy
+     * @return $this
+     */
     public function removeTerm(\WP_Term|Term|string|int $term, string $taxonomy = null): static
     {
         $term = $this->normalizeTerm($term, $taxonomy);
@@ -63,7 +112,7 @@ class PostBase extends Post
     public function getMergedExistingAndLocalTerms(string $taxonomy): array
     {
         $existing_terms = $this->terms(compact('taxonomy'));
-        $existing_terms_by_slug = array_combine(array_column($existing_terms, 'slug'), $existing_terms);
+        $existing_terms_by_slug = ArrayUtil::arrayToAssocByColumn($existing_terms, 'slug');
         foreach ($this->_local_add_terms_reference[$taxonomy] ?? [] as $slug => $term) {
             $existing_terms_by_slug[$slug] = $term;
         }

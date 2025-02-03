@@ -37,4 +37,10 @@ class ArrayUtil
         return array_merge(...array_map($callback, $array));
     }
 
+    public static function arrayToAssocByColumn(array $array, string $column): array
+    {
+        return array_combine(array_column($array, $column), $array);
+
+    }
+
 }
