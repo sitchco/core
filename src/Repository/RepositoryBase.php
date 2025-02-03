@@ -46,16 +46,73 @@ class RepositoryBase implements Repository
         return Timber::get_post($id);
     }
 
-    public function findOne(array $query = [])
+    public function findOne(array $query = []): ?Post
     {
         $query['posts_per_page'] = 1;
         $posts = $this->find($query);
         return $posts[0] ?? null;
     }
 
-    public function findOneBySlug($name)
+    public function findOneBySlug($name): ?Post
     {
+        if (!$name) {
+            return null;
+        }
         return $this->findOne(compact('name'));
+    }
+
+    public function findOneByAuthor($author): ?Post
+    {
+        if (!$author) {
+            return null;
+        }
+        if (is_object($author)) $author = $author->ID;
+        return $this->findOne(compact('author'));
+    }
+
+    public function findAllByAuthor($author): null|PostCollectionInterface
+    {
+        if (!$author) {
+            return null;
+        }
+        if (is_object($author)) $author = $author->ID;
+        return $this->find(compact('author'));
+    }
+
+    public function findAllDrafts(): ?PostCollectionInterface
+    {
+        return $this->find(['posts_per_page' => -1, 'post_status' => 'draft']);
+    }
+
+    public function findWithIds(array $post_ids, int $count = 10): null|PostCollectionInterface
+    {
+        if (empty($post_ids)) {
+            return null;
+        }
+        return $this->find([
+            'posts_per_page' => $count,
+            'post__in' => $post_ids,
+            'orderby' => 'post__in'
+        ]);
+    }
+
+    public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = []): null|PostCollectionInterface
+    {
+        if (empty($term_ids)) {
+            return null;
+        }
+        return $this->find([
+            'posts_per_page' => $count,
+            'post__not_in' => $excluded_post_ids,
+            'tax_query' => [
+                [
+                    'taxonomy' => $taxonomy,
+                    'terms' => $term_ids,
+                    'field' => 'term_id',
+                    'compare' => 'IN'
+                ]
+            ]
+        ]);
     }
 
     public function add($object): true|int
@@ -98,7 +155,7 @@ class RepositoryBase implements Repository
         return !empty($result);
     }
 
-    protected function maybeExcludeCurrentSingularPost($query)
+    protected function maybeExcludeCurrentSingularPost($query): array
     {
         global $wp_query;
         if (!$wp_query) {
@@ -128,60 +185,5 @@ class RepositoryBase implements Repository
             throw new InvalidArgumentException('Model Class is not an instance of :' . $this->model_class);
         }
     }
-//
-//    public function findOneByAuthor($author)
-//    {
-//        if (is_object($author)) $author = $author->ID;
-//        return $this->findOne(compact('author'));
-//    }
-//
-//    public function findAllByAuthor($author)
-//    {
-//        if (is_object($author)) $author = $author->ID;
-//        return $this->find(compact('author'));
-//    }
-
-//    public function findAllDrafts()
-//    {
-//        return $this->find(['posts_per_page' => -1, 'post_status' => 'draft']);
-//    }
-
-//    public function findWithIds(array $post_ids, int $count = 10)
-//    {
-//        if (empty($post_ids)) {
-//            return [];
-//        }
-//        return $this->find([
-//            'posts_per_page' => $count,
-//            'post__in' => $post_ids,
-//            'orderby' => 'post__in'
-//        ]);
-//    }
-
-//    /**
-//     * @param array $term_ids
-//     * @param int $count
-//     * @param string $taxonomy
-//     * @param array $excluded_post_ids
-//     * @return array
-//     */
-//    public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = [])
-//    {
-//        if (empty($term_ids)) {
-//            return [];
-//        }
-//        return $this->find([
-//            'posts_per_page' => $count,
-//            'post__not_in' => $excluded_post_ids,
-//            'tax_query' => [
-//                [
-//                    'taxonomy' => $taxonomy,
-//                    'terms' => $term_ids,
-//                    'field' => 'term_id',
-//                    'compare' => 'IN'
-//                ]
-//            ]
-//        ]);
-//    }
 
 }
