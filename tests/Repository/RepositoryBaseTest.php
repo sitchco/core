@@ -39,13 +39,14 @@ class RepositoryBaseTest extends TestCase
             'taxonomy' => 'category',
         ]);
 
+
         $second_test_term_id = $this->factory()->term->create([
             'name' => 'Second Test Category',
             'taxonomy' => 'category',
         ]);
 
         $thumbnail_id = $this->factory()->attachment->create_upload_object(
-            SITCHCO_CORE_DIR . '/tests/assets/sample-image.jpg'
+            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg'
         );
 
         $createdPost->wp_object()->post_title = $title;
@@ -91,7 +92,7 @@ class RepositoryBaseTest extends TestCase
 
         // Set a thumbnail (note: this does not set the thumbnail, instead just attaches to the post)
         $thumbnail_id = $this->factory()->attachment->create_upload_object(
-            SITCHCO_CORE_DIR . '/tests/assets/sample-image.jpg',
+            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg',
             $post_id
         );
         wp_set_post_terms($post_id, [$third_test_term_id], 'category');
