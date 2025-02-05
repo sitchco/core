@@ -8,11 +8,7 @@ use DI\NotFoundException;
 use Exception;
 use Sitchco\Framework\Config\ContainerDefinitionConfigLoader;
 use Sitchco\Framework\Config\ModuleConfigLoader;
-use Sitchco\Framework\Core\Registry;
-use Sitchco\Integration\BackgroundEventManager;
-use Sitchco\Integration\Timber;
-use Sitchco\Integration\Wordpress\Cleanup;
-use Sitchco\Integration\Wordpress\SearchRewrite;
+use Timber\Loader;
 
 class Bootstrap
 {
@@ -20,6 +16,10 @@ class Bootstrap
     public function __construct()
     {
         add_action('after_setup_theme', [$this, 'initialize'], 99);
+
+        if (wp_get_environment_type() === 'local') {
+            add_filter('timber/cache/mode', fn() => Loader::CACHE_NONE);
+        }
     }
 
     /**
