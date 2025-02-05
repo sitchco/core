@@ -2,6 +2,7 @@
 
 namespace Sitchco\Tests\AdvancedCustomFields;
 
+use ACF_Post_Type;
 use Sitchco\Tests\Support\TestCase;
 use WP_Query;
 
@@ -20,11 +21,7 @@ class CustomPostTypesTest extends TestCase
     function test_default_query_parameters()
     {
         $acf_post_type_content = include SITCHCO_CORE_FIXTURES_DIR . '/acf-post-type.php';
-        $acf_post_type = acf_get_instance('ACF_Post_Type');
-        //$acf_post_type_posts = get_posts(['post_type' => $acf_post_type->post_type, 'posts_per_page' => -1]);
-//        foreach ($acf_post_type_posts as $acf_post_type_post) {
-//            wp_delete_post($acf_post_type_post->ID, true);
-//        }
+        $acf_post_type = acf_get_instance('ACF_Post_Type'); /* @var $acf_post_type ACF_Post_Type */
         $post_type = $acf_post_type_content['post_type'];
         $this->factory()->post->create([
             'post_type' => $post_type, 'post_title' => '2',
@@ -48,6 +45,8 @@ class CustomPostTypesTest extends TestCase
             'post_title' => 'Performances',
             'post_content' => serialize($acf_post_type_content)
         ]);
+        wp_cache_delete( acf_cache_key( $acf_post_type->cache_key_plural ), 'acf' );
+        $acf_post_type->register_post_types();
         $post_type_object = get_post_type_object($post_type);
         $this->assertEquals($post_type, $post_type_object->name);
         //public

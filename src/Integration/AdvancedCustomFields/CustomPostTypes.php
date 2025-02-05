@@ -125,10 +125,8 @@ class CustomPostTypes extends Module
         if ($post_type == $acf_post_type->post_type) {
             return null;
         }
-        $acf_post_type_posts = get_posts(['post_type' => $acf_post_type->post_type, 'posts_per_page' => -1]);
-//        $acf_post_type_posts = $acf_post_type->get_posts();
-        foreach ($acf_post_type_posts as $acf_post_type_post) {
-            $post = $acf_post_type->get_post($acf_post_type_post->ID);
+        $acf_post_type_posts = $acf_post_type->get_posts();
+        foreach ($acf_post_type_posts as $post) {
             if ($post['post_type'] === $post_type) {
                 return $post;
             }
