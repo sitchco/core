@@ -14,7 +14,7 @@ class Cleanup extends Module
         'obscurity',
         'cleanHtmlMarkup',
         'disableEmojis',
-//        'disableGutenbergBlockCss',
+        'disableGutenbergBlockCss',
         'disableExtraRss',
         'disableRecentCommentsCss',
         'disableGalleryCss',
@@ -27,7 +27,7 @@ class Cleanup extends Module
         'disableRestEndpoints',
         'removeJpegCompression',
         'updateLoginPage',
-//        'removeGutenbergStyles',
+        'removeGutenbergStyles',
         'removeScriptVersion',
         'removeDefaultBlockPatterns'
     ];
@@ -398,7 +398,10 @@ class Cleanup extends Module
     public function removeDefaultBlockPatterns(): void
     {
         add_action('init', function() {
+            // will remove 95% of patterns (everything but posts)
             add_filter('should_load_remote_block_patterns', '__return_false');
+
+            // will remove remaining 5% (posts)
             $registry = \WP_Block_Patterns_Registry::get_instance();
             foreach($registry->get_all_registered() as $pattern) {
                 unregister_block_pattern($pattern['name']);
