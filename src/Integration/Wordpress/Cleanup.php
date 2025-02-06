@@ -14,7 +14,7 @@ class Cleanup extends Module
         'obscurity',
         'cleanHtmlMarkup',
         'disableEmojis',
-        'disableGutenbergBlockCss',
+//        'disableGutenbergBlockCss',
         'disableExtraRss',
         'disableRecentCommentsCss',
         'disableGalleryCss',
@@ -27,7 +27,7 @@ class Cleanup extends Module
         'disableRestEndpoints',
         'removeJpegCompression',
         'updateLoginPage',
-        'removeGutenbergStyles',
+//        'removeGutenbergStyles',
         'removeScriptVersion',
         'removeDefaultBlockPatterns'
     ];
