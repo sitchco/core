@@ -4,6 +4,10 @@ namespace Sitchco\Integration\Wordpress;
 
 use Sitchco\Framework\Core\Module;
 
+/**
+ * class Cleanup
+ * @package Sitchco\Integration\Wordpress
+ */
 class Cleanup extends Module
 {
     public const FEATURES = [
@@ -25,6 +29,7 @@ class Cleanup extends Module
         'updateLoginPage',
         'removeGutenbergStyles',
         'removeScriptVersion',
+        'removeDefaultBlockPatterns'
     ];
 
     /**
@@ -125,7 +130,7 @@ class Cleanup extends Module
      *
      * @return string|array
      */
-    public function removeSelfClosingTags($html)
+    public function removeSelfClosingTags($html): array|string
     {
         return is_array($html) ? array_map([$this, 'removeSelfClosingTags'], $html) : str_replace(' />', '>', $html);
     }
@@ -388,5 +393,16 @@ class Cleanup extends Module
         }
 
         return $url;
+    }
+
+    public function removeDefaultBlockPatterns(): void
+    {
+        add_action('init', function() {
+            add_filter('should_load_remote_block_patterns', '__return_false');
+            $registry = \WP_Block_Patterns_Registry::get_instance();
+            foreach($registry->get_all_registered() as $pattern) {
+                unregister_block_pattern($pattern['name']);
+            }
+        });
     }
 }
