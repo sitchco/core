@@ -1,5 +1,6 @@
 <?php
 
+use Sitchco\Integration\AdvancedCustomFields\AcfJsonSupport;
 use Sitchco\Integration\AdvancedCustomFields\CustomPostTypes;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Wordpress\Cleanup;
@@ -14,4 +15,5 @@ return [
     PostModel::class => true,
     TermModel::class => true,
     CustomPostTypes::class => true,
+    AcfJsonSupport::class => true
 ];
