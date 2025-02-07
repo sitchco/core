@@ -14,80 +14,40 @@ use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
 use Sitchco\Integration\AdvancedCustomFields\CustomPostTypes;
+use Sitchco\Tests\Support\ModuleTester;
 use Sitchco\Tests\Support\TestCase;
 
 class CoreMuPluginTest extends TestCase
 {
-    function test_registers_and_activates_core_modules()
+    function test_registers_and_activates_a_module()
     {
-        $Loader = $this->container->get(ModuleConfigLoader::class);
+        $loaded_config = $this->container->get(ModuleConfigLoader::class)->load();
         $this->assertEquals([
-            Cleanup::class => true,
-            SearchRewrite::class => true,
-            BackgroundEventManager::class => true,
-            PostModel::class => true,
-            TermModel::class => true,
-            CustomPostTypes::class => true
-        ], $Loader->load());
+            'featureOne' => true,
+            'featureTwo' => true,
+            'featureThree' => false,
+        ], $loaded_config[ModuleTester::class]);
         $full_feature_list = $this->container->get(Registry::class)->getModuleFeatures();
-        $this->assertEquals(
-            [
-                Cleanup::class => [
-                    'obscurity' => true,
-                    'cleanHtmlMarkup' => true,
-                    'disableEmojis' => true,
-                    'disableGutenbergBlockCss' => true,
-                    'disableExtraRss' => true,
-                    'disableRecentCommentsCss' => true,
-                    'disableGalleryCss' => true,
-                    'disableXmlRpc' => true,
-                    'disableFeeds' => true,
-                    'disableDefaultPosts' => true,
-                    'disableComments' => true,
-                    'removeLanguageDropdown' => true,
-                    'removeWordPressVersion' => true,
-                    'disableRestEndpoints' => true,
-                    'removeJpegCompression' => true,
-                    'updateLoginPage' => true,
-                    'removeGutenbergStyles' => true,
-                    'removeScriptVersion' => true
-                ],
-                SearchRewrite::class => [
-                    'redirect' => true,
-                    'compatibility' => true
-                ],
-                BackgroundEventManager::class => [
-                    'savePermalinks' => true
-                ],
-                Timber::class => true,
-                PostModel::class => true,
-                TermModel::class => true,
-                CustomPostTypes::class => true
-            ],
-            $full_feature_list
-        );
+        $this->assertEquals([
+            'featureOne',
+            'featureTwo',
+            'featureThree',
+        ], $full_feature_list[ModuleTester::class]);
     }
 
     /**
      * @throws DependencyException
      * @throws NotFoundException
      */
-    function test_active_modules_initialized()
+    function test_active_module_initialization()
     {
         $active_modules = $this->container->get(Registry::class)->getActiveModules();
-        $this->assertEquals([
-            Cleanup::class => $this->container->get(Cleanup::class),
-            SearchRewrite::class => $this->container->get(SearchRewrite::class),
-            BackgroundEventManager::class => $this->container->get(BackgroundEventManager::class),
-            Timber::class => $this->container->get(Timber::class),
-            PostModel::class => $this->container->get(PostModel::class),
-            TermModel::class => $this->container->get(TermModel::class),
-            CustomPostTypes::class => $this->container->get(CustomPostTypes::class),
-        ], $active_modules);
-        $this->assertHasFilter('body_class', $this->container->get(Cleanup::class), 'bodyClass');
-        $this->assertHasFilter('wpseo_json_ld_search_url', $this->container->get(SearchRewrite::class), 'rewriteUrl');
-        $this->assertHasAction('current_screen', $this->container->get(SavePermalinksAsyncHook::class), 'onSavePermalinks');
-        $this->assertTrue(TIMBER_LOADED);
+        $ModuleInstance = $this->container->get(ModuleTester::class);
+        $this->assertEquals($ModuleInstance, $active_modules[ModuleTester::class]);
+        $this->assertTrue($ModuleInstance->initialized);
+        $this->assertTrue($ModuleInstance->featureOneRan);
+        $this->assertTrue($ModuleInstance->featureTwoRan);
+        $this->assertFalse($ModuleInstance->featureThreeRan);
     }
 
 }

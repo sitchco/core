@@ -91,7 +91,7 @@ class Registry
     {
         $list = [];
         foreach ($this->registeredModuleClassnames as $module) {
-            $features = (array_fill_keys($module::FEATURES ?: [], true)) ?: true;
+            $features = $module::FEATURES ?: [];
             $list[$module] = $features;
         }
 

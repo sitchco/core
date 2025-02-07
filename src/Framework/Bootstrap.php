@@ -20,6 +20,14 @@ class Bootstrap
         if (wp_get_environment_type() === 'local') {
             add_filter('timber/cache/mode', fn() => Loader::CACHE_NONE);
         }
+
+        if (defined('WP_TESTS_CONFIG_FILE_PATH')) {
+
+            add_filter('sitchco/config_paths/modules', function(array $paths) {
+                $paths[] = SITCHCO_CORE_FIXTURES_DIR;
+                return $paths;
+            });
+        }
     }
 
     /**
