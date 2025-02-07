@@ -1,6 +1,6 @@
 <?php
 
-namespace Test\Sitchco;
+namespace Sitchco\Tests;
 
 use DI\DependencyException;
 use DI\NotFoundException;
@@ -13,6 +13,7 @@ use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
+use Sitchco\Integration\AdvancedCustomFields\CustomPostTypes;
 use Sitchco\Tests\Support\TestCase;
 
 class CoreMuPluginTest extends TestCase
@@ -25,7 +26,8 @@ class CoreMuPluginTest extends TestCase
             SearchRewrite::class => true,
             BackgroundEventManager::class => true,
             PostModel::class => true,
-            TermModel::class => true
+            TermModel::class => true,
+            CustomPostTypes::class => true
         ], $Loader->load());
         $full_feature_list = $this->container->get(Registry::class)->getModuleFeatures();
         $this->assertEquals(
@@ -59,7 +61,8 @@ class CoreMuPluginTest extends TestCase
                 ],
                 Timber::class => true,
                 PostModel::class => true,
-                TermModel::class => true
+                TermModel::class => true,
+                CustomPostTypes::class => true
             ],
             $full_feature_list
         );
@@ -78,7 +81,8 @@ class CoreMuPluginTest extends TestCase
             BackgroundEventManager::class => $this->container->get(BackgroundEventManager::class),
             Timber::class => $this->container->get(Timber::class),
             PostModel::class => $this->container->get(PostModel::class),
-            TermModel::class => $this->container->get(TermModel::class)
+            TermModel::class => $this->container->get(TermModel::class),
+            CustomPostTypes::class => $this->container->get(CustomPostTypes::class),
         ], $active_modules);
         $this->assertHasFilter('body_class', $this->container->get(Cleanup::class), 'bodyClass');
         $this->assertHasFilter('wpseo_json_ld_search_url', $this->container->get(SearchRewrite::class), 'rewriteUrl');
