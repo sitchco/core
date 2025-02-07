@@ -1,11 +1,10 @@
 <?php
 
-namespace Sitchco\Tests\AdvancedCustomFields;
+namespace Sitchco\Tests\Integration\AdvancedCustomFields;
 
 use ACF_Post_Type;
 use Sitchco\Tests\Support\TestCase;
 use WP_Query;
-
 
 class CustomPostTypesTest extends TestCase
 {
