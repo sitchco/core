@@ -3,8 +3,8 @@
     "description": "Core Monorepo for Sitchco WordPress projects",
     "autoload": {
         "psr-4": {
-            "Sitchco\\": "src/",
-            "Sitchco\\Tests\\": "tests/"
+            "Sitchco\\": "src",
+            "Sitchco\\Tests\\": "tests"
         }
     },
     "type": "wordpress-muplugin",
