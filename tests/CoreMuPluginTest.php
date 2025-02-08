@@ -15,6 +15,8 @@ use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
 use Sitchco\Integration\AdvancedCustomFields\CustomPostTypes;
 use Sitchco\Tests\Support\ModuleTester;
+use Sitchco\Tests\Support\ParentModuleTester;
+use Sitchco\Tests\Support\PostTester;
 use Sitchco\Tests\Support\TestCase;
 
 class CoreMuPluginTest extends TestCase
@@ -27,6 +29,7 @@ class CoreMuPluginTest extends TestCase
             'featureTwo' => true,
             'featureThree' => false,
         ], $loaded_config[ModuleTester::class]);
+        $this->assertArrayNotHasKey(ParentModuleTester::class, $loaded_config);
         $full_feature_list = $this->container->get(Registry::class)->getModuleFeatures();
         $this->assertEquals([
             'featureOne',
@@ -44,10 +47,20 @@ class CoreMuPluginTest extends TestCase
         $active_modules = $this->container->get(Registry::class)->getActiveModules();
         $ModuleInstance = $this->container->get(ModuleTester::class);
         $this->assertEquals($ModuleInstance, $active_modules[ModuleTester::class]);
+        $this->assertArrayHasKey(ParentModuleTester::class, $active_modules);
         $this->assertTrue($ModuleInstance->initialized);
         $this->assertTrue($ModuleInstance->featureOneRan);
         $this->assertTrue($ModuleInstance->featureTwoRan);
         $this->assertFalse($ModuleInstance->featureThreeRan);
+    }
+
+    function test_active_module_post_classes()
+    {
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Post',
+        ]);
+        $post = \Timber\Timber::get_post($post_id);
+        $this->assertInstanceOf(PostTester::class, $post);
     }
 
 }

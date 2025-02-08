@@ -5,6 +5,7 @@ namespace Sitchco\Framework\Core;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
+use Sitchco\ModuleExtension\TimberPostModuleExtension;
 use Sitchco\Utils\ArrayUtil;
 
 /**
@@ -26,6 +27,11 @@ class Registry
     private array $activeModuleInstances = [];
 
     protected Container $Container;
+
+
+    const EXTENSIONS = [
+        TimberPostModuleExtension::class
+    ];
 
     /**
      * @param Container $Container
@@ -78,6 +84,9 @@ class Registry
             return is_array($features) ? array_filter($features) : $features;
         }, $module_configs));
         array_walk($activeModules, [$this, 'activateModule']);
+        foreach (static::EXTENSIONS as $extension_classname) {
+            $this->Container->get($extension_classname)->extend(array_values($this->activeModuleInstances));
+        }
         return $this->activeModuleInstances;
     }
 
