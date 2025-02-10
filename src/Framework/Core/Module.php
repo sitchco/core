@@ -63,6 +63,8 @@ abstract class Module
      * @var array<string>
      */
     public const BLOCKS = [];
+    
+    protected string $basePath;
 
     /**
      * Default initialization feature that is always called when module is activated
@@ -73,13 +75,12 @@ abstract class Module
 
     protected function getModuleBasePath(): ?string
     {
-        static $basePath = null;
-        if ($basePath === null) {
+        if (empty($this->basePath)) {
             $reflector = new \ReflectionClass($this);
-            $basePath = trailingslashit(dirname($reflector->getFileName()));
+            $this->basePath = trailingslashit(dirname($reflector->getFileName()));
         }
 
-        return $basePath;
+        return $this->basePath;
     }
 
     public function getAcfJsonPaths(): array
