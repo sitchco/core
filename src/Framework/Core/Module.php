@@ -70,4 +70,20 @@ abstract class Module
      * @return void
      */
     public function init() {}
+
+    protected function getModuleBasePath(): ?string
+    {
+        static $basePath = null;
+        if ($basePath === null) {
+            $reflector = new \ReflectionClass($this);
+            $basePath = trailingslashit(dirname($reflector->getFileName()));
+        }
+
+        return $basePath;
+    }
+
+    public function getAcfJsonPaths(): array
+    {
+        return array_filter([realpath($this->getModuleBasePath() . 'acf-json')]);
+    }
 }
