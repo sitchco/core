@@ -5,6 +5,7 @@ namespace Sitchco\Framework\Core;
 use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
+use Sitchco\ModuleExtension\AcfPathsModuleExtension;
 use Sitchco\ModuleExtension\TimberPostModuleExtension;
 use Sitchco\Utils\ArrayUtil;
 
@@ -22,15 +23,15 @@ class Registry
 
     /**
      * @var array<string, Module>
-     *     Associative array mapping module name to the activated module instance .
+     *     Associative array mapping module name to the activated module instance.
      */
     private array $activeModuleInstances = [];
 
     protected Container $Container;
 
-
     const EXTENSIONS = [
-        TimberPostModuleExtension::class
+        TimberPostModuleExtension::class,
+        AcfPathsModuleExtension::class
     ];
 
     /**
@@ -41,20 +42,103 @@ class Registry
         $this->Container = $Container;
     }
 
-    protected function activateModule(array|bool &$featureList, string $module): void
+    /**
+     * First Pass – Module Registration
+     * Processes dependencies and instantiates the module.
+     *
+     * @param array|bool $featureList Feature list associated with the module.
+     * @param string     $module      Fully qualified module class name.
+     */
+    protected function registerActiveModule(array|bool &$featureList, string $module): void
     {
-        if (!class_exists($module)) {
+        if (! class_exists($module)) {
             return;
         }
         try {
+            // Process dependencies recursively.
             $dependencies = array_fill_keys($module::DEPENDENCIES, true);
-            array_walk($dependencies, [$this, 'activateModule']);
-            $instance = $this->Container->get($module); /* @var Module $instance */
+            array_walk($dependencies, [$this, 'registerActiveModule']);
+            $instance = $this->Container->get($module);
+            /* @var Module $instance */
             $this->activeModuleInstances[$module] = $instance;
-            // default init feature
+        } catch (DependencyException|NotFoundException $e) {
+            // Optionally log the error here.
+        }
+    }
+
+    /**
+     * Activates registered modules based on the active module configuration.
+     * The activation process is divided into three passes:
+     *   1. Registration Pass: Instantiate and register all active modules.
+     *   2. Extension Pass: Process module extensions (e.g., register ACF paths, custom post types, etc.).
+     *   3. Initialization Pass: Initialize each module and call its feature methods.
+     *
+     * @param array<string, array<string, bool>|bool> $module_configs The merged list of module configurations.
+     *
+     * @return array<string, Module> Active module instances.
+     */
+    public function activateModules(array $module_configs): array
+    {
+        // Add all module classes to the registry.
+        $this->addModules(array_keys($module_configs));
+
+        // Execute the three activation passes.
+        $this->registrationPass($module_configs);
+        $this->extensionPass();
+        $this->initializationPass($module_configs);
+
+        return $this->activeModuleInstances;
+    }
+
+    /**
+     * Registration Pass: Prepare the active modules configuration and register each module.
+     *
+     * @param array<string, array<string, bool>|bool> $module_configs
+     *
+     * @return void
+     */
+    private function registrationPass(array $module_configs): void
+    {
+        // Prepare active modules configuration.
+        $activeModules = array_filter(
+            array_map(
+                fn($features) => is_array($features) ? array_filter($features) : $features,
+                $module_configs
+            )
+        );
+
+        // Register each active module.
+        array_walk($activeModules, [$this, 'registerActiveModule']);
+    }
+
+    /**
+     * Extension Pass: Apply module extensions.
+     * @return void
+     */
+    private function extensionPass(): void
+    {
+        foreach (static::EXTENSIONS as $extension_classname) {
+            $extension = $this->Container->get($extension_classname);
+            $extension->extend(array_values($this->activeModuleInstances));
+        }
+    }
+
+    /**
+     * Initialization Pass: Initialize modules and execute their configured features.
+     *
+     * @param array<string, array<string, bool>|bool> $module_configs
+     *
+     * @return void
+     */
+    private function initializationPass(array $module_configs): void
+    {
+        foreach ($this->activeModuleInstances as $moduleName => $instance) {
+            // Call the module's init method.
             $instance->init();
-            // default to activate all features
-            if (!is_array($featureList) && count($instance::FEATURES)) {
+
+            // Prepare feature list for the module.
+            $featureList = $module_configs[$moduleName] ?? [];
+            if (! is_array($featureList) && count($instance::FEATURES)) {
                 $featureList = array_fill_keys($instance::FEATURES, true);
             }
             foreach ((array) $featureList as $feature => $status) {
@@ -62,38 +146,11 @@ class Registry
                     call_user_func([$instance, $feature]);
                 }
             }
-        } catch (DependencyException|NotFoundException) {
         }
-    }
-
-    /**
-     * Activates registered modules based on the active module configuration.
-     * Retrieves the module class map and the list of active modules.
-     * For each active module, it checks if the class exists and instantiates it.
-     * If features are specified, it invokes the corresponding methods on the module instance.
-     *
-     * @param array<string, array<string, bool>|bool> $module_configs The merged list of module configuration.
-     *
-     * @return array<string, Module> Active module list
-     */
-    public function activateModules(array $module_configs): array
-    {
-        $this->addModules(array_keys($module_configs));
-
-        $activeModules = array_filter(array_map(function ($features) {
-            return is_array($features) ? array_filter($features) : $features;
-        }, $module_configs));
-        array_walk($activeModules, [$this, 'activateModule']);
-        foreach (static::EXTENSIONS as $extension_classname) {
-            $this->Container->get($extension_classname)->extend(array_values($this->activeModuleInstances));
-        }
-        return $this->activeModuleInstances;
     }
 
     /**
      * Retrieves the full list of registered modules with their features.
-     * Iterates through the registered modules and constructs an associative array
-     * where the keys are module names and the values are arrays of feature flags or boolean true.
      * @return array<string, array<string, bool>|bool> Full list of modules and their features.
      */
     public function getModuleFeatures(): array
@@ -108,10 +165,8 @@ class Registry
     }
 
     /**
-     * Retrieves the list of active modules after applying filters.
-     * Applies the 'sitchco/modules/activate' filter to determine which modules should be activated.
-     * The filter receives an empty array and the full list of modules as arguments.
-     * @return array<string, array<string, bool>|bool> List of active modules and their features.
+     * Retrieves the list of active modules after activation.
+     * @return array<string, Module> Active module instances.
      */
     public function getActiveModules(): array
     {
@@ -120,7 +175,6 @@ class Registry
 
     /**
      * Adds modules to the registry.
-     * Merges the provided class names with the existing list of module class names.
      *
      * @param array<string>|string $classnames Array or single string of module class names to add.
      *
@@ -137,5 +191,4 @@ class Registry
 
         return $this;
     }
-
 }
