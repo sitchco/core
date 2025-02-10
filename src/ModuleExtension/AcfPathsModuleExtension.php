@@ -10,7 +10,6 @@ class AcfPathsModuleExtension implements ModuleExtension
 
     public function __construct(AcfJsonSupport $acfJsonSupport)
     {
-
         $this->acfJsonSupport = $acfJsonSupport;
     }
 
