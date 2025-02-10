@@ -17,21 +17,25 @@ use Sitchco\Utils\ArrayUtil;
 class Registry
 {
     /**
-     * @var array<string> List of registered module class names
+     * @var array<string> List of registered module class names.
      */
     private array $registeredModuleClassnames = [];
 
     /**
-     * @var array<string, Module>
-     *     Associative array mapping module name to the activated module instance.
+     * @var array<string, Module> Associative array mapping module name to the activated module instance.
      */
     private array $activeModuleInstances = [];
+
+    /**
+     * @var array<string> Tracks modules in the process of being registered to detect circular dependencies.
+     */
+    private array $inProgress = [];
 
     protected Container $Container;
 
     const EXTENSIONS = [
         TimberPostModuleExtension::class,
-        AcfPathsModuleExtension::class
+        AcfPathsModuleExtension::class,
     ];
 
     /**
@@ -43,26 +47,48 @@ class Registry
     }
 
     /**
-     * First Pass – Module Registration
-     * Processes dependencies and instantiates the module.
+     * First Pass – Module Registration.
+     * Processes dependencies recursively and instantiates the module.
      *
-     * @param array|bool $featureList Feature list associated with the module.
-     * @param string     $module      Fully qualified module class name.
+     * @param string $module Fully qualified module class name.
      */
-    protected function registerActiveModule(array|bool &$featureList, string $module): void
+    protected function registerActiveModule(string $module): void
     {
         if (! class_exists($module)) {
             return;
         }
+
+        // Skip if the module has already been instantiated.
+        if (isset($this->activeModuleInstances[$module])) {
+            return;
+        }
+
+        // Detect circular dependency.
+        if (in_array($module, $this->inProgress, true)) {
+            // Optionally log a warning, e.g.:
+            // error_log("Circular dependency detected for module: {$module}");
+            return;
+        }
+
+        // Mark this module as in progress.
+        $this->inProgress[] = $module;
+
         try {
             // Process dependencies recursively.
-            $dependencies = array_fill_keys($module::DEPENDENCIES, true);
-            array_walk($dependencies, [$this, 'registerActiveModule']);
+            foreach ($module::DEPENDENCIES as $dependency) {
+                $this->registerActiveModule($dependency);
+            }
+
             $instance = $this->Container->get($module);
             /* @var Module $instance */
             $this->activeModuleInstances[$module] = $instance;
         } catch (DependencyException|NotFoundException $e) {
-            // Optionally log the error here.
+            // Optionally log the error, e.g.:
+            // error_log("Failed to instantiate module {$module}: " . $e->getMessage());
+        }
+        finally {
+            // Remove the module from the in-progress stack.
+            array_pop($this->inProgress);
         }
     }
 
@@ -70,7 +96,7 @@ class Registry
      * Activates registered modules based on the active module configuration.
      * The activation process is divided into three passes:
      *   1. Registration Pass: Instantiate and register all active modules.
-     *   2. Extension Pass: Process module extensions (e.g., register ACF paths, custom post types, etc.).
+     *   2. Extension Pass: Process module extensions.
      *   3. Initialization Pass: Initialize each module and call its feature methods.
      *
      * @param array<string, array<string, bool>|bool> $module_configs The merged list of module configurations.
@@ -91,7 +117,7 @@ class Registry
     }
 
     /**
-     * Registration Pass: Prepare the active modules configuration and register each module.
+     * Registration Pass: Prepares the active modules configuration and registers each module.
      *
      * @param array<string, array<string, bool>|bool> $module_configs
      *
@@ -100,6 +126,7 @@ class Registry
     private function registrationPass(array $module_configs): void
     {
         // Prepare active modules configuration.
+        // For each module config, if it's an array, filter out any falsy feature flags.
         $activeModules = array_filter(
             array_map(
                 fn($features) => is_array($features) ? array_filter($features) : $features,
@@ -108,7 +135,9 @@ class Registry
         );
 
         // Register each active module.
-        array_walk($activeModules, [$this, 'registerActiveModule']);
+        foreach (array_keys($activeModules) as $module) {
+            $this->registerActiveModule($module);
+        }
     }
 
     /**
@@ -136,12 +165,14 @@ class Registry
             // Call the module's init method.
             $instance->init();
 
-            // Prepare feature list for the module.
+            // Prepare the feature list for the module.
             $featureList = $module_configs[$moduleName] ?? [];
             if (! is_array($featureList) && count($instance::FEATURES)) {
                 $featureList = array_fill_keys($instance::FEATURES, true);
             }
-            foreach ((array) $featureList as $feature => $status) {
+
+            // Execute each feature method if it exists.
+            foreach ((array)$featureList as $feature => $status) {
                 if (method_exists($instance, $feature)) {
                     call_user_func([$instance, $feature]);
                 }
@@ -184,10 +215,15 @@ class Registry
     {
         $valid_classnames = array_filter((array)$classnames, fn($c) => is_subclass_of($c, Module::class));
         $dependency_classnames = ArrayUtil::arrayMapFlat(fn($c) => $c::DEPENDENCIES, $valid_classnames);
+
         if (count($dependency_classnames)) {
             $this->addModules($dependency_classnames);
         }
-        $this->registeredModuleClassnames = array_merge($this->registeredModuleClassnames, $valid_classnames);
+
+        // Merge the new module classnames and remove duplicates.
+        $this->registeredModuleClassnames = array_unique(
+            array_merge($this->registeredModuleClassnames, $valid_classnames)
+        );
 
         return $this;
     }
