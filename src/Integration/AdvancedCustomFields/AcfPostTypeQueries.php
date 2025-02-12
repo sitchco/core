@@ -9,6 +9,8 @@ use WP_Query;
 
 class AcfPostTypeQueries extends Module
 {
+    const HOOK_NAME = 'acf_post_type_queries';
+
     public function init(): void
     {
         if (!class_exists('ACF')) {
@@ -131,6 +133,6 @@ class AcfPostTypeQueries extends Module
         ) {
             return;
         }
-        do_action('sitchco/acf_post_type_queries/admin_sort', $orderby, $post_type_config['post_type'], $query);
+        do_action(static::hookName('admin_sort'), $orderby, $post_type_config['post_type'], $query);
     }
 }

@@ -3,19 +3,20 @@
 namespace Sitchco\Framework\Config;
 
 use Sitchco\Utils\ArrayUtil;
+use Sitchco\Utils\Hooks;
 
 abstract class ConfigLoader
 {
     /**
      * Loads and merges config files from path list and passes concrete class to apply
      *
-     * @return void
+     * @return array
      */
     public function load(): array
     {
         $paths_raw = array_merge(
             [SITCHCO_CORE_CONFIG_DIR],
-            apply_filters("sitchco/config_paths/{$this->getHookName()}", []),
+            apply_filters(Hooks::name('config_paths', $this->getHookName()), []),
             $this->getConfigDirectoryPaths()
         );
         $paths = array_unique(array_map('trailingslashit', array_filter($paths_raw)));

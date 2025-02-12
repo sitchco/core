@@ -24,6 +24,11 @@ class Acf
         return $acf_post_type;
     }
 
+    public static function findAllPostTypeConfigs(): array
+    {
+        return static::postTypeInstance()->get_posts();
+    }
+
     public static function findPostTypeConfig(string $post_type): array|null
     {
         $acf_post_type = static::postTypeInstance();
@@ -31,7 +36,7 @@ class Acf
         if ($post_type == $acf_post_type->post_type) {
             return null;
         }
-        $acf_post_type_posts = $acf_post_type->get_posts();
+        $acf_post_type_posts = static::findAllPostTypeConfigs();
         foreach ($acf_post_type_posts as $post) {
             if ($post['post_type'] === $post_type) {
                 return $post;

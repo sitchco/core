@@ -2,6 +2,8 @@
 
 namespace Sitchco\Framework\Core;
 
+use Sitchco\Utils\Hooks;
+
 /**
  * Abstract base class for modules in the Sitchco framework.
  *
@@ -63,6 +65,11 @@ abstract class Module
      * @var array<string>
      */
     public const BLOCKS = [];
+
+    /**
+     * Set a descriptive name for the module to use in building action/filter hooks
+     */
+    public const HOOK_NAME = '';
     
     protected string $basePath;
 
@@ -87,4 +94,10 @@ abstract class Module
     {
         return array_filter([realpath($this->getModuleBasePath() . 'acf-json')]);
     }
+
+    protected static function hookName(...$name_parts): string
+    {
+        return Hooks::name(static::HOOK_NAME, ...$name_parts);
+    }
+
 }
