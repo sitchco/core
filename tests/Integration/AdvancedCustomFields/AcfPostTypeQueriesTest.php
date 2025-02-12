@@ -4,14 +4,14 @@ namespace Sitchco\Tests\Integration\AdvancedCustomFields;
 
 use ACF_Post_Type;
 use Sitchco\Tests\Support\TestCase;
+use Sitchco\Utils\Acf;
 use WP_Query;
 
-class CustomPostTypesTest extends TestCase
+class AcfPostTypeQueriesTest extends TestCase
 {
 
     protected function getTestPostTitles(string $post_type): array
     {
-//        wp_cache_flush('post-queries');
         $query = new WP_Query();
         $results = $query->query(compact('post_type'));
         return array_column($results, 'post_title');
@@ -20,7 +20,7 @@ class CustomPostTypesTest extends TestCase
     function test_default_query_parameters()
     {
         $acf_post_type_content = include SITCHCO_CORE_FIXTURES_DIR . '/acf-post-type.php';
-        $acf_post_type = acf_get_instance('ACF_Post_Type'); /* @var $acf_post_type ACF_Post_Type */
+        $acf_post_type = Acf::postTypeInstance();
         $post_type = $acf_post_type_content['post_type'];
         $this->factory()->post->create([
             'post_type' => $post_type, 'post_title' => '2',
@@ -53,5 +53,9 @@ class CustomPostTypesTest extends TestCase
         //admin
         set_current_screen('edit.php?post_type=' . $post_type);
         $this->assertEquals(['1', '2', '3'], $this->getTestPostTitles($post_type));
+        $this->assertDidNotDoAction('sitchco/acf_post_type_queries/admin_sort');
+        $_GET['orderby'] = 'test_meta';
+        $GLOBALS['wp_query']->query(compact('post_type'));
+        $this->assertDidAction('sitchco/acf_post_type_queries/admin_sort');
     }
 }

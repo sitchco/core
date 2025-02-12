@@ -1,6 +1,6 @@
 <?php
 
-use Sitchco\Integration\AdvancedCustomFields\CustomPostTypes;
+use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
@@ -13,5 +13,5 @@ return [
     BackgroundEventManager::class => true,
     PostModel::class => true,
     TermModel::class => true,
-    CustomPostTypes::class => true,
+    AcfPostTypeQueries::class => true,
 ];
