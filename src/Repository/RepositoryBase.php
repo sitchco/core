@@ -2,12 +2,13 @@
 
 namespace Sitchco\Repository;
 
-use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Sitchco\Model\PostBase;
 use Sitchco\Repository\Support\Repository;
-use Timber\Timber;
 use Timber\Post;
+use Timber\Timber;
+use Sitchco\Collection\Collection;
+use WP_Query;
 
 /**
  * class RepositoryBase
@@ -23,7 +24,9 @@ class RepositoryBase implements Repository
         $model_class = $this->model_class;
         $query['post_type'] = $model_class::POST_TYPE;
         $query = $this->maybeExcludeCurrentSingularPost($query);
-        return collect(Timber::get_posts($query));
+
+        $wp_query = new WP_Query($query);
+        return new Collection($wp_query);
     }
 
     public function findAll(array $query = []): Collection
@@ -31,7 +34,9 @@ class RepositoryBase implements Repository
         $model_class = $this->model_class;
         $query['post_type'] = $model_class::POST_TYPE;
         $query['posts_per_page'] = -1;
-        return collect(Timber::get_posts($query));
+
+        $wp_query = new WP_Query($query);
+        return new Collection($wp_query);
     }
 
     public function findById($id): ?Post
@@ -43,14 +48,14 @@ class RepositoryBase implements Repository
         return Timber::get_post($id);
     }
 
-    public function findOne(array $query = []): ?Post
+    public function findOne(array $query = []): ?PostBase
     {
         $query['posts_per_page'] = 1;
         $posts = $this->find($query);
         return $posts->first();
     }
 
-    public function findOneBySlug($name): ?Post
+    public function findOneBySlug($name): ?PostBase
     {
         if (!$name) {
             return null;
@@ -58,7 +63,7 @@ class RepositoryBase implements Repository
         return $this->findOne(compact('name'));
     }
 
-    public function findOneByAuthor($author): ?Post
+    public function findOneByAuthor($author): ?PostBase
     {
         if (!$author) {
             return null;
@@ -70,7 +75,7 @@ class RepositoryBase implements Repository
     public function findAllByAuthor($author): Collection
     {
         if (!$author) {
-            return collect();
+            return new Collection([]);
         }
         if (is_object($author)) $author = $author->ID;
         return $this->find(compact('author'));
@@ -84,7 +89,7 @@ class RepositoryBase implements Repository
     public function findWithIds(array $post_ids, int $count = 10): Collection
     {
         if (empty($post_ids)) {
-            return collect();
+            return new Collection([]);
         }
         return $this->find([
             'posts_per_page' => $count,
@@ -96,7 +101,7 @@ class RepositoryBase implements Repository
     public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = []): Collection
     {
         if (empty($term_ids)) {
-            return collect();
+            return new Collection([]);
         }
         return $this->find([
             'posts_per_page' => $count,
