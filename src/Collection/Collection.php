@@ -26,7 +26,7 @@ class Collection extends IlluminateCollection implements PostCollectionInterface
             $posts = array_map(fn($post) => Timber::get_post($post), $items->posts ?: []);
             parent::__construct($posts);
             $this->pagination = new Pagination([], $this->wp_query);
-        } else if (is_array($items) && !$items[0] instanceof Post) {
+        } else if (!empty($items) && !$items[0] instanceof Post) {
             throw new \InvalidArgumentException('Items in the collection are not a Timber\Post');
         } else {
             parent::__construct($items);

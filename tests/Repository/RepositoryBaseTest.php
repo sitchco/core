@@ -326,7 +326,7 @@ class RepositoryBaseTest extends TestCase
         // Scenario 3: Trying to find posts by non-existent author
         $non_existent_author = get_user_by('id', 999999);
         $resultNonExistent = $repository->findAllByAuthor($non_existent_author);
-        $this->assertNull($resultNonExistent);
+        $this->assertTrue($resultNonExistent->isEmpty());
     }
 
     public function test_find_all_drafts_method()
@@ -393,7 +393,7 @@ class RepositoryBaseTest extends TestCase
 
         // Scenario 3: Test with an empty post_ids array (edge case)
         $result_empty = $repository->findWithIds([]);
-        $this->assertNull($result_empty);  // Should return null for empty post_ids
+        $this->assertTrue($result_empty->isEmpty());
     }
 
     public function test_find_with_term_ids_method()
@@ -459,7 +459,7 @@ class RepositoryBaseTest extends TestCase
 
         // Scenario 4: Test with an empty term_ids array (edge case)
         $result_empty = $repository->findWithTermIds([]);
-        $this->assertNull($result_empty);
+        $this->assertTrue($result_empty->isEmpty());
     }
 
 }
