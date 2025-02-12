@@ -2,13 +2,12 @@
 
 namespace Sitchco\Repository;
 
-//use Illuminate\Support\Collection;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Sitchco\Model\PostBase;
 use Sitchco\Repository\Support\Repository;
 use Timber\Timber;
 use Timber\Post;
-use Timber\PostCollectionInterface;
 
 /**
  * class RepositoryBase
@@ -18,23 +17,21 @@ class RepositoryBase implements Repository
 {
     protected string $model_class = PostBase::class;
     protected bool $exclude_current_singular_post = true;
-//    protected string $collection_class = Collection::class;
 
-    public function find(array $query = []): ?PostCollectionInterface
+    public function find(array $query = []): Collection
     {
         $model_class = $this->model_class;
         $query['post_type'] = $model_class::POST_TYPE;
         $query = $this->maybeExcludeCurrentSingularPost($query);
-        return Timber::get_posts($query);
+        return collect(Timber::get_posts($query));
     }
 
-    public function findAll(array $query = []): ?PostCollectionInterface
+    public function findAll(array $query = []): Collection
     {
         $model_class = $this->model_class;
         $query['post_type'] = $model_class::POST_TYPE;
         $query['posts_per_page'] = -1;
-
-        return Timber::get_posts($query);
+        return collect(Timber::get_posts($query));
     }
 
     public function findById($id): ?Post
@@ -50,7 +47,7 @@ class RepositoryBase implements Repository
     {
         $query['posts_per_page'] = 1;
         $posts = $this->find($query);
-        return $posts[0] ?? null;
+        return $posts->first();
     }
 
     public function findOneBySlug($name): ?Post
@@ -70,24 +67,24 @@ class RepositoryBase implements Repository
         return $this->findOne(compact('author'));
     }
 
-    public function findAllByAuthor($author): null|PostCollectionInterface
+    public function findAllByAuthor($author): Collection
     {
         if (!$author) {
-            return null;
+            return collect();
         }
         if (is_object($author)) $author = $author->ID;
         return $this->find(compact('author'));
     }
 
-    public function findAllDrafts(): ?PostCollectionInterface
+    public function findAllDrafts(): Collection
     {
         return $this->find(['posts_per_page' => -1, 'post_status' => 'draft']);
     }
 
-    public function findWithIds(array $post_ids, int $count = 10): null|PostCollectionInterface
+    public function findWithIds(array $post_ids, int $count = 10): Collection
     {
         if (empty($post_ids)) {
-            return null;
+            return collect();
         }
         return $this->find([
             'posts_per_page' => $count,
@@ -96,10 +93,10 @@ class RepositoryBase implements Repository
         ]);
     }
 
-    public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = []): null|PostCollectionInterface
+    public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = []): Collection
     {
         if (empty($term_ids)) {
-            return null;
+            return collect();
         }
         return $this->find([
             'posts_per_page' => $count,
@@ -185,5 +182,4 @@ class RepositoryBase implements Repository
             throw new InvalidArgumentException('Model Class is not an instance of :' . $this->model_class);
         }
     }
-
 }
