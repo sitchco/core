@@ -7,8 +7,9 @@ use Sitchco\Model\PostBase;
 use Sitchco\Repository\Support\Repository;
 use Timber\Post;
 use Timber\Timber;
+use Timber\PostQuery;
+use \WP_Query;
 use Sitchco\Collection\Collection;
-use WP_Query;
 
 /**
  * class RepositoryBase
@@ -25,8 +26,7 @@ class RepositoryBase implements Repository
         $query['post_type'] = $model_class::POST_TYPE;
         $query = $this->maybeExcludeCurrentSingularPost($query);
 
-        $wp_query = new WP_Query($query);
-        return new Collection($wp_query);
+        return new Collection(new PostQuery(new WP_Query($query)));
     }
 
     public function findAll(array $query = []): Collection
@@ -35,8 +35,7 @@ class RepositoryBase implements Repository
         $query['post_type'] = $model_class::POST_TYPE;
         $query['posts_per_page'] = -1;
 
-        $wp_query = new WP_Query($query);
-        return new Collection($wp_query);
+        return new Collection(new PostQuery(new WP_Query($query)));
     }
 
     public function findById($id): ?Post
@@ -68,16 +67,20 @@ class RepositoryBase implements Repository
         if (!$author) {
             return null;
         }
-        if (is_object($author)) $author = $author->ID;
+        if (is_object($author)) {
+            $author = $author->ID;
+        }
         return $this->findOne(compact('author'));
     }
 
     public function findAllByAuthor($author): Collection
     {
         if (!$author) {
-            return new Collection([]);
+            return new Collection(new PostQuery(new WP_Query([])));
         }
-        if (is_object($author)) $author = $author->ID;
+        if (is_object($author)) {
+            $author = $author->ID;
+        }
         return $this->find(compact('author'));
     }
 
@@ -89,7 +92,7 @@ class RepositoryBase implements Repository
     public function findWithIds(array $post_ids, int $count = 10): Collection
     {
         if (empty($post_ids)) {
-            return new Collection([]);
+            return new Collection(new PostQuery(new WP_Query([])));
         }
         return $this->find([
             'posts_per_page' => $count,
@@ -101,7 +104,7 @@ class RepositoryBase implements Repository
     public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = []): Collection
     {
         if (empty($term_ids)) {
-            return new Collection([]);
+            return new Collection(new PostQuery(new WP_Query([])));
         }
         return $this->find([
             'posts_per_page' => $count,
