@@ -3,6 +3,7 @@
 namespace Sitchco\Tests\Repository;
 
 use InvalidArgumentException;
+use Sitchco\Collection\Collection;
 use Sitchco\Model\Category;
 use Sitchco\Repository\PostRepository;
 use Sitchco\Tests\Support\EventPostTester;
@@ -167,6 +168,7 @@ class RepositoryBaseTest extends TestCase
         setup_postdata($GLOBALS['post']);
         $found_posts = $this->container->get(PostRepository::class)->find();
 
+        $this->assertInstanceOf(Collection::class, $found_posts);
         $this->assertInstanceOf(PostCollectionInterface::class, $found_posts);
         $this->assertCount(1, $found_posts);
         $this->assertEquals($second_post->ID, $found_posts[0]->ID);
