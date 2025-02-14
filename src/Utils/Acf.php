@@ -29,7 +29,8 @@ class Acf
         return static::postTypeInstance()->get_posts();
     }
 
-    public static function findPostTypeConfig(string $post_type): array|null
+    // TODO: add in shim to avoid 500 error on Page CPT (with assigned Content Partial)
+    public static function findPostTypeConfig(array|string $post_type): array|null
     {
         $acf_post_type = static::postTypeInstance();
         // prevent infinite recursion
