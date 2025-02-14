@@ -22,9 +22,7 @@ class AcfPostTypeAdminColumns extends Module
             return $tabs;
         } );
         add_action('acf/post_type/render_settings_tab/admin-columns', [$this, 'adminColumnsTab']);
-        foreach (Acf::findAllPostTypeConfigs() as $post_type_config) {
-            $this->postTypeConfigHooks($post_type_config);
-        }
+        add_action('init', fn() => add_action('registered_post_type', [$this, 'postTypeConfigHooks']));
         add_filter(static::hookName('column_content'), [$this, 'postMeta'], 5, 3);
         add_filter(static::hookName('column_content', 'thumbnail'), [$this, 'postThumbnail'], 5, 2);
         add_filter(static::hookName('column_content', 'editor'), [$this, 'editor'], 5, 2);
@@ -70,18 +68,21 @@ class AcfPostTypeAdminColumns extends Module
         );
     }
 
-    protected function postTypeConfigHooks(array $post_type_config): void
+    public function postTypeConfigHooks(string $post_type): void
     {
-        $slug = $post_type_config['post_type'];
-        add_filter("manage_edit-{$slug}_sortable_columns", fn(array $columns) => $this->sortableColumns($columns, $post_type_config));
-        add_filter("manage_{$slug}_posts_columns", fn(array $columns) => $this->columnHeaders($columns, $post_type_config));
-        add_action("manage_{$slug}_posts_custom_column", fn(string $column_name, int $post_id) => $this->columnContent($column_name, $post_id, $post_type_config));
-        add_action('admin_print_styles', fn() => $this->printAdminStyles($slug));
+        $post_type_config = Acf::findPostTypeConfig($post_type);
+        if (!$post_type_config) {
+            return;
+        }
+        add_filter("manage_edit-{$post_type}_sortable_columns", fn(array $columns) => $this->sortableColumns($columns, $post_type_config));
+        add_filter("manage_{$post_type}_posts_columns", fn(array $columns) => $this->columnHeaders($columns, $post_type_config));
+        add_action("manage_{$post_type}_posts_custom_column", fn(string $column_name, int $post_id) => $this->columnContent($column_name, $post_id, $post_type_config), 10, 2);
+        add_action('admin_print_styles', fn() => $this->outputAdminStyles($post_type));
     }
 
-    protected function getColumnRows(array $post_type_config): array
+    protected function getColumnConfig(array $post_type_config): array
     {
-        return array_values($post_type_config['listing_screen_columns']);
+        return array_filter(array_values($post_type_config['listing_screen_columns']), fn($row) => !!$row['name'] && !!$row['label']);
     }
 
     protected function sortableColumns(array $columns, array $post_type_config): array
@@ -90,7 +91,7 @@ class AcfPostTypeAdminColumns extends Module
             $columns['taxonomy-' . $taxonomy] = 'taxonomy-' . $taxonomy;
         }
 
-        foreach ($this->getColumnRows($post_type_config) as $row) {
+        foreach ($this->getColumnConfig($post_type_config) as $row) {
             if (!empty($row['sortable'])) {
                 $columns[$row['name']] = $row['name'];
             }
@@ -107,7 +108,7 @@ class AcfPostTypeAdminColumns extends Module
     {
         $headers = [];
 
-        foreach ($this->getColumnRows($post_type_config) as $row) {
+        foreach ($this->getColumnConfig($post_type_config) as $row) {
             $key = $row['name'];
             $tax_key = 'taxonomy-' . $key;
             $header_key = array_key_exists($tax_key, $columns) ? $tax_key : $key;
@@ -123,12 +124,12 @@ class AcfPostTypeAdminColumns extends Module
                 'cb',
                 'title'
             ]), $headers, $get_defaults($taxonomies), $get_defaults(['author', 'comments', 'date']));
-
+        /* Hook: sitchco/acf_post_type_admin_columns/column_headers */
         return apply_filters(static::hookName('column_headers'), $columns, $post_type_config);
     }
 
     protected function columnContent(string $column_name, int $post_id, array $post_type_config) {
-        $column_config = $this->getColumnRows($post_type_config);
+        $column_config = $this->getColumnConfig($post_type_config);
         if (!in_array($column_name, array_column($column_config, 'name'))) {
             return false;
         }
@@ -139,7 +140,7 @@ class AcfPostTypeAdminColumns extends Module
          * add_filter('sitchco/acf_post_type_admin_columns/column_content', 'my_func', 10, 4);
          * function my_func($content, $post_id, $column_id, $post_type_config){ return $content; }
          */
-        $content = apply_filters($filter_base, $content, $post_id, $column_name, $post_type_config);
+        $content = apply_filters(static::hookName($filter_base), $content, $post_id, $column_name, $post_type_config);
         /**
          * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_key}}', 'my_func', 10, 3);
          * function my_func($content, $post_id, $post_type_config){ return $content; }
@@ -157,16 +158,17 @@ class AcfPostTypeAdminColumns extends Module
         echo $content;
     }
 
-    protected function printAdminStyles(string $post_type): void
+    protected function outputAdminStyles(string $post_type): void
     {
-        if (!apply_filters(static::hookName('print_styles'), true)) {
+        /* Hook: sitchco/acf_post_type_admin_columns/output_styles */
+        if (!apply_filters(static::hookName('output_styles'), true)) {
             return;
         }
         $screen = get_current_screen();
         if ($screen->id !== 'edit-' . $post_type) {
             return;
         }
-        $styles = apply_filters(static::hookName('print_styles', $post_type), '.column-thumbnail { text-align: center; width:75px; } .column-thumbnail img{ display:block;margin: 0 auto;max-width:100%; height:auto; }');
+        $styles = apply_filters(static::hookName('output_styles', $post_type), '.column-thumbnail { text-align: center; width:75px; } .column-thumbnail img{ display:block;margin: 0 auto;max-width:100%; height:auto; }');
         echo "<style>$styles</style>";
     }
 

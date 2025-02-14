@@ -71,7 +71,7 @@ return [
             2 => 'thumbnail',
             3 => 'custom-fields',
         ],
-    'taxonomies' => '',
+    'taxonomies' => 'category',
     'has_archive' => false,
     'has_archive_slug' => '',
     'rewrite' =>
@@ -95,25 +95,25 @@ return [
                     'value' => 'title',
                     'location' => '',
                 ],
-            'row-67a2be3947bef' =>
+            'row-row-1' =>
                 [
                     'key' => 'order',
                     'value' => 'DESC',
                     'location' => '',
                 ],
-            '67a2c1ff7e122' =>
+            'row-row-2' =>
                 [
                     'key' => 'order',
                     'value' => 'ASC',
                     'location' => 'admin',
                 ],
-            'row-67a2be3a47bf0' =>
+            'row-row-3' =>
                 [
                     'key' => 'meta_key',
                     'value' => 'active',
                     'location' => 'public',
                 ],
-            'row-67a2be9e47bf1' =>
+            'row-row-4' =>
                 [
                     'key' => 'meta_value',
                     'value' => '1',
@@ -123,6 +123,18 @@ return [
     'listing_screen_columns' =>
         [
             'row-row-0' =>
+                [
+                    'name' => 'active',
+                    'label' => 'Active',
+                    'sortable' => '0',
+                ],
+            'row-row-1' =>
+                [
+                    'name' => 'excerpt',
+                    'label' => 'Summary',
+                    'sortable' => '0',
+                ],
+            'row-row-2' =>
                 [
                     'name' => '',
                     'label' => '',
