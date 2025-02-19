@@ -2,6 +2,7 @@
 
 namespace Sitchco\Framework\Core;
 
+use Sitchco\Support\HasHooks;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -16,6 +17,11 @@ use Sitchco\Utils\Hooks;
  */
 abstract class Module
 {
+    /**
+     * Set a descriptive name for the module to use in building action/filter hooks
+     */
+    public const HOOK_NAME = '';
+
     /**
      * An array of other modules that this module depends on to function.
      * These modules will automatically be registered immediately before this module and configured to activate.
@@ -65,11 +71,6 @@ abstract class Module
      * @var array<string>
      */
     public const BLOCKS = [];
-
-    /**
-     * Set a descriptive name for the module to use in building action/filter hooks
-     */
-    public const HOOK_NAME = '';
     
     protected string $basePath;
 

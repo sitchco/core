@@ -5,11 +5,19 @@ namespace Sitchco\Integration\AdvancedCustomFields;
 use ACF_Post_Type;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Acf;
+use Sitchco\Utils\Hooks;
 use WP_Query;
 
 class AcfPostTypeAdminColumns extends Module
 {
+    protected AcfSettings $settings;
+
     const HOOK_NAME = 'acf_post_type_admin_columns';
+
+    public function __construct(AcfSettings $settings)
+    {
+        $this->settings = $settings;
+    }
 
     public function init(): void
     {
@@ -17,55 +25,48 @@ class AcfPostTypeAdminColumns extends Module
             return;
         }
 
-        add_filter( 'acf/post_type/additional_settings_tabs', function ( $tabs ) {
-            $tabs['admin-columns'] = 'Admin Columns';
-            return $tabs;
-        } );
-        add_action('acf/post_type/render_settings_tab/admin-columns', [$this, 'adminColumnsTab']);
+        $this->settings->addSettingsTab('admin-columns', 'Admin Columns', [$this, 'adminColumnsTab']);
         add_action('init', fn() => add_action('registered_post_type', [$this, 'postTypeConfigHooks']));
         add_filter(static::hookName('column_content'), [$this, 'postMeta'], 5, 3);
         add_filter(static::hookName('column_content', 'thumbnail'), [$this, 'postThumbnail'], 5, 2);
         add_filter(static::hookName('column_content', 'editor'), [$this, 'editor'], 5, 2);
         add_filter(static::hookName('column_content', 'excerpt'), [$this, 'excerpt'], 5, 2);
+        // Fixes ACF true_false field layout bug when in a table row
+        add_action('admin_print_styles', function() {
+            $screen = get_current_screen();
+            if ($screen->id !== Acf::postTypeInstance()->post_type) {
+                return;
+            }
+            echo "<style>.acf-admin-page .acf-row .acf-field-true-false { display: table-cell; }</style>";
+        });
     }
 
-    public function adminColumnsTab(array $acf_post_type): void
+    public function adminColumnsTab(array $values): void
     {
-        acf_render_field_wrap(
-            [
-                'label'        => 'Listing Screen Columns',
-                'instructions' => 'Enter a custom field name to automatically display its value in the column content, or use the <code>backstage/admin_col/{name}</code> filter to display custom content.',
-                'name'         => 'listing_screen_columns',
-                'prefix'       => 'acf_post_type',
-                'value'        => $acf_post_type['listing_screen_columns'] ?? [],
-                'type'         => 'repeater',
-                'ui'           => 1,
-                'sub_fields' => [
-                    [
-                        'key' => 'name',
-                        'label' => 'Name',
-                        'name' => 'name',
-                        'type' => 'text',
-                    ],
-                    [
-                        'key' => 'label',
-                        'label' => 'Label',
-                        'name' => 'label',
-                        'type' => 'text',
-                    ],
-                    [
-                        'key' => 'sortable',
-                        'label' => 'Sortable?',
-                        'name' => 'sortable',
-                        'type' => 'true_false',
-                    ],
+        $this->settings->addSettingsField('listing_screen_columns', [
+            'label'        => 'Listing Screen Columns',
+            'instructions' => 'Enter a custom field name to automatically display its value in the column content, or use the <code>backstage/admin_col/{name}</code> filter to display custom content.',
+            'type'         => 'repeater',
+            'ui'           => 1,
+            'sub_fields' => [
+                [
+                    'key' => 'name',
+                    'label' => 'Name',
+                    'name' => 'name',
+                    'type' => 'text',
                 ],
-                'min' => 1,
-                'max' => 10,
-                'layout' => 'table',
-                'button_label' => 'Add Row',
-            ]
-        );
+                [
+                    'key' => 'label',
+                    'label' => 'Label',
+                    'name' => 'label',
+                    'type' => 'text',
+                ],
+            ],
+            'min' => 1,
+            'max' => 10,
+            'layout' => 'table',
+            'button_label' => 'Add Row',
+        ], $values);
     }
 
     public function postTypeConfigHooks(string $post_type): void
@@ -74,30 +75,15 @@ class AcfPostTypeAdminColumns extends Module
         if (!$post_type_config) {
             return;
         }
-        add_filter("manage_edit-{$post_type}_sortable_columns", fn(array $columns) => $this->sortableColumns($columns, $post_type_config));
         add_filter("manage_{$post_type}_posts_columns", fn(array $columns) => $this->columnHeaders($columns, $post_type_config));
         add_action("manage_{$post_type}_posts_custom_column", fn(string $column_name, int $post_id) => $this->columnContent($column_name, $post_id, $post_type_config), 10, 2);
         add_action('admin_print_styles', fn() => $this->outputAdminStyles($post_type));
+        do_action(static::hookName('post_type_config'), $post_type, $post_type_config);
     }
 
-    protected function getColumnConfig(array $post_type_config): array
+    public static function getColumnConfig(array $post_type_config): array
     {
         return array_filter(array_values($post_type_config['listing_screen_columns']), fn($row) => !!$row['name'] && !!$row['label']);
-    }
-
-    protected function sortableColumns(array $columns, array $post_type_config): array
-    {
-        foreach ((array) $post_type_config['taxonomies'] as $taxonomy) {
-            $columns['taxonomy-' . $taxonomy] = 'taxonomy-' . $taxonomy;
-        }
-
-        foreach ($this->getColumnConfig($post_type_config) as $row) {
-            if (!empty($row['sortable'])) {
-                $columns[$row['name']] = $row['name'];
-            }
-        }
-
-        return $columns;
     }
 
     /**

@@ -1,6 +1,8 @@
 <?php
 
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminColumns;
+use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminFilters;
+use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Wordpress\Cleanup;
@@ -16,4 +18,6 @@ return [
     TermModel::class => true,
     AcfPostTypeQueries::class => true,
     AcfPostTypeAdminColumns::class => true,
+    AcfPostTypeAdminSort::class => true,
+    AcfPostTypeAdminFilters::class => true,
 ];
