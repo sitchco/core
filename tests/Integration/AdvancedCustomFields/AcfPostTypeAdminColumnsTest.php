@@ -6,6 +6,7 @@ class AcfPostTypeAdminColumnsTest extends AcfPostTypeTest
 {
     public function test_admin_columns(): void
     {
+        $this->createPosts();
         $table = _get_list_table('WP_Posts_List_Table');
         $this->assertEquals([
             'cb' => '<input type="checkbox" />',
@@ -20,7 +21,8 @@ class AcfPostTypeAdminColumnsTest extends AcfPostTypeTest
             'title' => 'Title',
             'date' => 'Date',
             'active' => 'Active',
-            'excerpt' => 'Summary'
+            'excerpt' => 'Summary',
+            'price_code' => 'Price Code'
         ], $table->get_columns());
         ob_start();
         $table->column_default($this->posts[1], 'active');

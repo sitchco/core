@@ -45,7 +45,7 @@ class AcfPostTypeAdminColumns extends Module
     {
         $this->settings->addSettingsField('listing_screen_columns', [
             'label'        => 'Listing Screen Columns',
-            'instructions' => 'Enter a custom field name to automatically display its value in the column content, or use the <code>backstage/admin_col/{name}</code> filter to display custom content.',
+            'instructions' => 'Enter a custom field name to automatically display its value in the column content, or use the <code>' . static::hookName('column_content', '{{column_name}}'). '</code> filter to display custom content.',
             'type'         => 'repeater',
             'ui'           => 1,
             'sub_fields' => [
@@ -83,7 +83,7 @@ class AcfPostTypeAdminColumns extends Module
 
     public static function getColumnConfig(array $post_type_config): array
     {
-        return array_filter(array_values($post_type_config['listing_screen_columns']), fn($row) => !!$row['name'] && !!$row['label']);
+        return array_filter(array_values($post_type_config['listing_screen_columns'] ?? []), fn($row) => !!$row['name'] && !!$row['label']);
     }
 
     /**
@@ -128,12 +128,12 @@ class AcfPostTypeAdminColumns extends Module
          */
         $content = apply_filters(static::hookName($filter_base), $content, $post_id, $column_name, $post_type_config);
         /**
-         * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_key}}', 'my_func', 10, 3);
+         * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_name}}', 'my_func', 10, 3);
          * function my_func($content, $post_id, $post_type_config){ return $content; }
          */
         $content = apply_filters(static::hookName($filter_base, $column_name), $content, $post_id, $post_type_config);
         /**
-         * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_key}}/{{post_type}}', 'my_func', 10, 2);
+         * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_name}}/{{post_type}}', 'my_func', 10, 2);
          * function my_func($content, $post_id, $post_type_config){ return $content; }
          */
         $content = apply_filters(static::hookName($filter_base, $column_name, $slug), $content, $post_id, $post_type_config);

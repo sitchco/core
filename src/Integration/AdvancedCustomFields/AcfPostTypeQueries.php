@@ -2,10 +2,9 @@
 
 namespace Sitchco\Integration\AdvancedCustomFields;
 
-use ACF_Post_Type;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Acf;
-use WP_Query;
+use WP_Post, WP_Query;
 
 class AcfPostTypeQueries extends Module
 {
@@ -27,6 +26,7 @@ class AcfPostTypeQueries extends Module
         add_action('init', function() {
             add_action('pre_get_posts', [$this, 'setDefaultQueryParameters']);
         });
+        add_action('save_post', [$this, 'savePost'], 13, 2);
     }
 
     public function queriesTab(array $values): void
@@ -71,6 +71,11 @@ class AcfPostTypeQueries extends Module
         ], $values);
     }
 
+    public static function getDefaultQueryParameters(array $post_type_config): array
+    {
+        return array_filter(array_values($post_type_config['default_query_parameters'] ?? []), fn($row) => !!$row['key'] && !!$row['value']);
+    }
+
     protected function setDefaultQueryParameter(array $parameter, $_, WP_Query $query): void
     {
         /**
@@ -102,7 +107,7 @@ class AcfPostTypeQueries extends Module
         if ($query->get('orderby')) {
             return;
         }
-        $default_query_parameters = array_values($post_type_config['default_query_parameters'] ?? []);
+        $default_query_parameters = static::getDefaultQueryParameters($post_type_config);
         array_walk($default_query_parameters, [$this, 'setDefaultQueryParameter'], $query);
     }
 
@@ -133,6 +138,54 @@ class AcfPostTypeQueries extends Module
         ) {
             return;
         }
-        do_action(static::hookName('admin_sort'), $orderby, $post_type_config['post_type'], $query);
+        do_action(static::hookName('admin_sort'), $orderby, $post_type_config, $query);
+    }
+
+    private function isMenuOrder(array $post_type_config): bool
+    {
+        $default_query_parameters = static::getDefaultQueryParameters($post_type_config);
+        return !!count(array_filter($default_query_parameters, fn($row) => $row['key'] === 'orderby' && $row['value'] === 'menu_order'));
+    }
+
+    /**
+     * When sorting posts by menu_order, we will increment the order on new cpt pages.
+     * Default menu_order is 0 - seems to be more intuitive to add new pages
+     * at the bottom of the list instead.
+     *
+     * @param int $post_id
+     * @param WP_Post $post_obj
+     */
+    public function savePost(int $post_id, WP_Post $post_obj): void
+    {
+        if (!apply_filters(static::hookName('increment_post_menu_order'), true, $post_obj)) {
+            return;
+        }
+        if (!($post_type_config = Acf::findPostTypeConfig($post_obj->post_type))) {
+            return;
+        }
+        remove_action('save_post', [$this, 'savePost'], 13);
+        if ($this->isMenuOrder($post_type_config)) {
+            $this->setPostMenuOrder($post_obj);
+        }
+        add_action('save_post', [$this, 'savePost'], 13, 2);
+    }
+
+    public function setPostMenuOrder(WP_Post $post_obj): void
+    {
+        if (
+            (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
+            (defined('DOING_AJAX') && DOING_AJAX) ||
+            in_array($post_obj->post_status, ['auto-draft', 'inherit']) ||
+            0 != $post_obj->menu_order
+        ) {
+            return;
+        }
+        global $wpdb;
+        $result = $wpdb->get_results($wpdb->prepare(
+            "SELECT MAX(menu_order) AS menu_order FROM $wpdb->posts WHERE post_type=%s", $post_obj->post_type
+        ), ARRAY_A);
+        $order = intval($result[0]['menu_order']) + 1;
+        $post_obj->menu_order = $order;
+        wp_update_post($post_obj);
     }
 }

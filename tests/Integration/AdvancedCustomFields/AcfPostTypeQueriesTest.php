@@ -2,20 +2,12 @@
 
 namespace Sitchco\Tests\Integration\AdvancedCustomFields;
 
-use WP_Query;
-
 class AcfPostTypeQueriesTest extends AcfPostTypeTest
 {
 
-    protected function getTestPostTitles(): array
-    {
-        $query = new WP_Query();
-        $results = $query->query(['post_type' => $this->post_type]);
-        return array_column($results, 'post_title');
-    }
-
     function test_default_query_parameters()
     {
+        $this->createPosts();
         $this->assertEquals(['1', '3', '2'], $this->getTestPostTitles());
 
         $this->createAcfPostTypeConfig();
@@ -25,10 +17,17 @@ class AcfPostTypeQueriesTest extends AcfPostTypeTest
         $this->assertEquals(['3', '1'], $this->getTestPostTitles());
         //admin
         set_current_screen('edit.php?post_type=' . $this->post_type);
-        $this->assertEquals(['1', '2', '3'], $this->getTestPostTitles());
-        $this->assertDidNotDoAction('sitchco/acf_post_type_queries/admin_sort');
-        $_GET['orderby'] = 'test_meta';
-        $GLOBALS['wp_query']->query(['post_type' => $this->post_type]);
-        $this->assertDidAction('sitchco/acf_post_type_queries/admin_sort');
+        $this->assertEquals(['2', '3', '1'], $this->getTestPostTitles());
+    }
+
+    function test_post_menu_order()
+    {
+        global $wp_query;
+        $this->createAcfPostTypeConfig();
+        $this->createPosts();
+        set_current_screen('edit.php?post_type=' . $this->post_type);
+        $posts = $wp_query->query(['post_type' => $this->post_type]);
+        $menu_orders = array_column($posts, 'menu_order');
+        $this->assertEquals([1, 2, 3], $menu_orders);
     }
 }

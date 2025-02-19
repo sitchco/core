@@ -103,17 +103,23 @@ return [
                 ],
             'row-row-2' =>
                 [
+                    'key' => 'orderby',
+                    'value' => 'menu_order',
+                    'location' => 'admin',
+                ],
+            'row-row-3' =>
+                [
                     'key' => 'order',
                     'value' => 'ASC',
                     'location' => 'admin',
                 ],
-            'row-row-3' =>
+            'row-row-4' =>
                 [
                     'key' => 'meta_key',
                     'value' => 'active',
                     'location' => 'public',
                 ],
-            'row-row-4' =>
+            'row-row-5' =>
                 [
                     'key' => 'meta_value',
                     'value' => '1',
@@ -135,6 +141,12 @@ return [
                     'sortable' => '0',
                 ],
             'row-row-2' =>
+                [
+                    'name' => 'price_code',
+                    'label' => 'Price Code',
+                    'sortable' => '1',
+                ],
+            'row-row-3' =>
                 [
                     'name' => '',
                     'label' => '',
