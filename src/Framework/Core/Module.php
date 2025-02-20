@@ -60,18 +60,6 @@ abstract class Module
      */
     public const POST_CLASSES = [];
 
-    /**
-     * An array of paths or identifiers for associated Gutenberg blocks.
-     *
-     * These blocks will be registered by the Registry, enabling each module
-     * to encapsulate its own Gutenberg block configurations.
-     *
-     * @example ['blocks/portfolio-gallery', 'blocks/portfolio-slider']
-     *
-     * @var array<string>
-     */
-    public const BLOCKS = [];
-    
     protected string $basePath;
 
     /**
@@ -81,7 +69,7 @@ abstract class Module
      */
     public function init() {}
 
-    protected function getModuleBasePath(): ?string
+    public function getModuleBasePath(): ?string
     {
         if (empty($this->basePath)) {
             $reflector = new \ReflectionClass($this);

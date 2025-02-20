@@ -6,6 +6,7 @@ use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Sitchco\ModuleExtension\AcfPathsModuleExtension;
+use Sitchco\ModuleExtension\BlockRegistrationModuleExtension;
 use Sitchco\ModuleExtension\TimberPostModuleExtension;
 use Sitchco\Utils\ArrayUtil;
 
@@ -36,6 +37,7 @@ class Registry
     const EXTENSIONS = [
         TimberPostModuleExtension::class,
         AcfPathsModuleExtension::class,
+        BlockRegistrationModuleExtension::class,
     ];
 
     /**
