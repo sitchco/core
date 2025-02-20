@@ -173,7 +173,7 @@ class Registry
 
             // Execute each feature method if it exists.
             foreach ((array)$featureList as $feature => $status) {
-                if (method_exists($instance, $feature)) {
+                if (method_exists($instance, $feature) && $status) {
                     call_user_func([$instance, $feature]);
                 }
             }

@@ -13,23 +13,13 @@ class PostModel extends Module
         Timber::class
     ];
 
+    public const POST_CLASSES = [
+        Post::class,
+        Page::class,
+    ];
     public function init(): void
     {
-        add_filter('timber/post/classmap', [$this, 'addCustomPostClassmap']);
         add_filter('timber/posts', [$this, 'convertToCollection']);
-    }
-
-    /**
-     * Add custom post class mapping for Timber.
-     *
-     * @param array $classmap Existing class map.
-     * @return array Updated class map.
-     */
-    public function addCustomPostClassmap(array $classmap): array
-    {
-        $classmap[Post::POST_TYPE] = Post::class;
-        $classmap[Page::POST_TYPE] = Page::class;
-        return $classmap;
     }
 
     public function convertToCollection($posts, $query): Collection

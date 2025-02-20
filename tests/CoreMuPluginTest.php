@@ -4,16 +4,8 @@ namespace Sitchco\Tests;
 
 use DI\DependencyException;
 use DI\NotFoundException;
-use Sitchco\Events\SavePermalinksAsyncHook;
 use Sitchco\Framework\Config\ModuleConfigLoader;
 use Sitchco\Framework\Core\Registry;
-use Sitchco\Integration\BackgroundEventManager;
-use Sitchco\Integration\Timber;
-use Sitchco\Integration\Wordpress\Cleanup;
-use Sitchco\Integration\Wordpress\SearchRewrite;
-use Sitchco\Model\PostModel;
-use Sitchco\Model\TermModel;
-use Sitchco\Integration\AdvancedCustomFields\CustomPostTypes;
 use Sitchco\Tests\Support\ModuleTester;
 use Sitchco\Tests\Support\ParentModuleTester;
 use Sitchco\Tests\Support\PostTester;

@@ -8,6 +8,7 @@ use DI\NotFoundException;
 use Exception;
 use Sitchco\Framework\Config\ContainerDefinitionConfigLoader;
 use Sitchco\Framework\Config\ModuleConfigLoader;
+use Sitchco\Utils\Hooks;
 use Timber\Loader;
 
 class Bootstrap
@@ -23,7 +24,7 @@ class Bootstrap
 
         if (defined('WP_TESTS_CONFIG_FILE_PATH')) {
 
-            add_filter('sitchco/config_paths/modules', function(array $paths) {
+            add_filter(Hooks::name('config_paths', 'modules'), function(array $paths) {
                 $paths[] = SITCHCO_CORE_FIXTURES_DIR;
                 return $paths;
             });
