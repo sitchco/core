@@ -7,6 +7,7 @@ use JsonSerializable;
 use Timber\Pagination;
 use Timber\PostCollectionInterface;
 use Timber\PostQuery;
+use WP_Query;
 
 /**
  * Class Collection
@@ -15,12 +16,11 @@ use Timber\PostQuery;
 class Collection extends IlluminateCollection implements PostCollectionInterface, JsonSerializable
 {
     protected PostQuery $postQuery;
-    protected ?Pagination $pagination = null;
 
     public function __construct(PostQuery $postQuery)
     {
         $this->postQuery = $postQuery;
-        parent::__construct($postQuery->to_array()); // Initialize IlluminateCollection with the posts
+        parent::__construct($postQuery); // Initialize IlluminateCollection with the posts
     }
 
     public function pagination(array $options = []): ?Pagination
@@ -35,18 +35,22 @@ class Collection extends IlluminateCollection implements PostCollectionInterface
 
     public function jsonSerialize(): array
     {
-        return $this->to_array();
+        return $this->all();
     }
 
-    /**
-     * Delegate method calls to PostQuery if not found in IlluminateCollection
-     */
-    public function __call($method, $parameters)
+    public function query(): ?WP_Query
     {
-        if (method_exists($this->postQuery, $method)) {
-            return $this->postQuery->{$method}(...$parameters);
-        }
-
-        return parent::__call($method, $parameters);
+        return $this->postQuery->query();
     }
+
+    public function realize(): PostQuery|PostCollectionInterface
+    {
+        return $this->postQuery->realize();
+    }
+
+    public function __debugInfo(): array
+    {
+        return $this->postQuery->__debugInfo();
+    }
+
 }
