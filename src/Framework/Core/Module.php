@@ -17,10 +17,7 @@ use Sitchco\Utils\Hooks;
  */
 abstract class Module
 {
-    /**
-     * Set a descriptive name for the module to use in building action/filter hooks
-     */
-    public const HOOK_NAME = '';
+    use HasHooks;
 
     /**
      * An array of other modules that this module depends on to function.
@@ -82,11 +79,6 @@ abstract class Module
     public function getAcfJsonPaths(): array
     {
         return array_filter([realpath($this->getModuleBasePath() . 'acf-json')]);
-    }
-
-    protected static function hookName(...$name_parts): string
-    {
-        return Hooks::name(static::HOOK_NAME, ...$name_parts);
     }
 
 }

@@ -3,13 +3,12 @@
 namespace Sitchco\Events;
 
 use Sitchco\Support\HasAsyncAction;
-use Sitchco\Support\HasHooks;
 use Sitchco\Utils\Hooks;
 
 /**
  *
  */
-abstract class BackgroundEvent extends \WP_Async_Request
+abstract class BackgroundQueue extends \WP_Background_Process
 {
     use HasAsyncAction;
 
@@ -18,5 +17,5 @@ abstract class BackgroundEvent extends \WP_Async_Request
      */
     protected $prefix = Hooks::ROOT;
 
-    const HOOK_PREFIX = 'event';
+    const HOOK_PREFIX = 'queue';
 }

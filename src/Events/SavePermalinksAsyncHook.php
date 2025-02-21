@@ -11,7 +11,7 @@ namespace Sitchco\Events;
  * Usage Example:
  * ```php
  * use Sitchco\Events\SavePermalinksAsyncHook;
- * add_action(SavePermalinksAsyncHook::ACTION, function() {
+ * add_action(SavePermalinksAsyncHook::hookName(), function() {
  *     // Code to run after permalinks are saved
  * });
  * ```
@@ -20,11 +20,8 @@ namespace Sitchco\Events;
 
 class SavePermalinksAsyncHook extends BackgroundEvent
 {
-    const ACTION_NAME = 'after_save_permalinks';
+    const HOOK_NAME = 'after_save_permalinks';
 
-    /**
-     * @var string
-     */
     protected $action = 'save_permalinks';
 
     public function __construct()
