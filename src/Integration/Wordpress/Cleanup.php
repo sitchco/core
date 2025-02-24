@@ -29,7 +29,8 @@ class Cleanup extends Module
         'updateLoginPage',
         'removeGutenbergStyles',
         'removeScriptVersion',
-        'removeDefaultBlockPatterns'
+        'removeDefaultBlockPatterns',
+        'relativeAttachmentUrls'
     ];
 
     /**
@@ -406,6 +407,13 @@ class Cleanup extends Module
             foreach($registry->get_all_registered() as $pattern) {
                 unregister_block_pattern($pattern['name']);
             }
+        });
+    }
+
+    public function relativeAttachmentUrls(): void
+    {
+        add_filter('wp_get_attachment_url', function ($url) {
+            return wp_make_link_relative($url);
         });
     }
 }
