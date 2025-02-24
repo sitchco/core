@@ -2,7 +2,7 @@
 
 namespace Sitchco\Tests\Collection;
 
-use PHPUnit\Framework\TestCase;
+use Sitchco\Tests\Support\TestCase;
 use Timber\PostQuery;
 use Sitchco\Collection\Collection;
 use WP_Query;
@@ -13,29 +13,12 @@ use WP_Query;
  */
 class CollectionTest extends TestCase
 {
-    protected array $post_ids = [];
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        // Create sample posts in the database
-        $this->post_ids = [];
-        for ($i = 0; $i < 3; $i++) {
-            $this->post_ids[] = wp_insert_post([
-                'post_title'  => "Test Post {$i}",
-                'post_status' => 'publish',
-                'post_type'   => 'post',
-            ]);
-        }
-    }
-
-    protected function tearDown(): void
-    {
-        foreach ($this->post_ids as $post_id) {
-            wp_delete_post($post_id, true);
-        }
-        parent::tearDown();
+        // Use post factory to create sample posts
+        $this->factory()->post->create_many(3);
     }
 
     public function testCollectionWrapsPostQueryCorrectly()
