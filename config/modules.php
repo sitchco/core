@@ -9,6 +9,7 @@ use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
+use Sitchco\Integration\WPRocket\WPRocket;
 
 return [
     Cleanup::class => true,
@@ -20,4 +21,5 @@ return [
     AcfPostTypeAdminColumns::class => true,
     AcfPostTypeAdminSort::class => true,
     AcfPostTypeAdminFilters::class => true,
+    WPRocket::class => true,
 ];
