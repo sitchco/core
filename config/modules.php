@@ -23,5 +23,5 @@ return [
     AcfPostTypeAdminSort::class => true,
     AcfPostTypeAdminFilters::class => true,
     WPRocket::class => true,
-    YoastSEO::class => [],
+    YoastSEO::class => true,
 ];

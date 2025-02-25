@@ -39,7 +39,7 @@ class YoastSEOTest extends TestCase
 
     public function testProminentWordsAddsFilter()
     {
-        $this->yoastSEO->prominentWords();
+        $this->yoastSEO->proDashboardInactive();
 
         // Check that the filter is correctly added
         $this->assertNotFalse(has_filter('Yoast\WP\SEO\prominent_words_post_types'));

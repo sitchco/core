@@ -11,7 +11,7 @@ use Sitchco\Framework\Core\Module;
 class YoastSEO extends Module
 {
     const FEATURES = [
-        'prominentWords'
+        'proDashboardInactive'
     ];
 
     public function init(): void
@@ -22,7 +22,11 @@ class YoastSEO extends Module
         add_filter('wpseo_sitemap_content_before_parse_html_images', '__return_empty_string');
     }
 
-    public function prominentWords(): void
+    /**
+     * This disables various yoast features that require a connection
+     * to yoast pro dashboard
+     */
+    public function proDashboardInactive(): void
     {
         add_filter('Yoast\WP\SEO\prominent_words_post_types', '__return_empty_array');
     }
