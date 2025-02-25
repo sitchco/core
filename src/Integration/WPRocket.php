@@ -1,12 +1,12 @@
 <?php
 
-namespace Sitchco\Integration\WPRocket;
+namespace Sitchco\Integration;
 
 use Sitchco\Framework\Core\Module;
 
 /**
  * class WPRocket
- * @package Sitchco\Integration\WPRocket
+ * @package Sitchco\Integration
  */
 class WPRocket extends Module
 {

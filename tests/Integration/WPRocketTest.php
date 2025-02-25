@@ -2,8 +2,8 @@
 
 namespace Sitchco\Tests\Integration;
 
+use Sitchco\Integration\WPRocket;
 use Sitchco\Tests\Support\TestCase;
-use Sitchco\Integration\WPRocket\WPRocket;
 
 /**
  * class WPRocketTest

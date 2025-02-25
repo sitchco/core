@@ -1,12 +1,12 @@
 <?php
 
-namespace Sitchco\Integration\Yoast;
+namespace Sitchco\Integration;
 
 use Sitchco\Framework\Core\Module;
 
 /**
  * Class YoastSEO
- * @package Sitchco\Integration\Yoast
+ * @package Sitchco\Integration
  */
 class YoastSEO extends Module
 {

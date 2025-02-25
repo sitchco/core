@@ -2,8 +2,8 @@
 
 namespace Sitchco\Tests\Integration;
 
+use Sitchco\Integration\YoastSEO;
 use Sitchco\Tests\Support\TestCase;
-use Sitchco\Integration\Yoast\YoastSEO;
 
 /**
  * class YoastSEOTest
