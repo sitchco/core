@@ -7,11 +7,14 @@ use Sitchco\Framework\Core\Module;
 /**
  * Class Imagify
  * @package Sitchco\Integration
+ *
+ * TODO: disable on local/staging
  */
 class Imagify extends Module
 {
     public function init(): void
     {
+        // TODO: check if Imagify is activated, if so, then run filter
         add_filter('imagify_site_root', [$this, 'setSiteRoot'], 10001);
     }
 

@@ -17,12 +17,11 @@ class ImagifyTest extends TestCase
     {
         parent::setUp();
         $this->imagify = new Imagify();
-        $this->imagify->init(); // Call init() to register the filter
+        $this->imagify->init();
     }
 
     public function testInitAddsFilter()
     {
-        // Ensure the filter is added after calling init()
         $this->assertNotFalse(has_filter('imagify_site_root', [$this->imagify, 'setSiteRoot']));
     }
 
@@ -56,27 +55,4 @@ class ImagifyTest extends TestCase
 
         remove_filter('upload_dir', fn($dirs) => $dirs);
     }
-
-//    public function testSetSiteRootWithoutWpContent()
-//    {
-//        // Simulate an upload directory outside `/wp-content/`
-//        add_filter('upload_dir', function ($dirs) {
-//            $dirs['basedir'] = '/var/www/custom-uploads';
-//            return $dirs;
-//        });
-//
-//        // Force WordPress to re-fetch the upload base directory
-//        $modifiedUploadBaseDir = imagify_get_filesystem()->get_upload_basedir(true);
-//
-//        $rootPath = '/var/www/html/';
-//        if (!str_contains($modifiedUploadBaseDir, '/wp-content/')) {
-//            $this->assertSame($rootPath, $this->imagify->setSiteRoot($rootPath));
-//        }
-//
-//        // Cleanup: Remove the filter after the test
-//        remove_filter('upload_dir', fn($dirs) => $dirs);
-//
-//        // Fallback assertion to prevent PHPUnit from marking it as risky
-//        $this->assertTrue(true);
-//    }
 }
