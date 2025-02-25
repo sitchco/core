@@ -10,7 +10,7 @@ use Sitchco\Framework\Core\Module;
  */
 class Imagify extends Module
 {
-    public function __construct()
+    public function init(): void
     {
         add_filter('imagify_site_root', [$this, 'setSiteRoot'], 10001);
     }
