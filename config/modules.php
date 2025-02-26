@@ -7,6 +7,9 @@ use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
+use Sitchco\Integration\WPRocket;
+use Sitchco\Integration\YoastSEO;
+use Sitchco\Integration\Imagify;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
 
@@ -20,4 +23,7 @@ return [
     AcfPostTypeAdminColumns::class => true,
     AcfPostTypeAdminSort::class => true,
     AcfPostTypeAdminFilters::class => true,
+    WPRocket::class => true,
+    YoastSEO::class => true,
+    Imagify::class => true
 ];

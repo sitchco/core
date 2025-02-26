@@ -29,7 +29,7 @@ class Cleanup extends Module
         'updateLoginPage',
         'removeGutenbergStyles',
         'removeScriptVersion',
-        'removeDefaultBlockPatterns'
+        'removeDefaultBlockPatterns',
     ];
 
     /**
