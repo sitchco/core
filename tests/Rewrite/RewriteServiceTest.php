@@ -81,8 +81,8 @@ class RewriteServiceTest extends TestCase
         $this->service->register('/query-var-test/', ['custom_var' => 'value']);
         $this->service->execute();
 
-        $query_vars = apply_filters('query_vars', []);
-        $this->assertContains('custom_var', $query_vars);
+        $queryVars = apply_filters('query_vars', []);
+        $this->assertContains('custom_var', $queryVars);
     }
 
 //    public function testFlushRewriteRulesAfterExecution(): void

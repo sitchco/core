@@ -18,9 +18,9 @@ class QueryRewrite extends Rewrite
         $this->query = $query;
     }
 
-    public function setQueryVars(array $query_vars): array
+    public function setQueryVars(array $queryVars): array
     {
-        return [...$query_vars, ...array_keys($this->query)];
+        return [...$queryVars, ...array_keys($this->query)];
     }
 
     public function getQuery(): string
