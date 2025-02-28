@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Sitchco\Tests\Rewrite;
+namespace Sitchco\Tests;
 
-use Sitchco\Rewrite\RewriteService;
 use Sitchco\Rewrite\QueryRewrite;
+use Sitchco\Rewrite\RewriteService;
 use Sitchco\Tests\Support\TestCase;
 
 /**
@@ -57,11 +57,11 @@ class RewriteServiceTest extends TestCase
     public function testRegisterAllThrowsExceptionOnInvalidInput(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("Each rule must have 'path' and 'query' keys.");
+        $this->expectExceptionMessage("Each rule must have a 'path' key.");
 
         $this->service->registerAll([
             ['path' => '/valid-path/', 'query' => ['key' => 'value']],
-            ['path' => '/missing-query/'] // Invalid entry
+            ['path' => ''] // Invalid entry
         ]);
     }
 

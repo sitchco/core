@@ -38,7 +38,7 @@ class RewriteService
     public function registerAll(array $rules): RewriteService
     {
         foreach ($rules as $rule) {
-            if (!isset($rule['path'])) {
+            if (!isset($rule['path']) || empty($rule['path'])) {
                 throw new InvalidArgumentException("Each rule must have a 'path' key.");
             }
 
