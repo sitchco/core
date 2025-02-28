@@ -74,6 +74,6 @@ class AcfPostTypeAdminSort extends Module
 
     protected static function getSortableColumns(array $post_type_config): array
     {
-        return array_filter(AcfPostTypeAdminColumns::getColumnConfig($post_type_config), fn($row) => $row['sortable']);
+        return array_filter(AcfPostTypeAdminColumns::getColumnConfig($post_type_config), fn($row) => $row['sortable'] ?? false);
     }
 }

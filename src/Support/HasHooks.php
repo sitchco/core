@@ -20,7 +20,7 @@ trait HasHooks
      */
 
     /**
-     * @param string[] ...$name_parts
+     * @param string ...$name_parts
      * @return string
      */
     protected static function hookName(...$name_parts): string
