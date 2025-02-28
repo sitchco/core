@@ -3,11 +3,20 @@
 namespace Sitchco\Utils;
 
 /**
- * class BlockPattern
+ * Class BlockPattern
  * @package Sitchco\Utils
  */
 class BlockPattern
 {
+    /**
+     * Registers a block pattern in WordPress.
+     *
+     * @param string       $name The unique name of the block pattern.
+     * @param string|array $args Either a path to a JSON file containing block pattern data
+     *                           or an associative array with pattern details.
+     *
+     * @return void
+     */
     public static function register(string $name, string|array $args): void
     {
         if (!function_exists('register_block_pattern')) {
@@ -28,15 +37,15 @@ class BlockPattern
         }
 
         /**
-         * $args:
-         *  - title (required)
-         *  - description
-         *  - categories
-         *  - content (required)
-         *  - keywords
-         *  - viewportWidth
+         * Expected keys in $args:
+         * - title (required)
+         * - description (optional)
+         * - categories (optional)
+         * - content (required)
+         * - keywords (optional)
+         * - viewportWidth (optional)
          *
-         * https://developer.wordpress.org/reference/functions/register_block_pattern/
+         * @see https://developer.wordpress.org/reference/functions/register_block_pattern/
          */
         register_block_pattern("sitchco/$name", $args);
     }
