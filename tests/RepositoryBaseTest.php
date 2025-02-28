@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Tests\Repository;
+namespace Sitchco\Tests;
 
 use InvalidArgumentException;
 use Sitchco\Collection\Collection;
@@ -9,9 +9,9 @@ use Sitchco\Repository\PostRepository;
 use Sitchco\Tests\Support\EventPostTester;
 use Sitchco\Tests\Support\EventRepositoryTester;
 use Sitchco\Tests\Support\PostTester;
+use Sitchco\Tests\Support\TestCase;
 use Timber\PostCollectionInterface;
 use Timber\Timber;
-use Sitchco\Tests\Support\TestCase;
 
 /**
  * class RepositoryBaseTest
