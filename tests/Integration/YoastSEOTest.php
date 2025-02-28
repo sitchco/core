@@ -16,14 +16,11 @@ class YoastSEOTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->yoastSEO = new YoastSEO();
-        $this->yoastSEO->init();
+        $this->yoastSEO = $this->container->get(YoastSEO::class);
     }
 
     public function testInitAddsFilters()
     {
-        do_action('muplugins_loaded');
-
         // Check that filters are correctly added
         $this->assertNotFalse(has_filter('wpseo_metabox_prio'));
         $this->assertNotFalse(has_filter('wpseo_premium_post_redirect_slug_change'));
@@ -39,8 +36,6 @@ class YoastSEOTest extends TestCase
 
     public function testProminentWordsAddsFilter()
     {
-        $this->yoastSEO->proDashboardInactive();
-
         // Check that the filter is correctly added
         $this->assertNotFalse(has_filter('Yoast\WP\SEO\prominent_words_post_types'));
 

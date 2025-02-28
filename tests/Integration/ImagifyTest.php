@@ -16,8 +16,7 @@ class ImagifyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->imagify = new Imagify();
-        $this->imagify->init();
+        $this->imagify = $this->container->get(Imagify::class);
     }
 
     public function testInitAddsFilter()

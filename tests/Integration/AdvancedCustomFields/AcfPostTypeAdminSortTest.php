@@ -16,8 +16,8 @@ class AcfPostTypeAdminSortTest extends AcfPostTypeTest
     function test_admin_main_query_sort()
     {
         global $wp_query;
-        $this->createPosts();
         $this->createAcfPostTypeConfig();
+        $this->createPosts();
         set_current_screen('edit.php?post_type=' . $this->post_type);
         $wp_query->query(['post_type' => $this->post_type]);
         $this->assertEquals(['2', '3', '1'], $this->getTestPostTitles($wp_query));

@@ -22,7 +22,8 @@ class AcfPostTypeAdminColumnsTest extends AcfPostTypeTest
             'date' => 'Date',
             'active' => 'Active',
             'excerpt' => 'Summary',
-            'price_code' => 'Price Code'
+            'price_code' => 'Price Code',
+            'taxonomy-performance-category' => 'Performance Categories'
         ], $table->get_columns());
         ob_start();
         $table->column_default($this->posts[1], 'active');

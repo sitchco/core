@@ -3,6 +3,7 @@
 namespace Sitchco\Utils;
 
 use ACF_Post_Type;
+use ACF_Taxonomy;
 
 /**
  * class Acf
@@ -22,6 +23,12 @@ class Acf
     {
         $acf_post_type = acf_get_instance('ACF_Post_Type'); /* @var $acf_post_type ACF_Post_Type */
         return $acf_post_type;
+    }
+
+    public static function taxonomyInstance(): ACF_Taxonomy
+    {
+        $acf_taxonomy = acf_get_instance('ACF_Taxonomy'); /* @var $acf_taxonomy ACF_Taxonomy */
+        return $acf_taxonomy;
     }
 
     public static function findAllPostTypeConfigs(): array

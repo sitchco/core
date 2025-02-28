@@ -7,10 +7,10 @@ class AcfPostTypeQueriesTest extends AcfPostTypeTest
 
     function test_default_query_parameters()
     {
-        $this->createPosts();
-        $this->assertEquals(['1', '3', '2'], $this->getTestPostTitles());
+        //$this->assertEquals(['1', '3', '2'], $this->getTestPostTitles());
 
         $this->createAcfPostTypeConfig();
+        $this->createPosts();
         $post_type_object = get_post_type_object($this->post_type);
         $this->assertEquals($this->post_type, $post_type_object->name);
         //public

@@ -83,7 +83,8 @@ class AcfPostTypeAdminColumns extends Module
 
     public static function getColumnConfig(array $post_type_config): array
     {
-        return array_filter(array_values($post_type_config['listing_screen_columns'] ?? []), fn($row) => !!$row['name'] && !!$row['label']);
+        $columns = array_filter((array) ($post_type_config['listing_screen_columns'] ?? []));
+        return array_filter(array_values($columns), fn($row) => !!$row['name'] && !!$row['label']);
     }
 
     /**

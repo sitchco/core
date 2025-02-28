@@ -4,12 +4,15 @@ namespace Sitchco\Tests\Integration\AdvancedCustomFields;
 
 class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
 {
-    public function test_admin_filter(): void
+    public function test_admin_filters(): void
     {
-        $this->createPosts();
+
         $filters = apply_filters('restrict_manage_posts', $this->post_type, '');
         $this->assertEquals([], $filters);
         $this->createAcfPostTypeConfig();
+        $filters = apply_filters('restrict_manage_posts', $this->post_type, '');
+        $this->assertEquals([], $filters);
+        $this->createPosts();
         $filters = apply_filters('restrict_manage_posts', $this->post_type, '');
         $this->assertEquals([
             'active' => [
@@ -30,19 +33,5 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
                 ],
             ]
         ], $filters);
-    }
-
-    function test_admin_main_query_sort()
-    {
-        global $wp_query;
-        $this->createPosts();
-        $this->createAcfPostTypeConfig();
-        set_current_screen('edit.php?post_type=' . $this->post_type);
-        $wp_query->query(['post_type' => $this->post_type]);
-        $this->assertEquals(['2', '3', '1'], $this->getTestPostTitles($wp_query));
-        $_GET['orderby'] = 'price_code';
-        $wp_query->query(['post_type' => $this->post_type, 'orderby' => 'price_code']);
-        $this->assertEquals(['1', '3', '2'], $this->getTestPostTitles($wp_query));
-
     }
 }
