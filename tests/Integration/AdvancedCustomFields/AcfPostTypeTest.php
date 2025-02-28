@@ -26,7 +26,6 @@ abstract class AcfPostTypeTest extends TestCase
         $this->acf_taxonomy_config = include SITCHCO_CORE_FIXTURES_DIR . '/acf-taxonomy.php';
         $this->acf_taxonomy = Acf::taxonomyInstance();
         $this->taxonomy = $this->acf_taxonomy_config['taxonomy'];
-
         parent::setUp();
     }
 
@@ -41,7 +40,7 @@ abstract class AcfPostTypeTest extends TestCase
     protected function createPosts(): void
     {
         $this->factory()->term->create([
-           'taxonomy' => $this->taxonomy,
+            'taxonomy' => $this->taxonomy,
             'name' => 'Category 1',
             'slug' => 'category-1',
         ]);
@@ -50,24 +49,28 @@ abstract class AcfPostTypeTest extends TestCase
             'name' => 'Category 2',
             'slug' => 'category-2',
         ]);
-        $this->posts[] = $this->factory()->post->create_and_get([
+        $post1 = $this->factory()->post->create_and_get([
             'post_type' => $this->post_type, 'post_title' => '2',
             'post_date' => '2024-11-20 00:00:00',
             'meta_input' => ['active' => '0', 'price_code' => 'A'],
-            'tax_input' => [$this->taxonomy => 'category-1']
         ]);
-        $this->posts[] = $this->factory()->post->create_and_get([
+        wp_set_object_terms($post1->ID, 'category-1', $this->taxonomy);
+        $this->posts[] = $post1;
+        $post2 = $this->factory()->post->create_and_get([
             'post_type' => $this->post_type, 'post_title' => '3',
             'post_date' => '2024-11-21 00:00:00',
             'meta_input' => ['active' => '1', 'price_code' => 'B'],
-            'tax_input' => [$this->taxonomy => 'category-1']
         ]);
-        $this->posts[] = $this->factory()->post->create_and_get([
+        wp_set_object_terms($post2->ID, 'category-1', $this->taxonomy);
+        $this->posts[] = $post2;
+        $post3 = $this->factory()->post->create_and_get([
             'post_type' => $this->post_type, 'post_title' => '1',
             'post_date' => '2024-11-22 00:00:00',
             'meta_input' => ['active' => '1', 'price_code' => 'C'],
             'tax_input' => [$this->taxonomy => 'category-2']
         ]);
+        wp_set_object_terms($post3->ID, 'category-2', $this->taxonomy);
+        $this->posts[] = $post2;
     }
 
     protected function createAcfPostTypeConfig(): void
