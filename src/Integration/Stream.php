@@ -81,7 +81,7 @@ class Stream extends Module
                 $report[$type]['actions'] = $actions;
                 $report[$type]['summary'] = $summary;
             }
-            echo Template::getTemplateScoped(__DIR__ . '/activity-report.php', compact('report', 'date'));
+            echo Template::getTemplateScoped(SITCHCO_CORE_TEMPLATES_DIR . '/stream-activity-report.php', compact('report', 'date'));
         }
     }
 }

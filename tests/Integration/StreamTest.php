@@ -2,8 +2,8 @@
 
 namespace Sitchco\Tests\Integration;
 
-use Sitchco\Tests\Support\TestCase;
 use Sitchco\Integration\Stream;
+use Sitchco\Tests\Support\TestCase;
 
 /**
  * class StreamTest
@@ -96,20 +96,18 @@ class StreamTest extends TestCase
 //        );
 //    }
 
+    public function testSummaryPageContentOutputsCorrectly(): void
+    {
+        // Ensure wp_stream_get_instance exists
+        if (! function_exists('wp_stream_get_instance')) {
+            $this->markTestSkipped('wp_stream_get_instance is not available.');
+        }
 
-    // TODO: fix this test!
-//    public function testSummaryPageContentOutputsCorrectly(): void
-//    {
-//        // Ensure wp_stream_get_instance exists
-//        if (! function_exists('wp_stream_get_instance')) {
-//            $this->markTestSkipped('wp_stream_get_instance is not available.');
-//        }
-//
-//        $_GET['start'] = '2024-02-28';
-//
-//        ob_start();
-//        $this->stream->summaryPageContent();
-//        $output = ob_get_clean();
-//        $this->assertStringContainsString('activity-report.php', $output);
-//    }
+        $_GET['start'] = '2024-02-28';
+
+        ob_start();
+        $this->stream->summaryPageContent();
+        $output = ob_get_clean();
+        $this->assertStringContainsString('activity-report', $output);
+    }
 }
