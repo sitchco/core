@@ -133,6 +133,7 @@ return [
                     'name' => 'active',
                     'label' => 'Active',
                     'sortable' => '0',
+                    'filterable' => '1',
                 ],
             'row-row-1' =>
                 [
@@ -145,6 +146,7 @@ return [
                     'name' => 'price_code',
                     'label' => 'Price Code',
                     'sortable' => '1',
+                    'filterable' => '1',
                 ],
             'row-row-3' =>
                 [
