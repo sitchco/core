@@ -10,7 +10,7 @@ class AcfPostTypeAdminSortTest extends AcfPostTypeTest
         $screen_id = "edit-$this->post_type";
         $table = _get_list_table('WP_Posts_List_Table', ['screen' => $screen_id]);
         list(, ,$sortable) = $table->get_column_info();
-        $this->assertEquals(['title', 'parent', 'comments', 'date', 'taxonomy-category', 'price_code'], array_keys($sortable));
+        $this->assertEquals(['title', 'parent', 'comments', 'date', 'taxonomy-performance-category', 'price_code'], array_keys($sortable));
     }
 
     function test_admin_main_query_sort()
