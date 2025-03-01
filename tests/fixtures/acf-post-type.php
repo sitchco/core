@@ -71,7 +71,7 @@ return [
             2 => 'thumbnail',
             3 => 'custom-fields',
         ],
-    'taxonomies' => 'category',
+    'taxonomies' => ['performance-category'],
     'has_archive' => false,
     'has_archive_slug' => '',
     'rewrite' =>

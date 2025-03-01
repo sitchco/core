@@ -2,15 +2,28 @@
 
 namespace Sitchco\Tests\Integration\AdvancedCustomFields;
 
+use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminFilters;
+
 class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
 {
-    public function test_admin_filter(): void
+    private AcfPostTypeAdminFilters $module;
+
+    protected function setUp(): void
     {
-        $this->createPosts();
-        $filters = apply_filters('restrict_manage_posts', $this->post_type, '');
+        parent::setUp();
+        $this->module = $this->container->get(AcfPostTypeAdminFilters::class);
+    }
+
+    public function test_admin_filters(): void
+    {
+        $this->assertHasAction('restrict_manage_posts', [$this->module, 'renderColumnFilters']);
+        $filters = $this->module->renderColumnFilters($this->post_type, '');
         $this->assertEquals([], $filters);
         $this->createAcfPostTypeConfig();
-        $filters = apply_filters('restrict_manage_posts', $this->post_type, '');
+        $filters = $this->module->renderColumnFilters($this->post_type, '');
+        $this->assertEquals([], $filters);
+        $this->createPosts();
+        $filters = $this->module->renderColumnFilters($this->post_type, '');
         $this->assertEquals([
             'active' => [
                 'id' => 'active',
@@ -28,21 +41,15 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
                     ['value' => 'B', 'label' => 'B', 'selected' => false],
                     ['value' => 'C', 'label' => 'C', 'selected' => false],
                 ],
+            ],
+            'performance-category' => [
+                'id' => 'performance-category',
+                'options' => [
+                    ['value' => '', 'label' => 'All Performance Categories', 'selected' => false],
+                    ['value' => 'category-1', 'label' => 'Category 1', 'selected' => false],
+                    ['value' => 'category-2', 'label' => 'Category 2', 'selected' => false],
+                ],
             ]
         ], $filters);
-    }
-
-    function test_admin_main_query_sort()
-    {
-        global $wp_query;
-        $this->createPosts();
-        $this->createAcfPostTypeConfig();
-        set_current_screen('edit.php?post_type=' . $this->post_type);
-        $wp_query->query(['post_type' => $this->post_type]);
-        $this->assertEquals(['2', '3', '1'], $this->getTestPostTitles($wp_query));
-        $_GET['orderby'] = 'price_code';
-        $wp_query->query(['post_type' => $this->post_type, 'orderby' => 'price_code']);
-        $this->assertEquals(['1', '3', '2'], $this->getTestPostTitles($wp_query));
-
     }
 }

@@ -16,14 +16,11 @@ class WPRocketTest extends TestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->wprocket = new WPRocket();
-        $this->wprocket->init();
+        $this->wprocket = $this->container->get(WPRocket::class);
     }
 
     public function testInitAddsFilters()
     {
-        do_action('muplugins_loaded');
-
         // Check that filters are correctly added
         $this->assertNotFalse(has_filter('before_rocket_htaccess_rules', [$this->wprocket, 'forceTrailingSlash']));
         $this->assertNotFalse(has_filter('rocket_metabox_options_post_types', '__return_empty_array'));

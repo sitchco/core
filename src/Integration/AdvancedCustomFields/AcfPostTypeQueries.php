@@ -73,7 +73,8 @@ class AcfPostTypeQueries extends Module
 
     public static function getDefaultQueryParameters(array $post_type_config): array
     {
-        return array_filter(array_values($post_type_config['default_query_parameters'] ?? []), fn($row) => !!$row['key'] && !!$row['value']);
+        $parameters = array_filter((array) ($post_type_config['default_query_parameters'] ?? []));
+        return array_filter(array_values($parameters), fn($row) => !!$row['key'] && !!$row['value']);
     }
 
     protected function setDefaultQueryParameter(array $parameter, $_, WP_Query $query): void
