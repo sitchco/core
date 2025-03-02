@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Sitchco\Tests;
 
 use Sitchco\Rewrite\QueryRewrite;
+use Sitchco\Rewrite\RedirectRoute;
 use Sitchco\Rewrite\RewriteService;
+use Sitchco\Rewrite\Route;
+use Sitchco\Support\Exception\ExitException;
+use Sitchco\Support\Exception\RedirectExitException;
 use Sitchco\Tests\Support\TestCase;
 
 /**
@@ -19,78 +23,55 @@ class RewriteServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new RewriteService();
+        $this->service = $this->container->get(RewriteService::class);
     }
 
-    public function testRegisterAddsRewriteRule(): void
+    public function testQueryRewriteRule(): void
     {
-        $this->service->register('/custom-path/', ['custom' => 'value']);
-
-        $reflection = new \ReflectionClass($this->service);
-        $property = $reflection->getProperty('rewriteRules');
-        $property->setAccessible(true);
-        $rules = $property->getValue($this->service);
-
-        $this->assertCount(1, $rules);
-        $this->assertInstanceOf(QueryRewrite::class, $rules[0]);
-    }
-
-    public function testRegisterAllAddsMultipleRewriteRules(): void
-    {
-        $rules = [
-            ['path' => '/first-path/', 'query' => ['var' => 'one']],
-            ['path' => '/second-path/', 'query' => ['var' => 'two']]
-        ];
-
-        $this->service->registerAll($rules);
-
-        $reflection = new \ReflectionClass($this->service);
-        $property = $reflection->getProperty('rewriteRules');
-        $property->setAccessible(true);
-        $storedRules = $property->getValue($this->service);
-
-        $this->assertCount(2, $storedRules);
-        $this->assertInstanceOf(QueryRewrite::class, $storedRules[0]);
-        $this->assertInstanceOf(QueryRewrite::class, $storedRules[1]);
-    }
-
-    public function testRegisterAllThrowsExceptionOnInvalidInput(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage("Each rule must have a 'path' key.");
-
-        $this->service->registerAll([
-            ['path' => '/valid-path/', 'query' => ['key' => 'value']],
-            ['path' => ''] // Invalid entry
-        ]);
-    }
-
-//    public function testExecuteRegistersRewriteRules(): void
-//    {
-//        global $wp_rewrite;
-//        $this->service->register('/test-path/', ['var' => 'value']);
-//        $this->service->execute();
-//
-//        // Ensure rewrite rules exist after execution
-//        $this->assertArrayHasKey('test-path/?$', $wp_rewrite->rules);
-//        $this->assertStringContainsString('index.php?var=value', $wp_rewrite->rules['test-path/?$']);
-//    }
-
-    public function testExecuteAddsQueryVars(): void
-    {
-        $this->service->register('/query-var-test/', ['custom_var' => 'value']);
-        $this->service->execute();
-
+        global $wp_rewrite;
+        $this->service->register('/custom-path/', ['query' => ['custom' => 'value']]);
+        $registered = $this->service->getRegisteredRewriteRules();
+        $this->assertInstanceOf(QueryRewrite::class, end($registered));
+        $last_rule = array_slice($wp_rewrite->extra_rules_top, -1, 1);
+        $this->assertEquals([ '/custom-path/' => 'index.php?custom=value'], $last_rule);
         $queryVars = apply_filters('query_vars', []);
-        $this->assertContains('custom_var', $queryVars);
+        $this->assertContains('custom', $queryVars);
     }
 
-//    public function testFlushRewriteRulesAfterExecution(): void
-//    {
-//        global $wp_rewrite;
-//        $this->service->register('/flush-test/', ['flush_var' => 'value']);
-//        $this->service->execute();
-//
-//        $this->assertNotEmpty($wp_rewrite->rules, 'Expected rewrite rules to be flushed and not empty.');
-//    }
+    public function testRouteRule(): void
+    {
+        global $wp_rewrite;
+        $callback = fn () => 'test response';
+        $this->service->register('/custom-route/', ['callback' => $callback]);
+        $registered = $this->service->getRegisteredRewriteRules();
+        $route = end($registered);
+        $this->assertInstanceOf(Route::class, $route);
+        $last_rule = array_slice($wp_rewrite->extra_rules_top, -1, 1);
+        $route_id = 'route_81d6db2488763c8d20514fd2b24a2618';
+        $this->assertEquals([ '/custom-route/' => "index.php?route=$route_id"], $last_rule);
+        $result = $route->processRoute();
+        $this->assertFalse($result);
+        set_query_var('route', $route_id);
+        $result = $route->processRoute();
+        $this->assertEquals('test response', $result);
+    }
+
+    public function testRedirectRouteRule(): void
+    {
+        global $wp_rewrite;
+        $callback = fn () => true;
+        $this->service->register('/logout/', ['callback' => $callback, 'redirect_url' => '/login/']);
+        $registered = $this->service->getRegisteredRewriteRules();
+        $route = end($registered);
+        $this->assertInstanceOf(RedirectRoute::class, $route);
+        $last_rule = array_slice($wp_rewrite->extra_rules_top, -1, 1);
+        $route_id = 'route_f5ac2f16bee931afff6fb4a5c0069970';
+        $this->assertEquals([ '/logout/' => "index.php?route=$route_id"], $last_rule);
+        $result = $route->processRoute();
+        $this->assertFalse($result);
+        set_query_var('route', $route_id);
+        $this->expectException(RedirectExitException::class);
+        $this->expectExceptionMessage('http://example.org/login/');
+        $route->processRoute();
+    }
 }

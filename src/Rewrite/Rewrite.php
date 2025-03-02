@@ -1,19 +1,16 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Sitchco\Rewrite;
 
-/**
- * class Rewrite
- * @package Sitchco\Rewrite
- */
+use Sitchco\Utils\Hooks;
+
 abstract class Rewrite
 {
     protected string $hook;
+
     protected string $path;
-    protected int $argumentsCount = 0;
-    protected mixed $callback = null;
+
+    protected int $arguments_count = 0;
 
     public function __construct(string $path)
     {
@@ -22,35 +19,42 @@ abstract class Rewrite
         $this->setArgumentCount();
     }
 
+    public function init(): void
+    {
+        Hooks::do_eager_action('wp_loaded', [$this, 'addRewriteRule']);
+        add_filter('query_vars', [$this, 'setQueryVars']);
+    }
+
     public function addRewriteRule(): void
     {
         add_rewrite_rule($this->path, 'index.php?' . $this->getQuery(), 'top');
     }
 
-    public function setQueryVars(array $queryVars): array
+    public function setQueryVars($query_vars)
     {
-        return $queryVars;
-    }
-
-    public function getArgumentName(int $index): string
-    {
-        return "route_arg_{$index}";
+        return $query_vars;
     }
 
     protected function setArgumentCount(): void
     {
-        $this->argumentsCount = preg_match_all('/\(.*?\)/', $this->path) ?: 0;
+        $this->arguments_count = (int) preg_match_all('/\(.*?\)/', $this->path);
     }
 
     protected function matchesRequest(): bool
     {
-        return get_query_var('route') === $this->hook;
+        return get_query_var('route') == $this->hook;
     }
 
-    protected function getArgumentValue(int $index): ?string
+    protected function getArgumentName($index): string
     {
-        return get_query_var($this->getArgumentName($index)) ?: null;
+        return 'route_arg_' . $index;
     }
 
-    abstract public function getQuery(): string;
+    protected function getArgumentValue($index)
+    {
+        return get_query_var($this->getArgumentName($index));
+    }
+
+    abstract protected function getQuery(): string;
+
 }

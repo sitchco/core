@@ -30,11 +30,12 @@ class Acf
     /**
      * Returns the instance of the ACF Post Type.
      *
-     * @return object The instance of the ACF Post Type.
+     * @return ACF_Post_Type
      */
-    public static function postTypeInstance(): object
+    public static function postTypeInstance(): ACF_Post_Type
     {
-        return acf_get_instance(ACF_Post_Type::class);
+        $acf_post_type = acf_get_instance('ACF_Post_Type'); /* @var $acf_post_type ACF_Post_Type */
+        return $acf_post_type;
     }
 
     public static function taxonomyInstance(): ACF_Taxonomy

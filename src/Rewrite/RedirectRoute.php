@@ -2,31 +2,25 @@
 
 namespace Sitchco\Rewrite;
 
-use JetBrains\PhpStorm\NoReturn;
+use Sitchco\Utils\Env;
 
-/**
- * class RedirectRoute
- * @package Sitchco\Rewrite
- */
 class RedirectRoute extends Route
 {
-    private string $redirectUrl;
+    protected string $redirect_url;
 
-    public function __construct(string $path, \Closure $callback, string $redirectUrl = '/')
+    public function __construct($path, callable $callback, $redirect_url = '/')
     {
         parent::__construct($path, $callback);
-        $this->redirectUrl = home_url($redirectUrl);
+        $this->redirect_url = home_url($redirect_url);
     }
 
-    #[NoReturn] public function processRoute(): void
+    public function processRoute()
     {
-        if (untrailingslashit($_SERVER['REQUEST_URI']) === untrailingslashit(parse_url($this->redirectUrl, PHP_URL_PATH))) {
-            return;
+        $redirect = parent::processRoute();
+        if (false !== $redirect) {
+            Env::redirectExit($this->redirect_url);
         }
-
-        parent::processRoute();
-        wp_redirect($this->redirectUrl, 302);
-        exit;
+        return $redirect;
     }
 
 }

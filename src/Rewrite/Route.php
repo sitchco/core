@@ -2,55 +2,57 @@
 
 namespace Sitchco\Rewrite;
 
-use Closure;
+use Sitchco\Utils\Hooks;
 
-/**
- * class Route
- * @package Sitchco\Rewrite
- */
 class Route extends Rewrite
 {
-    protected mixed $callback;
 
-    public function __construct(string $path, Closure $callback)
+    protected $callback;
+
+    public function __construct($path, callable $callback)
     {
         parent::__construct($path);
         $this->callback = $callback;
     }
 
-    public function addRewriteRule(): void
+    public function init(): void
     {
-        parent::addRewriteRule();
+        parent::init();
+        Hooks::do_eager_action('wp', [$this, 'processRoute']);
 
-        // Hook into WordPress request lifecycle
-        add_action('wp', [$this, 'processRoute'], 999);
     }
 
-    public function getQuery(): string
+    protected function getQuery(): string
     {
-        $query = "route={$this->hook}";
-        for ($index = 1; $index <= $this->argumentsCount; $index++) {
+        $query = 'route=' . $this->hook;
+        for ($index = 1; $index <= $this->arguments_count; $index++) {
             $query .= sprintf('&%s=$matches[%d]', $this->getArgumentName($index), $index);
         }
         return $query;
     }
 
-    public function setQueryVars(array $queryVars): array
+    public function setQueryVars($query_vars)
     {
-        $queryVars[] = 'route';
-        for ($index = 1; $index <= $this->argumentsCount; $index++) {
-            $queryVars[] = $this->getArgumentName($index);
+        $query_vars[] = 'route';
+        for ($index = 1; $index <= $this->arguments_count; $index++) {
+            $query_vars[] = $this->getArgumentName($index);
         }
-        return $queryVars;
+        return $query_vars;
     }
 
-    public function processRoute(): void
+    public function processRoute()
     {
-        if (!$this->matchesRequest()) {
-            return;
+        if(!$this->matchesRequest()) return false;
+        $parameters = [];
+        for ($index = 1; $index <= $this->arguments_count; $index++) {
+            $parameters[] = $this->getArgumentValue($index);
         }
-
-        $parameters = array_map(fn($index) => $this->getArgumentValue($index), range(1, $this->argumentsCount));
-        call_user_func_array($this->callback, $parameters);
+        return call_user_func_array($this->callback, $parameters);
     }
+
+    protected function matchesRequest(): bool
+    {
+        return get_query_var('route') == $this->hook;
+    }
+
 }

@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Sitchco\Rewrite;
 
 use Closure;
@@ -15,70 +13,39 @@ class RewriteService
 {
     protected array $rewriteRules = [];
 
+    public function getRegisteredRewriteRules(): array
+    {
+        return $this->rewriteRules;
+    }
+
     /**
      * Register a standard rewrite rule or a route.
+     *
+     * @param string $path
+     * @param array $args {
+     * *  @type array $query array of WP_Query parameters
+     * *  @type callable $callback function to execute when URL matches the rewrite path
+     * *  @type string $redirect_url URL to redirect to if callback function returns true
+     * }
+ * @return RewriteService
      */
-    public function register(string $path, array $query = [], ?Closure $callback = null, ?string $redirectUrl = null): RewriteService
+    public function register(string $path, array $args): RewriteService
     {
-        if ($callback) {
+        $args = wp_parse_args($args, [
+            'query' => [],
+            'callback' => null,
+            'redirect_url' => '',
+        ]);
+        if (is_callable($args['callback'])) {
             // Determine if it's a redirect route
-            $route = $redirectUrl ? new RedirectRoute($path, $callback, $redirectUrl) : new Route($path, $callback);
+            $route = $args['redirect_url'] ? new RedirectRoute($path, $args['callback'], (string) $args['redirect_url']) : new Route($path, $args['callback']);
         } else {
             // Default to QueryRewrite
-            $route = new QueryRewrite($path, $query);
+            $route = new QueryRewrite($path, (array) $args['query']);
         }
 
         $this->rewriteRules[] = $route;
-        return $this;
-    }
-
-    /**
-     * Register multiple rewrite rules.
-     */
-    public function registerAll(array $rules): RewriteService
-    {
-        foreach ($rules as $rule) {
-            if (!isset($rule['path']) || empty($rule['path'])) {
-                throw new InvalidArgumentException("Each rule must have a 'path' key.");
-            }
-
-            $query = $rule['query'] ?? [];
-            $callback = $rule['callback'] ?? null;
-            $redirectUrl = $rule['redirect'] ?? null;
-
-            $this->register($rule['path'], $query, $callback, $redirectUrl);
-        }
-        return $this;
-    }
-
-    /**
-     * Execute all registered rewrite rules and routes.
-     */
-    public function execute(): RewriteService
-    {
-        add_action('init', function () {
-            foreach ($this->rewriteRules as $rule) {
-                $rule->addRewriteRule();
-            }
-        });
-
-        add_filter('query_vars', function ($query_vars) {
-            foreach ($this->rewriteRules as $rule) {
-                $query_vars = $rule->setQueryVars($query_vars);
-            }
-            return $query_vars;
-        });
-
-        // Ensure registered routes process correctly on request
-        add_action('wp', function () {
-            foreach ($this->rewriteRules as $rule) {
-                if ($rule instanceof Route) {
-                    $rule->processRoute();
-                }
-            }
-        }, 999);
-
-        flush_rewrite_rules();
+        $route->init();
         return $this;
     }
 }
