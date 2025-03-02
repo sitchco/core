@@ -4,9 +4,6 @@ namespace Sitchco\Utils;
 
 /**
  * Class Method
- *
- * Provides utility methods for working with class method names.
- *
  * @package Sitchco\Utils
  */
 class Method
@@ -24,7 +21,7 @@ class Method
      *
      * @return string|false The method name if found, or false if the method does not exist.
      */
-    public static function getMethodName($object, $name, $prefix = 'get')
+    public static function getMethodName($object, $name, $prefix = 'get'): false|string
     {
         $method_name = $prefix ? sprintf('%s_%s', $prefix, $name) : $name;
         if (method_exists($object, $method_name)) {

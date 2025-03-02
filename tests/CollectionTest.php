@@ -1,10 +1,10 @@
 <?php
 
-namespace Sitchco\Tests\Collection;
+namespace Sitchco\Tests;
 
+use Sitchco\Collection\Collection;
 use Sitchco\Tests\Support\TestCase;
 use Timber\PostQuery;
-use Sitchco\Collection\Collection;
 use WP_Query;
 
 /**

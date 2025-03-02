@@ -4,6 +4,7 @@ namespace Sitchco\Integration\AdvancedCustomFields;
 
 use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Acf;
+use Sitchco\Utils\Template;
 use WP_Query;
 use wpdb;
 
@@ -65,7 +66,7 @@ class AcfPostTypeAdminFilters extends Module
         $filters = $this->getColumnFilters($post_type);
         if ($render_location) {
             foreach ($filters as $filter) {
-                include SITCHCO_CORE_TEMPLATES_DIR . '/admin-filter-select.php';
+                echo Template::getTemplateScoped(SITCHCO_CORE_TEMPLATES_DIR . '/admin-filter-select.php', compact('filter'));
             }
         }
         return $filters;
