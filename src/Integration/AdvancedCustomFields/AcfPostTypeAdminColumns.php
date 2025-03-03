@@ -2,7 +2,6 @@
 
 namespace Sitchco\Integration\AdvancedCustomFields;
 
-use ACF_Post_Type;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Acf;
 use Sitchco\Utils\Hooks;
@@ -26,7 +25,9 @@ class AcfPostTypeAdminColumns extends Module
         }
 
         $this->settings->addSettingsTab('admin-columns', 'Admin Columns', [$this, 'adminColumnsTab']);
-        add_action('init', fn() => add_action('registered_post_type', [$this, 'postTypeConfigHooks']));
+        add_action('registered_post_type', function(string $post_type) {
+            Hooks::add_eager_action('acf/init', [$this, 'postTypeConfigHooks'], $post_type);
+        });
         add_filter(static::hookName('column_content'), [$this, 'postMeta'], 5, 3);
         add_filter(static::hookName('column_content', 'thumbnail'), [$this, 'postThumbnail'], 5, 2);
         add_filter(static::hookName('column_content', 'editor'), [$this, 'editor'], 5, 2);

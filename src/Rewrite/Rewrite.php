@@ -21,7 +21,7 @@ abstract class Rewrite
 
     public function init(): void
     {
-        Hooks::do_eager_action('wp_loaded', [$this, 'addRewriteRule']);
+        Hooks::add_eager_action('wp_loaded', [$this, 'addRewriteRule']);
         add_filter('query_vars', [$this, 'setQueryVars']);
     }
 

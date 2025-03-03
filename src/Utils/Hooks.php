@@ -23,12 +23,12 @@ class Hooks
         return implode('/', array_filter([self::ROOT, ...$parts]));
     }
 
-    public static function do_eager_action(string $hook_name, callable $callback): void
+    public static function add_eager_action(string $hook_name, callable $callback, ...$args): void
     {
         if (did_action($hook_name)) {
-            $callback();
+            $callback(...$args);
         } else {
-            add_action($hook_name, $callback);
+            add_action($hook_name, fn() => $callback(...$args));
         }
     }
 }

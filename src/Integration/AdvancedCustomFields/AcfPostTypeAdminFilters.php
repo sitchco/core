@@ -144,7 +144,8 @@ class AcfPostTypeAdminFilters extends Module
     }
 
     public function filterColumnsByMeta(WP_Query $query): void {
-        global $pagenow;
+        global $pagenow, $current_screen;
+
         if (!(is_admin() && $pagenow == 'edit.php' && $query->is_main_query())) {
             return;
         }
