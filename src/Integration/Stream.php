@@ -3,6 +3,7 @@
 namespace Sitchco\Integration;
 
 use Sitchco\Framework\Core\Module;
+use Sitchco\Support\DateTime;
 use Sitchco\Utils\Template;
 
 class Stream extends Module
@@ -50,8 +51,7 @@ class Stream extends Module
             if ($start) {
                 $args['date_after'] = $start;
                 try {
-                    // TODO: we want to replace this with the Sitchco\DateTime class whenever that gets created
-                    $date = new \DateTime($start);
+                    $date = DateTime::createFromTimeString($start);
                 } catch (\Exception $e) {
                     $date = false;
                 }
