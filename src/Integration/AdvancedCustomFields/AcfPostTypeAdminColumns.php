@@ -7,6 +7,12 @@ use Sitchco\Utils\Acf;
 use Sitchco\Utils\Hooks;
 use WP_Query;
 
+/**
+ * Class AcfPostTypeAdminColumns
+ * @package Sitchco\Integration\AdvancedCustomFields
+ *
+ * Adds configurations settings and display behavior for admin post type columns
+ */
 class AcfPostTypeAdminColumns extends Module
 {
     protected AcfSettings $settings;
@@ -18,6 +24,11 @@ class AcfPostTypeAdminColumns extends Module
         $this->settings = $settings;
     }
 
+    /**
+     * Initialization hooks and configuration
+     *
+     * @return void
+     */
     public function init(): void
     {
         if (!class_exists('ACF')) {
@@ -25,9 +36,7 @@ class AcfPostTypeAdminColumns extends Module
         }
 
         $this->settings->addSettingsTab('admin-columns', 'Admin Columns', [$this, 'adminColumnsTab']);
-        add_action('registered_post_type', function(string $post_type) {
-            Hooks::add_eager_action('acf/init', [$this, 'postTypeConfigHooks'], $post_type);
-        });
+        add_action('acf/init', fn() => add_action('registered_post_type', [$this, 'postTypeConfigHooks']), 5);
         add_filter(static::hookName('column_content'), [$this, 'postMeta'], 5, 3);
         add_filter(static::hookName('column_content', 'thumbnail'), [$this, 'postThumbnail'], 5, 2);
         add_filter(static::hookName('column_content', 'editor'), [$this, 'editor'], 5, 2);
@@ -42,6 +51,12 @@ class AcfPostTypeAdminColumns extends Module
         });
     }
 
+    /**
+     * Adds Listing Screen Columns settings to ACF post type configuration screen
+     *
+     * @param array $values
+     * @return void
+     */
     public function adminColumnsTab(array $values): void
     {
         $this->settings->addSettingsField('listing_screen_columns', [
@@ -70,6 +85,12 @@ class AcfPostTypeAdminColumns extends Module
         ], $values);
     }
 
+    /**
+     * Hooks for the configured post type's listing screen
+     *
+     * @param string $post_type
+     * @return void
+     */
     public function postTypeConfigHooks(string $post_type): void
     {
         $post_type_config = Acf::findPostTypeConfig($post_type);
@@ -81,6 +102,13 @@ class AcfPostTypeAdminColumns extends Module
         add_action('admin_print_styles', fn() => $this->outputAdminStyles($post_type));
         do_action(static::hookName('post_type_config'), $post_type, $post_type_config);
     }
+
+    /**
+     * Extracts and normalizes the listing screen columns from the entire config
+     *
+     * @param array $post_type_config
+     * @return array
+     */
 
     public static function getColumnConfig(array $post_type_config): array
     {
@@ -116,10 +144,20 @@ class AcfPostTypeAdminColumns extends Module
         return apply_filters(static::hookName('column_headers'), $columns, $post_type_config);
     }
 
+    /**
+     * Displays content for a column
+     *
+     * @param string $column_name
+     * @param int $post_id
+     * @param array $post_type_config
+     * @return false|void
+     */
+
     protected function columnContent(string $column_name, int $post_id, array $post_type_config) {
         $column_config = $this->getColumnConfig($post_type_config);
+        // Don't display anything if this column isn't configured
         if (!in_array($column_name, array_column($column_config, 'name'))) {
-            return false;
+            return;
         }
         $slug = $post_type_config['post_type'];
         $filter_base = 'column_content';
@@ -145,6 +183,13 @@ class AcfPostTypeAdminColumns extends Module
         }
         echo $content;
     }
+
+    /**
+     * Adds styles to correctly display a thumbnail image in the listing table
+     *
+     * @param string $post_type
+     * @return void
+     */
 
     protected function outputAdminStyles(string $post_type): void
     {
