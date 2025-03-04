@@ -45,9 +45,8 @@ class DateTime extends CarbonImmutable
 
         // Check if DST is in effect at this time using the system timezone
         $localtime_assoc = localtime(strtotime($time ?? 'now'), true);
-        $isDst = !empty($localtime_assoc['is_dst']) || !empty($localtime_assoc['tm_isdst']);
 
-        return timezone_name_from_abbr('', $gmtOffset, $isDst);
+        return timezone_name_from_abbr('', $gmtOffset, $localtime_assoc['tm_isdst']);
     }
 
 }

@@ -18,7 +18,7 @@ class Route extends Rewrite
     public function init(): void
     {
         parent::init();
-        Hooks::add_eager_action('wp', [$this, 'processRoute']);
+        Hooks::callOrAddAction('wp', [$this, 'processRoute']);
 
     }
 
