@@ -22,7 +22,7 @@ class RestRouteService
      */
     public function __construct(string $namespace = '')
     {
-        $this->namespace = Hooks::name('v1', $namespace);
+        $this->namespace = Hooks::name($namespace);
     }
 
     /**
