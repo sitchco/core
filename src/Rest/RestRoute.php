@@ -2,6 +2,7 @@
 
 namespace Sitchco\Rest;
 
+use Sitchco\Utils\Hooks;
 use WP_Error;
 use WP_REST_Request;
 use Throwable;
@@ -15,7 +16,7 @@ class RestRoute
     private string $path;
     private string|array $methods;
     private mixed $callback;
-    private mixed $permissionCallback;
+    private string $capability;
 
     /**
      * Constructor to initialize the route.
@@ -23,14 +24,14 @@ class RestRoute
      * @param string $path The route path.
      * @param string|array $methods Allowed HTTP methods.
      * @param callable $callback Function to handle the request.
-     * @param callable|null $permissionCallback Function to check permissions.
+     * @param string $capability
      */
-    public function __construct(string $path, string|array $methods, callable $callback, ?callable $permissionCallback = null)
+    public function __construct(string $path, string|array $methods, callable $callback, string $capability = '')
     {
         $this->path = $path;
         $this->methods = $methods;
         $this->callback = $callback;
-        $this->permissionCallback = $permissionCallback;
+        $this->capability = $capability;
     }
 
     /**
@@ -40,11 +41,11 @@ class RestRoute
      */
     public function register(string $namespace): void
     {
-        add_action('rest_api_init', function() use ($namespace) {
+        Hooks::callOrAddAction('rest_api_init', function() use ($namespace) {
             register_rest_route($namespace, $this->path, [
                 'methods'             => $this->methods,
                 'callback'            => [$this, 'handleRequest'],
-                'permission_callback' => $this->permissionCallback ?? '__return_true',
+                'permission_callback' => $this->permissionCallback(),
             ]);
         });
     }
@@ -60,11 +61,27 @@ class RestRoute
         try {
             return rest_ensure_response(($this->callback)($request));
         } catch (Throwable $e) {
+            $route_key = explode('/', $this->path)[0] ?? 'error';
             return new WP_Error(
-                'rest_error',
+                "rest_$route_key",
                 $e->getMessage(),
                 ['status' => $e->getCode() ?: 500]
             );
         }
+    }
+
+    protected function permissionCallback(): \Closure
+    {
+        return function() {
+            if (!$this->capability) {
+                return true;
+            }
+            return current_user_can($this->capability) ?:
+                new WP_Error(
+                    'incorrect_permissions',
+                    'Incorrect permissions for requested route',
+                    ['status' => rest_authorization_required_code()]
+                );
+        };
     }
 }

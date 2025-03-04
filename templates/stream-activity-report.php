@@ -2,7 +2,7 @@
 /**
  *Expected:
  * @var array    $report
- * @var DateTime $date
+ * @var \Sitchco\Support\DateTime $date
  */
 ?>
 <style>

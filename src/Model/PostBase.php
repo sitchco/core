@@ -2,9 +2,9 @@
 
 namespace Sitchco\Model;
 
+use Sitchco\Support\DateTime;
 use Sitchco\Utils\Acf;
 use Sitchco\Utils\ArrayUtil;
-use Timber\Factory\PostFactory;
 use Timber\Post;
 use Timber\Term;
 use Timber\Timber;
@@ -23,6 +23,11 @@ class PostBase extends Post
     private array $_local_add_terms_reference = [];
     private array $_local_remove_terms_reference = [];
 
+    /**
+     * The post's local modified time, as a raw date string ex: 2014-07-05 18:01:39
+     */
+    public string $post_modified;
+
     public function __get($field)
     {
         $value = parent::__get($field);
@@ -34,6 +39,16 @@ class PostBase extends Post
     {
         $this->__get($name);
         $this->$name = $value;
+    }
+
+    public function publishedDate(): DateTime
+    {
+        return new DateTime($this->post_date);
+    }
+
+    public function modifiedDate(): DateTime
+    {
+        return new DateTime($this->post_modified);
     }
 
     /**

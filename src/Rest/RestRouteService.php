@@ -3,6 +3,7 @@
 namespace Sitchco\Rest;
 
 use Closure;
+use Sitchco\Utils\Hooks;
 use WP_REST_Server;
 
 /**
@@ -19,9 +20,9 @@ class RestRouteService
      *
      * @param string $namespace The API namespace, defaults to 'sitchco/v1'.
      */
-    public function __construct(string $namespace = 'sitchco/v1')
+    public function __construct(string $namespace = '')
     {
-        $this->namespace = $namespace;
+        $this->namespace = Hooks::name('v1', $namespace);
     }
 
     /**
@@ -50,11 +51,11 @@ class RestRouteService
      *
      * @param string $path The route path.
      * @param Closure $callback The function to handle the request.
-     * @param Closure|null $permissionCallback Optional permission callback.
+     * @param string $capability Optional WP capability.
      */
-    public function addReadRoute(string $path, Closure $callback, ?Closure $permissionCallback = null): void
+    public function addReadRoute(string $path, Closure $callback, string $capability = ''): void
     {
-        $this->addRoute(new RestRoute($path, WP_REST_Server::READABLE, $callback, $permissionCallback));
+        $this->addRoute(new RestRoute($path, WP_REST_Server::READABLE, $callback, $capability));
     }
 
     /**
@@ -62,10 +63,10 @@ class RestRouteService
      *
      * @param string $path The route path.
      * @param Closure $callback The function to handle the request.
-     * @param Closure|null $permissionCallback Optional permission callback.
+     * @param string $capability Optional WP capability.
      */
-    public function addCreateRoute(string $path, Closure $callback, ?Closure $permissionCallback = null): void
+    public function addCreateRoute(string $path, Closure $callback, string $capability = ''): void
     {
-        $this->addRoute(new RestRoute($path, WP_REST_Server::CREATABLE, $callback, $permissionCallback));
+        $this->addRoute(new RestRoute($path, WP_REST_Server::CREATABLE, $callback, $capability));
     }
 }
