@@ -17,6 +17,7 @@
         "illuminate/collections": "*",
         "php-di/php-di": "^7.0",
         "timber/timber": "*",
-        "deliciousbrains/wp-background-processing": "*"
+        "deliciousbrains/wp-background-processing": "*",
+        "nesbot/carbon": "^3.8"
     }
 }

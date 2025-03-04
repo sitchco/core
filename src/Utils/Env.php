@@ -32,6 +32,6 @@ class Env
         } else {
             wp_redirect($location, $status);
         }
-        Env::exit($exception);
+        static::exit($exception);
     }
 }

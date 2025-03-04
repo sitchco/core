@@ -6,6 +6,12 @@ use Sitchco\Framework\Core\Module;
 use Sitchco\Utils\Acf;
 use WP_Post, WP_Query;
 
+/**
+ * Class AcfPostTypeQueries
+ * @package Sitchco\Integration\AdvancedCustomFields
+ *
+ * Adds configuration settings to set default query parameters for a post type
+ */
 class AcfPostTypeQueries extends Module
 {
     protected AcfSettings $settings;
@@ -17,6 +23,11 @@ class AcfPostTypeQueries extends Module
         $this->settings = $settings;
     }
 
+    /**
+     * Initialization hooks and configuration
+     *
+     * @return void
+     */
     public function init(): void
     {
         if (!class_exists('ACF')) {
@@ -28,6 +39,13 @@ class AcfPostTypeQueries extends Module
         });
         add_action('save_post', [$this, 'savePost'], 13, 2);
     }
+
+    /**
+     * Add Default Query Parameters settings to ACF post type configuration screen
+     *
+     * @param array $values
+     * @return void
+     */
 
     public function queriesTab(array $values): void
     {
@@ -71,13 +89,28 @@ class AcfPostTypeQueries extends Module
         ], $values);
     }
 
+    /**
+     * Extracts and normalizes the default query parameters from the entire config
+     *
+     * @param array $post_type_config
+     * @return array
+     */
     public static function getDefaultQueryParameters(array $post_type_config): array
     {
         $parameters = array_filter((array) ($post_type_config['default_query_parameters'] ?? []));
         return array_filter(array_values($parameters), fn($row) => !!$row['key'] && !!$row['value']);
     }
 
-    protected function setDefaultQueryParameter(array $parameter, $_, WP_Query $query): void
+    /**
+     * Sets a single query parameters
+     *
+     * @param array $parameter
+     * @param int $index
+     * @param WP_Query $query
+     * @return void
+     */
+
+    protected function setDefaultQueryParameter(array $parameter, int $index, WP_Query $query): void
     {
         /**
          * Expected:
@@ -86,6 +119,7 @@ class AcfPostTypeQueries extends Module
          * @var string $location
          */
         extract($parameter);
+        // Location doesn't match configured location
         if (
             (is_admin() && $location == 'public') ||
             (!is_admin() && $location == 'admin')
@@ -96,21 +130,44 @@ class AcfPostTypeQueries extends Module
         $query->set($key, $value);
     }
 
+    /**
+     * Set all default query parameters for the requested post type
+     *
+     * @param WP_Query $query
+     * @return void
+     */
     public function setDefaultQueryParameters(WP_Query $query): void
     {
-        if (!($post_type_config = Acf::findPostTypeConfig($query->get('post_type')))) {
+        $post_type = $query->get('post_type');
+        // Ignore when multiple post types involved, i.e. search
+        if (is_array($post_type)) {
             return;
         }
+        $post_type_config = Acf::findPostTypeConfig($post_type);
+        // No configuration for this post type
+        if (!$post_type_config) {
+            return;
+        }
+        // Allow admin orderby query to take precedence
         if (is_admin() && isset($_GET['orderby']) && $query->is_main_query()) {
             $this->adminSortHook($query, $post_type_config);
             return;
         }
+        // Allow an existing set orderby to take precedence
         if ($query->get('orderby')) {
             return;
         }
         $default_query_parameters = static::getDefaultQueryParameters($post_type_config);
         array_walk($default_query_parameters, [$this, 'setDefaultQueryParameter'], $query);
     }
+
+    /**
+     * Allow hooking into a non-taxonomy admin orderby
+     *
+     * @param WP_Query $query
+     * @param array $post_type_config
+     * @return void
+     */
 
     protected function adminSortHook(WP_Query $query, array $post_type_config): void
     {
@@ -142,36 +199,25 @@ class AcfPostTypeQueries extends Module
         do_action(static::hookName('admin_sort'), $orderby, $post_type_config, $query);
     }
 
-    private function isMenuOrder(array $post_type_config): bool
+    /**
+     * Is one of the default parameters configured to orderby menu_order
+     *
+     * @param array $post_type_config
+     * @return bool
+     */
+    protected function isMenuOrder(array $post_type_config): bool
     {
         $default_query_parameters = static::getDefaultQueryParameters($post_type_config);
         return !!count(array_filter($default_query_parameters, fn($row) => $row['key'] === 'orderby' && $row['value'] === 'menu_order'));
     }
 
     /**
-     * When sorting posts by menu_order, we will increment the order on new cpt pages.
-     * Default menu_order is 0 - seems to be more intuitive to add new pages
-     * at the bottom of the list instead.
+     * Increments menu order on a post
      *
-     * @param int $post_id
      * @param WP_Post $post_obj
+     * @return void
      */
-    public function savePost(int $post_id, WP_Post $post_obj): void
-    {
-        if (!apply_filters(static::hookName('increment_post_menu_order'), true, $post_obj)) {
-            return;
-        }
-        if (!($post_type_config = Acf::findPostTypeConfig($post_obj->post_type))) {
-            return;
-        }
-        remove_action('save_post', [$this, 'savePost'], 13);
-        if ($this->isMenuOrder($post_type_config)) {
-            $this->setPostMenuOrder($post_obj);
-        }
-        add_action('save_post', [$this, 'savePost'], 13, 2);
-    }
-
-    public function setPostMenuOrder(WP_Post $post_obj): void
+    protected function setPostMenuOrder(WP_Post $post_obj): void
     {
         if (
             (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) ||
@@ -189,4 +235,31 @@ class AcfPostTypeQueries extends Module
         $post_obj->menu_order = $order;
         wp_update_post($post_obj);
     }
+
+    /**
+     * When sorting posts by menu_order, we will increment the order on new cpt pages.
+     * Default menu_order is 0 - seems to be more intuitive to add new pages
+     * at the bottom of the list instead.
+     *
+     * @param int $post_id
+     * @param WP_Post $post_obj
+     */
+    public function savePost(int $post_id, WP_Post $post_obj): void
+    {
+        // Allow explicit disabling via filter sitchco/acf_post_type_queries/increment_post_menu_order
+        if (!apply_filters(static::hookName('increment_post_menu_order'), true, $post_obj)) {
+            return;
+        }
+        // No configuration for this post type
+        if (!($post_type_config = Acf::findPostTypeConfig($post_obj->post_type))) {
+            return;
+        }
+        remove_action('save_post', [$this, 'savePost'], 13);
+        if ($this->isMenuOrder($post_type_config)) {
+            $this->setPostMenuOrder($post_obj);
+        }
+        add_action('save_post', [$this, 'savePost'], 13, 2);
+    }
+
+
 }
