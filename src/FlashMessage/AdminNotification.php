@@ -3,36 +3,38 @@
 namespace Sitchco\FlashMessage;
 
 /**
- * class AdminNotification
+ * Class AdminNotification
+ *
+ * Manages admin notifications, including rendering messages as WordPress admin notices.
+ *
  * @package Sitchco\FlashMessage
  */
-class AdminNotification
+class AdminNotification extends FlashMessage
 {
     public const SUCCESS = 'success';
     public const INFO = 'info';
     public const WARNING = 'warning';
     public const ERROR = 'error';
 
-    private string $message;
     private string $status;
     private bool $dismissible;
 
     /**
      * AdminNotification constructor.
      *
-     * @param mixed  $message     Message to display
-     * @param string $status      One of AdminNotification::SUCCESS, INFO, WARNING, ERROR
-     * @param bool   $dismissible Whether the notification is dismissible
+     * @param mixed  $message     Message to display.
+     * @param string $status      One of SUCCESS, INFO, WARNING, ERROR.
+     * @param bool   $dismissible Whether the notification is dismissible.
      */
     public function __construct(mixed $message, string $status = self::SUCCESS, bool $dismissible = true)
     {
-        $this->message = (string) $message;
-        $this->status = $status ?: self::SUCCESS;
+        parent::__construct($message);
+        $this->status = $status;
         $this->dismissible = $dismissible;
     }
 
     /**
-     * Converts the notification to a string.
+     * Converts the notification to a string (HTML).
      *
      * @return string
      */
@@ -44,5 +46,15 @@ class AdminNotification
             ($this->dismissible ? ' is-dismissible' : ''),
             $this->message
         );
+    }
+
+    /**
+     * Check if the notification is dismissible.
+     *
+     * @return bool
+     */
+    public function isDismissible(): bool
+    {
+        return $this->dismissible;
     }
 }

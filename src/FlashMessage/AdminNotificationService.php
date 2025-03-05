@@ -5,18 +5,18 @@ namespace Sitchco\FlashMessage;
 use Sitchco\Utils\Hooks;
 
 /**
- * Class AdminNotificationService
- *
- * This class manages the dispatch, storage, and rendering of admin notifications
- * within the WordPress admin panel.
- *
+ * class AdminNotificationService
  * @package Sitchco\FlashMessage
  */
 class AdminNotificationService
 {
     protected array $notifications = [];
-
     protected static bool $hooked = false;
+
+    public function __construct()
+    {
+        $this->init();
+    }
 
     public function init(): void
     {
@@ -30,10 +30,9 @@ class AdminNotificationService
     /**
      * Dispatches an admin notification.
      *
-     * @param string|array|AdminNotification $message The notification message, which can be a string,
-     *        an array of messages, or an AdminNotification instance.
-     * @param string $status The status of the notification (default: success).
-     * @param bool $dismissible Whether the notification should be dismissible (default: true).
+     * @param string|array|AdminNotification $message The notification message.
+     * @param string $status The status (default: success).
+     * @param bool $dismissible Whether dismissible (default: true).
      * @return int The total number of stored notifications.
      */
     public function dispatch(string|array|AdminNotification $message, string $status = AdminNotification::SUCCESS, bool $dismissible = true): int
@@ -42,56 +41,100 @@ class AdminNotificationService
             $message = implode('</p><p>', array_map(fn($count, $msg) => "$msg: $count", $message, array_keys($message)));
         }
 
-        $this->notifications[] = $message instanceof AdminNotification
-            ? $message
-            : new AdminNotification($message, $status, $dismissible);
-
+        $notification = $message instanceof AdminNotification ? $message : new AdminNotification($message, $status, $dismissible);
+        $this->notifications[] = $notification;
         return count($this->notifications);
+    }
+
+    public function dispatchError(string|array|AdminNotification $message, bool $dismissible = true): int
+    {
+        return $this->dispatch($message, AdminNotification::ERROR, $dismissible);
+    }
+
+    public function dispatchInfo(string|array|AdminNotification $message, bool $dismissible = true): int
+    {
+        return $this->dispatch($message, AdminNotification::INFO, $dismissible);
+    }
+
+    public function dispatchWarning(string|array|AdminNotification $message, bool $dismissible = true): int
+    {
+        return $this->dispatch($message, AdminNotification::WARNING, $dismissible);
     }
 
     /**
      * Renders and outputs stored admin notifications.
      *
-     * @return array The list of notifications that were displayed.
+     * @return array The list of notifications displayed.
      */
     public function render(): array
     {
-        $notifications = (array) (FlashMessage::get() ?: $this->notifications);
-        echo implode("\n", $notifications);
+        // Retrieve stored notifications
+        $storedNotifications = $this->retrieveStoredNotifications();
+
+        // Merge the flash notification and stored notifications, if any.
+        $allNotifications = array_unique(array_merge($storedNotifications, $this->notifications));
+
+        // Output notifications
+        foreach ($allNotifications as $notification) {
+            echo $notification . "\n";
+        }
+
+        // Clear notifications after rendering
         $this->notifications = [];
-        return $notifications;
+        return $allNotifications;
     }
 
     /**
-     * Stores notifications to be displayed on the next request.
+     * Stores notifications for the next request.
      *
-     * @return bool True if notifications were stored, false if no notifications were available.
+     * @return bool True if stored, false if no notifications.
      */
     public function shutdown(): bool
     {
         if (empty($this->notifications)) {
             return false;
         }
-        FlashMessage::create($this->notifications);
-        $this->notifications = [];
+
+        /** @var AdminNotification $notification */
+        foreach($this->notifications as $notification) {
+            if (!$notification->isDismissible()) {
+                $this->storeNotification($notification);
+            }
+        }
         return true;
     }
 
     /**
-     * Handles a CommandResponse or error string and converts it into admin notifications.
+     * Store a notification for the next request.
      *
-     * @param CommandResponse|string $response The command response instance or an error message.
-     * @return void
+     * @param AdminNotification $notification
      */
-//    public function handleCommandResponse(CommandResponse|string $response): void
-//    {
-//        if (!$response instanceof CommandResponse) {
-//            $commandResponse = new CommandResponse();
-//            $commandResponse->addError($response);
-//            $response = $commandResponse;
-//        }
-//
-//        $this->dispatch($response->getResults());
-//        $this->dispatch($response->getErrors(), AdminNotification::ERROR);
-//    }
+    private function storeNotification(AdminNotification $notification): void
+    {
+        $notifications = (array) get_option($this->getOptionKey(), []);
+        $notifications[] = $notification;
+        update_option($this->getOptionKey(), $notifications, false);
+    }
+
+    /**
+     * Retrieves stored notifications.
+     *
+     * @return AdminNotification[] Array of notifications.
+     */
+    private function retrieveStoredNotifications(): array
+    {
+        $notifications = (array) get_option($this->getOptionKey(), []);
+        delete_option($this->getOptionKey());
+        return $notifications;
+    }
+
+    /**
+     * Generates a unique option key for the current user.
+     *
+     * @return string
+     */
+    private function getOptionKey(): string
+    {
+        return sprintf('sitchco_admin_notification_%d', get_current_user_id());
+    }
 }
