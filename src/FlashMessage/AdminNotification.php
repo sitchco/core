@@ -32,26 +32,6 @@ class AdminNotification
     }
 
     /**
-     * Gets the name of the view.
-     *
-     * @return string
-     */
-    public function getName(): string
-    {
-        return 'admin-notification';
-    }
-
-    /**
-     * Returns an array of object properties.
-     *
-     * @return array
-     */
-    public function getScope(): array
-    {
-        return get_object_vars($this);
-    }
-
-    /**
      * Converts the notification to a string.
      *
      * @return string

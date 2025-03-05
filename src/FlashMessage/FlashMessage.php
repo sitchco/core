@@ -8,6 +8,8 @@ namespace Sitchco\FlashMessage;
  */
 class FlashMessage
 {
+    const FLASH_PREFIX = 'sitchco_admin_notification';
+
     protected string $optionKey;
 
     /**
@@ -50,7 +52,7 @@ class FlashMessage
      * @param string $prefix The prefix used to generate the unique option key.
      * @return static The FlashMessage instance.
      */
-    public static function create(mixed $value, string $prefix): static
+    public static function create(mixed $value, string $prefix = self::FLASH_PREFIX): static
     {
         $flash = new static($prefix);
         $flash->setValue($value);
@@ -63,7 +65,7 @@ class FlashMessage
      * @param string $prefix The prefix used to generate the unique option key.
      * @return mixed The stored value, or null if not found.
      */
-    public static function get(string $prefix): mixed
+    public static function get(string $prefix = self::FLASH_PREFIX): mixed
     {
         $flash = new static($prefix);
         return $flash->getValue();

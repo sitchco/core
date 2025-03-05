@@ -2,6 +2,8 @@
 
 namespace Sitchco\FlashMessage;
 
+use Sitchco\Utils\Hooks;
+
 /**
  * Class AdminNotificationService
  *
@@ -12,8 +14,6 @@ namespace Sitchco\FlashMessage;
  */
 class AdminNotificationService
 {
-    const FLASH_PREFIX = 'sitchco_admin_notification';
-
     protected array $notifications = [];
 
     protected static bool $hooked = false;
@@ -21,8 +21,8 @@ class AdminNotificationService
     public function init(): void
     {
         if (!static::$hooked) {
-            add_action('admin_notices', [$this, 'render']);
-            add_action('shutdown', [$this, 'shutdown']);
+            Hooks::callOrAddAction('admin_notices', [$this, 'render']);
+            Hooks::callOrAddAction('shutdown', [$this, 'shutdown']);
             static::$hooked = true;
         }
     }
@@ -56,7 +56,7 @@ class AdminNotificationService
      */
     public function render(): array
     {
-        $notifications = (array) (FlashMessage::get(self::FLASH_PREFIX) ?: $this->notifications);
+        $notifications = (array) (FlashMessage::get() ?: $this->notifications);
         echo implode("\n", $notifications);
         $this->notifications = [];
         return $notifications;
@@ -72,7 +72,7 @@ class AdminNotificationService
         if (empty($this->notifications)) {
             return false;
         }
-        FlashMessage::create($this->notifications, self::FLASH_PREFIX);
+        FlashMessage::create($this->notifications);
         $this->notifications = [];
         return true;
     }
@@ -83,15 +83,15 @@ class AdminNotificationService
      * @param CommandResponse|string $response The command response instance or an error message.
      * @return void
      */
-    public function handleCommandResponse(CommandResponse|string $response): void
-    {
-        if (!$response instanceof CommandResponse) {
-            $commandResponse = new CommandResponse();
-            $commandResponse->addError($response);
-            $response = $commandResponse;
-        }
-
-        $this->dispatch($response->getResults());
-        $this->dispatch($response->getErrors(), AdminNotification::ERROR);
-    }
+//    public function handleCommandResponse(CommandResponse|string $response): void
+//    {
+//        if (!$response instanceof CommandResponse) {
+//            $commandResponse = new CommandResponse();
+//            $commandResponse->addError($response);
+//            $response = $commandResponse;
+//        }
+//
+//        $this->dispatch($response->getResults());
+//        $this->dispatch($response->getErrors(), AdminNotification::ERROR);
+//    }
 }
