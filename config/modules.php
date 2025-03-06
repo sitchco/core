@@ -11,6 +11,7 @@ use Sitchco\Integration\WPRocket;
 use Sitchco\Integration\YoastSEO;
 use Sitchco\Integration\Imagify;
 use Sitchco\Integration\Stream;
+use Sitchco\Flash\Flash;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
 
@@ -27,5 +28,6 @@ return [
     WPRocket::class => true,
     YoastSEO::class => true,
     Imagify::class => true,
-    Stream::class => true
+    Stream::class => true,
+    Flash::class => true,
 ];

@@ -1,12 +1,9 @@
 <?php
 
-namespace Sitchco\FlashMessage;
+namespace Sitchco\Flash;
 
 /**
  * Class AdminNotification
- *
- * Manages admin notifications, including rendering messages as WordPress admin notices.
- *
  * @package Sitchco\FlashMessage
  */
 class AdminNotification extends FlashMessage
@@ -48,13 +45,8 @@ class AdminNotification extends FlashMessage
         );
     }
 
-    /**
-     * Check if the notification is dismissible.
-     *
-     * @return bool
-     */
-    public function isDismissible(): bool
+    public function getStatus(): string
     {
-        return $this->dismissible;
+        return $this->status;
     }
 }

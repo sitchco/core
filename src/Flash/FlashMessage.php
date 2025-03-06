@@ -1,12 +1,9 @@
 <?php
 
-namespace Sitchco\FlashMessage;
+namespace Sitchco\Flash;
 
 /**
  * Class FlashMessage
- *
- * Handles storing and retrieving flash messages.
- *
  * @package Sitchco\FlashMessage
  */
 class FlashMessage
@@ -33,6 +30,11 @@ class FlashMessage
         return $this->message;
     }
 
+    /**
+     * Returns the message
+     *
+     * @return string
+     */
     public function getMessage(): string
     {
         return $this->message;
