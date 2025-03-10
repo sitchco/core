@@ -3,7 +3,6 @@
 namespace Sitchco\Flash;
 
 use Sitchco\Framework\Core\Module;
-use Sitchco\Utils\Hooks;
 
 /**
  * class Flash
@@ -19,8 +18,8 @@ class Flash extends Module
 
     public function init(): void
     {
-        Hooks::callOrAddAction('admin_notices', [$this, 'render']);
-        Hooks::callOrAddAction('shutdown', [$this, 'shutdown']);
+        add_action('admin_notices', [$this, 'render']);
+        add_action('shutdown', [$this, 'shutdown']);
     }
 
     /**
@@ -31,13 +30,9 @@ class Flash extends Module
     public function render(): array
     {
         $allNotifications = array_unique($this->retrieveStoredNotifications());
-        error_log(var_export($allNotifications, true));
         foreach ($allNotifications as $notification) {
             echo $notification . "\n";
         }
-
-        // Clear notifications after rendering
-        $this->service->clearNotifications();
 
         return $allNotifications;
     }
@@ -49,26 +44,21 @@ class Flash extends Module
      */
     public function shutdown(): bool
     {
-        error_log('Has Notifications: ' .  $this->service->hasNotifications());
         if (!$this->service->hasNotifications()) {
             return false;
         }
 
-        foreach($this->service->getNotifications() as $notification) {
-            $this->storeNotification($notification);
-        }
+        $this->storeNotifications($this->service->getNotifications());
         return true;
     }
 
     /**
      * Store a notification for the next request.
      *
-     * @param AdminNotification $notification
+     * @param array $notifications
      */
-    private function storeNotification(AdminNotification $notification): void
+    private function storeNotifications(array $notifications): void
     {
-        $notifications = (array) get_option($this->getOptionKey(), []);
-        $notifications[] = $notification;
         update_option($this->getOptionKey(), $notifications, false);
     }
 

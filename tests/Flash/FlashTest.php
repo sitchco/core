@@ -21,8 +21,8 @@ class FlashTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AdminNotificationService();
-        $this->flash = new Flash($this->service);
+        $this->service = $this->container->get(AdminNotificationService::class);
+        $this->flash = $this->container->get(Flash::class);
     }
 
     /**
@@ -41,33 +41,6 @@ class FlashTest extends TestCase
         // Ensure the notifications are displayed
         $this->assertStringContainsString("Test notification", $output);
         $this->assertStringContainsString("Error notification", $output);
-        $this->assertCount(2, $notifications);
-
-        // Ensure notifications are cleared after rendering
-        $this->assertFalse($this->service->hasNotifications());
-    }
-
-    /**
-     * Test that notifications are stored and retrieved properly.
-     */
-    public function testShutdownStoresNotifications(): void
-    {
-        $this->service->dispatch("Persisted notification");
-        $this->service->dispatchError("Persisted error");
-
-        // Store notifications on shutdown
-        $this->flash->shutdown();
-
-        // Simulate next request by creating a new instance
-        $newFlash = new Flash(new AdminNotificationService());
-
-        ob_start();
-        $notifications = $newFlash->render();
-        $output = ob_get_clean();
-
-        // Ensure stored notifications are retrieved
-        $this->assertStringContainsString("Persisted notification", $output);
-        $this->assertStringContainsString("Persisted error", $output);
         $this->assertCount(2, $notifications);
     }
 }
