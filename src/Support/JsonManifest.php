@@ -1,15 +1,12 @@
 <?php
 
-namespace Sitchco\Utils;
+namespace Sitchco\Support;
 
 use JsonException;
 
 /**
  * Class JsonManifest
- *
- * This class is responsible for loading and interacting with a JSON manifest file.
- *
- * @package Sitchco\Utils
+ * @package Sitchco\Support
  */
 class JsonManifest
 {
