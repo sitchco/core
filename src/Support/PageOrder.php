@@ -10,6 +10,7 @@ use WP_Query;
  * @package Sitchco\Support
  *
  * TODO: create a test class for this!
+ * TODO: does this belong in parent theme?
  */
 class PageOrder
 {
