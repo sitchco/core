@@ -7,6 +7,8 @@ use Sitchco\Framework\Core\Module;
 /**
  * Class AmazonCloudfront
  * @package Sitchco\Integration
+ *
+ * TODO: make this an env thing?
  */
 class AmazonCloudfront extends Module
 {
