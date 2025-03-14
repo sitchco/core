@@ -12,6 +12,7 @@ use Sitchco\Integration\YoastSEO;
 use Sitchco\Integration\Imagify;
 use Sitchco\Integration\Stream;
 use Sitchco\Flash\Flash;
+use Sitchco\Integration\AmazonCloudfront;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
 
@@ -30,4 +31,5 @@ return [
     Imagify::class => true,
     Stream::class => true,
     Flash::class => true,
+    AmazonCloudfront::class => true,
 ];
