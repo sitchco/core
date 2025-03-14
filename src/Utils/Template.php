@@ -2,9 +2,6 @@
 
 namespace Sitchco\Utils;
 
-use JsonException;
-use Sitchco\Support\JsonManifest;
-
 /**
  * Class Template
  * @package Sitchco\Utils
