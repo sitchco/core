@@ -19,7 +19,6 @@ class Cleanup extends Module
         'cleanHtmlMarkup',
         'cleanLoginPage',
         'disableEmojis',
-        'disableGutenbergBlockCss',
         'disableExtraRss',
         'disableGalleryCss',
         'disableXmlRpc',
@@ -135,19 +134,6 @@ class Cleanup extends Module
         ) {
             remove_filter($hook, $function);
         }
-    }
-
-    /**
-     * Disable Gutenberg block library CSS.
-     *
-     * @return void
-     */
-    public function disableGutenbergBlockCss(): void
-    {
-        add_action('wp_enqueue_scripts', function () {
-            wp_dequeue_style('wp-block-library');
-            wp_dequeue_style('wp-block-library-theme');
-        }, 200);
     }
 
     /**
