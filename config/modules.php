@@ -1,20 +1,21 @@
 <?php
 
+use Sitchco\Flash\Flash;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminColumns;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminFilters;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
+use Sitchco\Integration\AmazonCloudfront;
 use Sitchco\Integration\BackgroundEventManager;
+use Sitchco\Integration\Imagify;
+use Sitchco\Integration\Stream;
 use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Integration\WPRocket;
 use Sitchco\Integration\YoastSEO;
-use Sitchco\Integration\Imagify;
-use Sitchco\Integration\Stream;
-use Sitchco\Flash\Flash;
-use Sitchco\Integration\AmazonCloudfront;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
+use Sitchco\Support\UploadSvgHandler;
 
 return [
     Cleanup::class => true,
@@ -32,4 +33,5 @@ return [
     Stream::class => true,
     Flash::class => true,
     AmazonCloudfront::class => true,
+    UploadSvgHandler::class => true
 ];

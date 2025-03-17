@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Collection;
+namespace Sitchco;
 
 use Illuminate\Support\Collection as IlluminateCollection;
 use JsonSerializable;
@@ -12,6 +12,7 @@ use WP_Query;
 /**
  * Class Collection
  * A decorator for Timber's PostQuery that provides collection-like functionality while extending IlluminateCollection.
+ * @package Sitchco
  */
 class Collection extends IlluminateCollection implements PostCollectionInterface, JsonSerializable
 {
@@ -20,7 +21,7 @@ class Collection extends IlluminateCollection implements PostCollectionInterface
     public function __construct(PostQuery $postQuery)
     {
         $this->postQuery = $postQuery;
-        parent::__construct($postQuery); // Initialize IlluminateCollection with the posts
+        parent::__construct($postQuery);
     }
 
     public function pagination(array $options = []): ?Pagination

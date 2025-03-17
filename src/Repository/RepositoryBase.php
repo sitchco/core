@@ -3,13 +3,13 @@
 namespace Sitchco\Repository;
 
 use InvalidArgumentException;
+use Sitchco\Collection;
 use Sitchco\Model\PostBase;
 use Sitchco\Repository\Support\Repository;
 use Timber\Post;
-use Timber\Timber;
 use Timber\PostQuery;
-use \WP_Query;
-use Sitchco\Collection\Collection;
+use Timber\Timber;
+use WP_Query;
 
 /**
  * class RepositoryBase
