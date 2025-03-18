@@ -17,5 +17,5 @@ abstract class BackgroundQueue extends \WP_Background_Process
      */
     protected $prefix = Hooks::ROOT;
 
-    const HOOK_PREFIX = 'queue';
+    const HOOK_PREFIX = 'background_queue';
 }

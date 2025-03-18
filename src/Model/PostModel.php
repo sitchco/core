@@ -6,7 +6,6 @@ use DateTimeImmutable;
 use Sitchco\Framework\Core\Module;
 use Sitchco\Integration\Timber;
 use Sitchco\Support\DateTime;
-use Timber\Integration\AcfIntegration;
 
 class PostModel extends Module
 {

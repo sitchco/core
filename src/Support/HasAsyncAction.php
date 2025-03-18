@@ -8,6 +8,8 @@ trait HasAsyncAction
 {
     use HasHooks;
 
+    protected array $action_data = [];
+
     public function getName(): string
     {
         return $this->action;
@@ -17,6 +19,6 @@ trait HasAsyncAction
 
     protected function handle(): void
     {
-        do_action(static::hookName());
+        do_action(static::hookName(), ...$this->action_data);
     }
 }
