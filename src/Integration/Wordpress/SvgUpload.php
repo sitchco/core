@@ -1,16 +1,16 @@
 <?php
 
-namespace Sitchco\Support;
+namespace Sitchco\Integration\Wordpress;
 
 use Sitchco\Framework\Core\Module;
 
 /**
- * Class UploadSvgHandler
- * @package Sitchco\Support
+ * Class SvgUpload
+ * @package Sitchco\Integration\Wordpress
  *
  * TODO: create a test for this file!
  */
-class UploadSvgHandler extends Module
+class SvgUpload extends Module
 {
     public function init(): void
     {
