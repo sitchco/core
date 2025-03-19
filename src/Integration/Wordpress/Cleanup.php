@@ -5,35 +5,39 @@ namespace Sitchco\Integration\Wordpress;
 use Sitchco\Framework\Core\Module;
 
 /**
- * class Cleanup
+ * Class Cleanup
+ *
+ * This class provides methods to clean up and optimize WordPress functionality.
+ *
  * @package Sitchco\Integration\Wordpress
  */
 class Cleanup extends Module
 {
+    /** @var array<string> List of features supported by this class. */
     public const FEATURES = [
         'obscurity',
         'cleanHtmlMarkup',
+        'cleanLoginPage',
         'disableEmojis',
-        'disableGutenbergBlockCss',
         'disableExtraRss',
-        'disableRecentCommentsCss',
         'disableGalleryCss',
         'disableXmlRpc',
         'disableFeeds',
         'disableDefaultPosts',
         'disableComments',
-        'removeLanguageDropdown',
-        'removeWordPressVersion',
+        'disableLanguageDropdown',
+        'disableWordPressVersion',
         'disableRestEndpoints',
-        'removeJpegCompression',
-        'updateLoginPage',
-        'removeGutenbergStyles',
-        'removeScriptVersion',
-        'removeDefaultBlockPatterns',
+        'disableJpegCompression',
+        'disableGutenbergStyles',
+        'disableScriptVersion',
+        'disableDefaultBlockPatterns',
     ];
 
     /**
      * Obscure and suppress WordPress information.
+     *
+     * @return void
      */
     public function obscurity(): void
     {
@@ -58,11 +62,31 @@ class Cleanup extends Module
 
     /**
      * Clean HTML5 markup.
+     *
+     * @return void
      */
     public function cleanHtmlMarkup(): void
     {
-        add_filter('body_class', [$this, 'bodyClass']);
-        add_filter('language_attributes', [$this, 'languageAttributes']);
+        add_filter('body_class', [$this, 'cleanBodyClass']);
+        add_filter('language_attributes', function (): string {
+            $attributes = [];
+
+            if (is_rtl()) {
+                $attributes[] = 'dir="rtl"';
+            }
+
+            $lang = esc_attr(get_bloginfo('language'));
+
+            if ($lang) {
+                $attributes[] = "lang=\"{$lang}\"";
+            }
+
+            return implode(' ', $attributes);
+        });
+
+        add_filter('wp_targeted_link_rel', function ($values) {
+            return preg_replace('/noreferrer\s*/i', '', $values);
+        });
 
         foreach (
             [
@@ -77,66 +101,21 @@ class Cleanup extends Module
         add_filter('site_icon_meta_tags', fn($tags) => array_map([$this, 'removeSelfClosingTags'], $tags), 20);
     }
 
-
     /**
-     * Add and remove body_class() classes.
+     * Update login page image link URL and title.
      *
-     * @param array $classes
-     * @param array $disallowedClasses
-     *
-     * @return array
+     * @return void
      */
-    public function bodyClass(array $classes, array $disallowedClasses = ['page-template-default']): array
+    public function cleanLoginPage(): void
     {
-        if (is_single() || (is_page() && ! is_front_page())) {
-            $slug = basename(get_permalink());
-            if (! in_array($slug, $classes, true)) {
-                $classes[] = $slug;
-            }
-        }
-
-        if (is_front_page()) {
-            $disallowedClasses[] = 'page-id-' . get_option('page_on_front');
-        }
-
-        return array_values(array_diff($classes, $disallowedClasses));
-    }
-
-    /**
-     * Clean up language_attributes() used in <html> tag.
-     * @return string
-     */
-    public function languageAttributes(): string
-    {
-        $attributes = [];
-
-        if (is_rtl()) {
-            $attributes[] = 'dir="rtl"';
-        }
-
-        $lang = esc_attr(get_bloginfo('language'));
-
-        if ($lang) {
-            $attributes[] = "lang=\"{$lang}\"";
-        }
-
-        return implode(' ', $attributes);
-    }
-
-    /**
-     * Remove self-closing tags.
-     *
-     * @param string|array $html
-     *
-     * @return string|array
-     */
-    public function removeSelfClosingTags($html): array|string
-    {
-        return is_array($html) ? array_map([$this, 'removeSelfClosingTags'], $html) : str_replace(' />', '>', $html);
+        add_filter('login_headerurl', fn() => home_url());
+        add_filter('login_headertext', fn() => get_bloginfo('name'));
     }
 
     /**
      * Disable WordPress emojis.
+     *
+     * @return void
      */
     public function disableEmojis(): void
     {
@@ -158,18 +137,9 @@ class Cleanup extends Module
     }
 
     /**
-     * Disable Gutenberg block library CSS.
-     */
-    public function disableGutenbergBlockCss(): void
-    {
-        add_action('wp_enqueue_scripts', function () {
-            wp_dequeue_style('wp-block-library');
-            wp_dequeue_style('wp-block-library-theme');
-        }, 200);
-    }
-
-    /**
      * Disable extra RSS feeds.
+     *
+     * @return void
      */
     public function disableExtraRss(): void
     {
@@ -178,15 +148,9 @@ class Cleanup extends Module
     }
 
     /**
-     * Disable recent comments CSS.
-     */
-    public function disableRecentCommentsCss(): void
-    {
-        add_filter('show_recent_comments_widget_style', '__return_false');
-    }
-
-    /**
      * Disable gallery CSS.
+     *
+     * @return void
      */
     public function disableGalleryCss(): void
     {
@@ -195,6 +159,8 @@ class Cleanup extends Module
 
     /**
      * Disable XML-RPC.
+     *
+     * @return void
      */
     public function disableXmlRpc(): void
     {
@@ -203,6 +169,8 @@ class Cleanup extends Module
 
     /**
      * Disable all RSS feeds by redirecting them to the homepage.
+     *
+     * @return void
      */
     public function disableFeeds(): void
     {
@@ -216,28 +184,27 @@ class Cleanup extends Module
     }
 
     /**
-     * Redirect feed requests to the homepage.
+     * Disable default posts.
+     *
+     * @return void
      */
-    public function disableFeedsRedirect(): void
+    public function disableDefaultPosts(): void
     {
-        wp_redirect(home_url());
-        exit;
-    }
-
-    public function disableDefaultPosts()
-    {
-        add_action('admin_menu', function(){
+        add_action('admin_menu', function () {
             remove_menu_page('edit.php');
         });
     }
 
     /**
      * Disable comments globally.
+     *
+     * @return void
      */
     public function disableComments(): void
     {
         add_filter('comments_open', '__return_false', 20, 2);
         add_filter('pings_open', '__return_false', 20, 2);
+        add_filter('show_recent_comments_widget_style', '__return_false');
         remove_action('admin_init', 'wp_comments_require_registration');
         add_action('admin_menu', function () {
             remove_menu_page('edit-comments.php');
@@ -246,133 +213,124 @@ class Cleanup extends Module
 
     /**
      * Remove language dropdown on login screen.
+     *
+     * @return void
      */
-    public function removeLanguageDropdown(): void
+    public function disableLanguageDropdown(): void
     {
         add_filter('login_display_language_dropdown', '__return_false');
     }
 
     /**
      * Remove WordPress version from various sources.
+     *
+     * @return void
      */
-    public function removeWordPressVersion(): void
+    public function disableWordPressVersion(): void
     {
         remove_action('wp_head', 'wp_generator');
         add_filter('the_generator', '__return_false');
     }
 
-
     /**
      * Disable REST API endpoints for users when not logged in.
+     *
+     * @return void
      */
     public function disableRestEndpoints(): void
     {
-        add_filter('rest_endpoints', [$this, 'disableRestEndpointsForUsers']);
-    }
+        add_filter('rest_endpoints', function (array $endpoints): array {
+            if (!is_user_logged_in()) {
+                unset($endpoints['/wp/v2/users']);
+                unset($endpoints['/wp/v2/users/(?P<id>[\d]+)']);
+            }
 
-    /**
-     * Disable REST API endpoints for user data if not logged in.
-     *
-     * @param array $endpoints
-     *
-     * @return array
-     */
-    public function disableRestEndpointsForUsers(array $endpoints): array
-    {
-        if (! is_user_logged_in()) {
-            unset($endpoints['/wp/v2/users']);
-            unset($endpoints['/wp/v2/users/(?P<id>[\d]+)']);
-        }
-
-        return $endpoints;
+            return $endpoints;
+        });
     }
 
     /**
      * Remove JPEG compression by setting quality to 100.
+     *
+     * @return void
      */
-    public function removeJpegCompression(): void
+    public function disableJpegCompression(): void
     {
-        add_filter('jpeg_quality', '__return_true'); // 'true' sets it to 100
-    }
-
-    /**
-     * Update login page image link URL and title.
-     */
-    public function updateLoginPage(): void
-    {
-        add_filter('login_headerurl', [$this, 'loginUrl']);
-        add_filter('login_headertext', [$this, 'loginTitle']);
-    }
-
-    /**
-     * Update the login header URL to the site's home URL.
-     * @return string
-     */
-    public function loginUrl(): string
-    {
-        return home_url();
-    }
-
-    /**
-     * Update the login header title to the site's name.
-     * @return string
-     */
-    public function loginTitle(): string
-    {
-        return get_bloginfo('name');
+        add_filter('jpeg_quality', '__return_true');
     }
 
     /**
      * Remove Gutenberg's core and global styles.
+     *
+     * @return void
      */
-    public function removeGutenbergStyles(): void
+    public function disableGutenbergStyles(): void
     {
-        add_action('wp_enqueue_scripts', [$this, 'removeBlockStyles']);
-        add_action('wp_enqueue_scripts', [$this, 'removeGlobalStyles']);
-        add_action('wp_footer', [$this, 'removeCoreBlockSupports'], 5);
-        add_action('wp_enqueue_scripts', [$this, 'removeClassicThemeStyles']);
+        add_action('wp_enqueue_scripts', function (): void {
+            wp_deregister_style('wp-block-library');
+            wp_deregister_style('wp-block-library-theme');
+        }, 200);
+//        add_action('wp_enqueue_scripts', function(): void {
+//            wp_dequeue_style('global-styles');
+//        });
+        add_action('wp_footer', fn() => wp_dequeue_style('core-block-supports'), 5);
+        add_action('wp_enqueue_scripts', fn() => wp_dequeue_style('classic-theme-styles'));
     }
 
     /**
-     * Deregister Gutenberg block styles.
+     * Disable default block patterns.
+     *
+     * @return void
      */
-    public function removeBlockStyles(): void
+    public function disableDefaultBlockPatterns(): void
     {
-        wp_deregister_style('wp-block-library');
-        wp_deregister_style('wp-block-library-theme');
-    }
+        add_action('init', function () {
+            // Remove 95% of patterns (everything but posts)
+            add_filter('should_load_remote_block_patterns', '__return_false');
 
-    /**
-     * Deregister core block supports.
-     */
-    public function removeCoreBlockSupports(): void
-    {
-        wp_dequeue_style('core-block-supports');
-    }
-
-    /**
-     * Deregister Gutenberg global styles.
-     */
-    public function removeGlobalStyles(): void
-    {
-        //        wp_dequeue_style('global-styles');
-    }
-
-    /**
-     * Deregister classic theme styles.
-     */
-    public function removeClassicThemeStyles(): void
-    {
-        wp_dequeue_style('classic-theme-styles');
+            // Remove remaining 5% (posts)
+            $registry = \WP_Block_Patterns_Registry::get_instance();
+            foreach ($registry->get_all_registered() as $pattern) {
+                unregister_block_pattern($pattern['name']);
+            }
+        });
     }
 
     /**
      * Remove ?ver= query from styles and scripts.
+     *
+     * @return void
      */
-    public function removeScriptVersion(): void
+    public function disableScriptVersion(): void
     {
         add_filter('script_loader_src', [$this, 'removeVersionArg'], 15, 1);
         add_filter('style_loader_src', [$this, 'removeVersionArg'], 15, 1);
+    }
+
+    // FEATURE UTILITY METHODS
+
+    /**
+     * Add and remove body_class() classes.
+     *
+     * @param array $classes
+     * @param array $disallowedClasses
+     *
+     * @return array
+     */
+    public function cleanBodyClass(array $classes, array $disallowedClasses = ['page-template-default']): array
+    {
+        if (is_single() || (is_page() && !is_front_page())) {
+            $slug = basename(get_permalink());
+            if (!in_array($slug, $classes, true)) {
+                $classes[] = $slug;
+            }
+        }
+
+        if (is_front_page()) {
+            $disallowedClasses[] = 'page-id-' . get_option('page_on_front');
+        }
+
+        return array_values(array_diff($classes, $disallowedClasses));
     }
 
     /**
@@ -395,17 +353,26 @@ class Cleanup extends Module
         return $url;
     }
 
-    public function removeDefaultBlockPatterns(): void
+    /**
+     * Redirect feed requests to the homepage.
+     *
+     * @return void
+     */
+    public function disableFeedsRedirect(): void
     {
-        add_action('init', function() {
-            // will remove 95% of patterns (everything but posts)
-            add_filter('should_load_remote_block_patterns', '__return_false');
+        wp_redirect(home_url());
+        exit;
+    }
 
-            // will remove remaining 5% (posts)
-            $registry = \WP_Block_Patterns_Registry::get_instance();
-            foreach($registry->get_all_registered() as $pattern) {
-                unregister_block_pattern($pattern['name']);
-            }
-        });
+    /**
+     * Remove self-closing tags.
+     *
+     * @param array|string $html
+     *
+     * @return array|string
+     */
+    public function removeSelfClosingTags(array|string $html): array|string
+    {
+        return is_array($html) ? array_map([$this, 'removeSelfClosingTags'], $html) : str_replace(' />', '>', $html);
     }
 }

@@ -3,7 +3,7 @@
 namespace Sitchco\Tests;
 
 use InvalidArgumentException;
-use Sitchco\Collection\Collection;
+use Sitchco\Collection;
 use Sitchco\Model\Category;
 use Sitchco\Repository\PostRepository;
 use Sitchco\Tests\Support\EventPostTester;
