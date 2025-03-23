@@ -1,0 +1,6 @@
+{
+  "name": "sample-block",
+  "title": "Example Block",
+  "category": "common",
+  "editorScript": "file:./index.js"
+}
