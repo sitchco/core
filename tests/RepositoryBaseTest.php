@@ -69,6 +69,8 @@ class RepositoryBaseTest extends TestCase
         $this->assertInstanceOf(Category::class, $returnedCategories[0]);
         $this->assertEquals(array_column($returnedCategories, 'term_id'), [$second_test_term_id, $test_term_id]);
         $this->assertEquals($thumbnail_id, $returnedPost->thumbnail_id());
+
+        wp_delete_attachment($thumbnail_id, true);
     }
 
     public function test_update_post()
@@ -120,6 +122,8 @@ class RepositoryBaseTest extends TestCase
 
         // Check if the thumbnail was set
         $this->assertEquals($thumbnail_id, $returnedPost->thumbnail_id());
+
+        wp_delete_attachment($thumbnail_id, true);
     }
 
     public function test_remove_post()
