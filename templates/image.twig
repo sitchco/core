@@ -1,0 +1,7 @@
+<img src="{{ image.getSrc() }}"
+     width="{{ image.width|default(null) }}"
+     height="{{ image.height|default(null) }}"
+     alt="{{ image.alt|default('') }}"
+     loading="{{ image.lazy ? 'lazy' : 'eager' }}"
+     {{ image.attrsHtml }}
+/>
