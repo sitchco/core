@@ -14,6 +14,7 @@ use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Integration\Wordpress\SvgUpload;
 use Sitchco\Integration\WPRocket;
 use Sitchco\Integration\YoastSEO;
+use Sitchco\Model\ImageModel;
 use Sitchco\Model\PostModel;
 use Sitchco\Model\TermModel;
 
@@ -23,6 +24,7 @@ return [
     BackgroundEventManager::class => true,
     PostModel::class => true,
     TermModel::class => true,
+    ImageModel::class  => true,
     AcfPostTypeQueries::class => true,
     AcfPostTypeAdminColumns::class => true,
     AcfPostTypeAdminSort::class => true,

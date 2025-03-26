@@ -107,6 +107,7 @@ class Image extends \Timber\Image
         }
 
         if ($this->resize_width || $this->resize_height) {
+            // Not cropping
             if ($this->crop === CropDirection::DEFAULT) {
                 list($this->resize_width, $this->resize_height) = wp_constrain_dimensions(
                     $this->image_dimensions->width(),
@@ -121,13 +122,22 @@ class Image extends \Timber\Image
         return parent::src();
     }
 
-    public function __toString(): string
+    public function render(): string
     {
+        $output = '';
         $loader = (new Loader())->get_loader();
         if ($loader->exists(static::TEMPLATE)) {
-            return Timber::compile(static::TEMPLATE, ['image' => $this]);
+            $result = Timber::compile(static::TEMPLATE, ['image' => $this]);
+            if ($result) {
+                $output = $result;
+            }
         }
-        return parent::__toString();
+        return $output;
+    }
+
+    public function __toString(): string
+    {
+        return $this->render() ?: parent::__toString();
     }
 
     public static function create(): Image
