@@ -1,0 +1,26 @@
+{
+    "name": "@sitchco/eslint-config",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Shared ESLint config for sitchco projects",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "publishConfig": {
+        "access": "public"
+    },
+    "dependencies": {
+        "@babel/eslint-parser": "^7.27.0",
+        "@babel/preset-env": "^7.26.9",
+        "@eslint/js": "^9.23.0",
+        "@stylistic/eslint-plugin": "^4.2.0",
+        "eslint": "^9.23.0",
+        "eslint-config-prettier": "^9.0.0",
+        "eslint-plugin-import": "^2.31.0",
+        "globals": "^16.0.0"
+    }
+}
