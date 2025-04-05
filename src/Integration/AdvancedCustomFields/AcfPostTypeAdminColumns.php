@@ -38,7 +38,6 @@ class AcfPostTypeAdminColumns extends Module
         $this->settings->addSettingsTab('admin-columns', 'Admin Columns', [$this, 'adminColumnsTab']);
         add_action('acf/init', fn() => add_action('registered_post_type', [$this, 'postTypeConfigHooks']), 5);
         add_filter(static::hookName('column_content'), [$this, 'postMeta'], 5, 3);
-        add_filter(static::hookName('column_content', 'thumbnail'), [$this, 'postThumbnail'], 5, 2);
         add_filter(static::hookName('column_content', 'editor'), [$this, 'editor'], 5, 2);
         add_filter(static::hookName('column_content', 'excerpt'), [$this, 'excerpt'], 5, 2);
         // Fixes ACF true_false field layout bug when in a table row
@@ -207,21 +206,6 @@ class AcfPostTypeAdminColumns extends Module
 
     public function postMeta($content, $post_id, $column_id) {
         return get_post_meta($post_id, $column_id) ?: $content;
-    }
-
-    public function postThumbnail($content, $post_id) {
-        if (!class_exists('WP_Image')) {
-            return $content;
-        }
-        $img = WP_Image::get_featured($post_id);
-        if (empty($img)) {
-            return $content;
-        }
-        if ($img->height > 75) {
-            $img->height(75);
-        }
-
-        return $img->get_html();
     }
 
     public function editor($content, $post_id): string
