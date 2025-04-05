@@ -1,0 +1,13 @@
+<div {{ anchor|e('html_attr') }} class="{{ [
+    block.name,
+    block.background,
+    block.has_background,
+    block.font_size,
+    block.align,
+    block.align_text,
+    block.classes
+]|join(' ')|e('html_attr') }}">
+    <h2 class="wp-block-sitchco-acf-block">Welcome to your ACF block.</h2>
+    <p>Open the Twig template to edit this text.</p>
+    {{ function('InnerBlocks') }}
+</div>
