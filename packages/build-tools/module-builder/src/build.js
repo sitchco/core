@@ -1,49 +1,59 @@
 import { build as viteBuild } from 'vite';
 import path from 'node:path';
 import chalk from 'chalk';
+import laravel from 'laravel-vite-plugin';
 import { BASE_VITE_CONFIG } from './config.js';
 
-function generateViteConfig(target, isWatchMode = false) {
-    const config = JSON.parse(JSON.stringify(BASE_VITE_CONFIG));
-    config.root = target.root;
-    config.build = {
-        ...config.build,
-        outDir: target.outDir,
-        base: `${path.relative(target.root, target.outDir)}/`,
-        watch: isWatchMode ? {} : null,
-        rollupOptions: {
-            ...(config.build?.rollupOptions || {}),
-            input: target.entryPoints,
+async function generateViteConfig(target, isWatchMode) {
+    return {
+        root: target.root,
+        base: isWatchMode ? '/' : './',
+        plugins: [
+            laravel({
+                input: target.viteInput,
+                publicDirectory: target.vitePublicDir,
+                buildDirectory: target.viteBuildDir,
+                hotFile: target.viteHotFile,
+                refresh: target.viteRefreshPaths,
+            }),
+            ...(BASE_VITE_CONFIG.plugins || []),
+        ],
+        build: {
+            ...BASE_VITE_CONFIG.build,
+            outDir: path.relative(target.root, target.outDir),
+            manifest: true,
+            watch: isWatchMode ? {} : null,
         },
+        clearScreen: false,
+        server: {},
     };
-    return config;
 }
 
-export async function runBuilds(targets, isWatchMode = false) {
-    if (targets.length === 0) {
-        console.log(chalk.yellow('No targets to build.'));
+export async function runBuild(target, isWatchMode) {
+    if (!target) {
+        console.log(chalk.yellow(`No targets found. Nothing to build.`));
         return;
     }
 
-    // We only expect one combined target now
-    const target = targets[0];
     console.log(
         chalk.cyan(
-            `\n🚀 Starting ${isWatchMode ? 'watch' : 'build'} with ${Object.keys(target.entryPoints).length} entry points...`
+            `\n🚀 Starting ${isWatchMode ? 'watch' : 'build'} with ${Object.keys(target.viteInput).length} entry points...`
         )
     );
 
     try {
-        const viteConfig = generateViteConfig(target, isWatchMode);
+        const viteConfig = await generateViteConfig(target, isWatchMode);
         await viteBuild(viteConfig);
 
-        if (!isWatchMode) {
-            console.log(chalk.cyan('\n✨ Build completed successfully!'));
-        } else {
-            console.log(chalk.cyan('\n👀 Watching all entry points...'));
+        if (isWatchMode) {
+            console.log(chalk.cyan(`\n👀 Watching...`));
+            const hotFileAbsolute = path.join(target.root, target.viteHotFile);
+            console.log(chalk.grey(`   Hot file: ${hotFileAbsolute}`));
+            console.log(
+                chalk.yellow(`   Ensure PHP enqueuer checks for existence of the hot file above to load dev assets.`)
+            );
         }
     } catch (error) {
-        console.error(chalk.red('\n💥 Build failed:'));
         console.error(error);
 
         if (!isWatchMode) {

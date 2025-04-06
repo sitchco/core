@@ -12,16 +12,15 @@ async function loadProcessors(prettierConfig) {
 }
 
 async function runFormat() {
-    const projectRoot = process.env.INIT_CWD || process.cwd();
     let totalFilesProcessed = 0;
     let totalFilesChanged = 0;
     let totalFilesErrored = 0;
     console.log(chalk.blue('[sitchco-format] Starting format process...'));
 
     try {
-        const prettierConfig = (await prettier.resolveConfig(projectRoot)) || sitchcoPrettierConfig;
+        const scanner = new ProjectScanner();
+        const prettierConfig = (await prettier.resolveConfig(scanner.projectRoot)) || sitchcoPrettierConfig;
         const processors = await loadProcessors(prettierConfig);
-        const scanner = new ProjectScanner({ projectRoot });
         const supportedExtensions = processors.flatMap((p) => p.extensions);
         const filesToProcess = await scanner.findAllSourceFiles(supportedExtensions);
         if (!filesToProcess.length) {

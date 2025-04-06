@@ -7,7 +7,6 @@ import eslintConfigPrettier from 'eslint-config-prettier';
 import babelParser from '@babel/eslint-parser';
 
 export default defineConfig([
-    // Basic JS settings (applied to all JS files)
     {
         files: ['**/*.{js,mjs,cjs}'],
         languageOptions: {
@@ -17,19 +16,15 @@ export default defineConfig([
             },
         },
     },
-    // Use ESLint’s recommended rules from @eslint/js.
     {
         files: ['**/*.{js,mjs,cjs}'],
         plugins: { js },
         extends: ['js/recommended'],
     },
-    // Add Prettier config to turn off conflicting ESLint rules.
     eslintConfigPrettier,
-    // Add custom configuration:
     {
         files: ['**/*.{js,mjs,cjs}'],
         languageOptions: {
-            // Use Babel’s parser via createRequire so that we can pass options
             parser: babelParser,
             parserOptions: {
                 requireConfigFile: false,

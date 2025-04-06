@@ -2,9 +2,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { createRequire } from 'module';
-import { cleanBuildArtifacts } from '../src/clean.js';
-import { findAssetTargets } from '../src/discover.js';
-import { runBuilds } from '../src/build.js';
+import { findAssetTargets, runBuild, cleanBuildArtifacts } from '../src/index.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json');
@@ -20,7 +18,7 @@ function createCommand(name, description, isWatchMode) {
 
         try {
             const targets = await findAssetTargets();
-            await runBuilds(targets, isWatchMode);
+            await runBuild(targets, isWatchMode);
         } catch (error) {
             console.error(chalk.red(`${name} process encountered an error:`), error);
             process.exit(1);

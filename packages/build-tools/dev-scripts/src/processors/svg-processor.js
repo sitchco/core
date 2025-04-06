@@ -5,7 +5,6 @@ import { BaseProcessor } from './base-processor.js';
 export class SvgProcessor extends BaseProcessor {
     extensions = ['.svg'];
     name = 'svg';
-    // SVGO configuration from plan.md
     svgoConfig = {
         multipass: true,
         js2svg: {
