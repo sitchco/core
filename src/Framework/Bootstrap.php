@@ -16,7 +16,7 @@ class Bootstrap
 
     public function __construct()
     {
-        add_action('after_setup_theme', [$this, 'initialize'], 99);
+        add_action('after_setup_theme', [$this, 'initialize'], 5);
 
         if (wp_get_environment_type() === 'local') {
             add_filter('timber/cache/mode', fn() => Loader::CACHE_NONE);
