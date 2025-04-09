@@ -6,23 +6,39 @@ use Sitchco\Utils\ArrayUtil;
 use Sitchco\Utils\Hooks;
 
 /**
- * Unified Configuration Registry Service.
- * Loads, merges, and caches configuration files (PHP or JSON)
- * from standard locations (core plugin, additional filtered paths, parent theme, child theme).
+ * Configuration Registry Service.
+ * Loads a single configuration file (sitchco.config.php) from defined locations
+ * (Core defined path, additional filtered paths, parent theme, child theme),
+ * merges their contents recursively, caches the result, and provides access
+ * to specific configuration sections (top-level keys) within the merged array.
  * Caching is disabled in 'local' environment, enabled via transient otherwise.
  */
 class ConfigRegistry
 {
-    /** @var array Cache for loaded configs within the current request */
-    private array $requestCache = [];
+    /** @var array|null Cache for the fully merged config within the current request */
+    private ?array $requestCache = null;
+
     /** @var array<string>|null Ordered list of base paths to search (null until initialized) */
     private ?array $basePaths = null;
+
     /** @var string Current WP environment type */
     private string $environmentType;
+
     /** @var bool Whether persistent object caching is enabled for this instance */
     private bool $objectCacheEnabled;
+
     /** @var int Default TTL for cached items in seconds (e.g., 1 day) */
     private const CACHE_TTL = DAY_IN_SECONDS;
+
+    /** @var string Group name for WP Object Cache */
+    private const CACHE_GROUP = 'sitchco_cfg_group';
+
+    /** @var string Cache key for the merged configuration */
+    private const CACHE_KEY = 'sitchco_config';
+
+    /** @var string The standard filename for the configuration file */
+    private const CONFIG_FILENAME = 'sitchco.config.php';
+
     /** @var string Filter hook for adding additional config paths */
     public const PATH_FILTER_HOOK = 'additional_config_paths';
 
@@ -35,180 +51,180 @@ class ConfigRegistry
     public function __construct(?string $environmentType = null)
     {
         $this->environmentType = $environmentType ?? wp_get_environment_type();
-        // We disable object caching in the 'local' environment to ensure that changes to config files are immediately reflected.
         $this->objectCacheEnabled = $this->environmentType !== 'local';
     }
 
     /**
-     * Loads, merges, and caches a PHP configuration file (.php).
-     * Expects the PHP file to return an array.
+     * Retrieves a specific configuration section (top-level key) from the merged configuration file.
+     * Loads and merges `sitchco.config.php` from all registered locations,
+     * caches the result, and returns the array associated with the specified key.
      *
-     * @param string $configName The base name of the config file (e.g., 'modules', 'container').
-     * @param array  $default    Default value if no files found or files are invalid.
+     * @param string $configName The top-level key in the configuration array (e.g., 'modules', 'container').
+     *                           This used to be the filename base, now it's the array key.
+     * @param array  $default    Default value to return if the key is not found in the merged config.
      *
-     * @return array The merged configuration array.
+     * @return array The requested configuration array section, or the default value.
      */
-    public function loadPhpConfig(string $configName, array $default = []): array
+    public function loadConfig(string $configName, array $default = []): array
     {
-        return $this->load('php', $configName, $default);
-    }
-
-    /**
-     * Loads, merges, and caches a JSON configuration file (.json).
-     *
-     * @param string $configName The base name of the config file (e.g., 'settings').
-     * @param array  $default    Default value if no files found or files are invalid.
-     *
-     * @return array The merged configuration array.
-     */
-    public function loadJsonConfig(string $configName, array $default = []): array
-    {
-        return $this->load('json', $configName, $default);
-    }
-
-    /**
-     * Core loading logic.
-     *
-     * @param string $type       'php' or 'json'.
-     * @param string $configName Base name of the config file.
-     * @param array  $default    Default value.
-     *
-     * @return array Merged configuration.
-     */
-    private function load(string $type, string $configName, array $default): array
-    {
-        $type = strtolower($type);
         $configName = trim($configName);
-        if (empty($configName) || !in_array($type, ['php', 'json'])) {
+        if (empty($configName)) {
             error_log(
-                "Sitchco Config Error: Invalid type or configName provided to load(). Type: {$type}, Name: {$configName}"
+                "Sitchco Config Error: Invalid configName provided to loadConfig(). Name: {$configName}"
             );
 
             return $default;
         }
 
-        // We only initialize base paths when needed to avoid unnecessary work if no config is loaded.
-        if ($this->basePaths === null) {
-            $this->initializeBasePaths();
+        $mergedConfig = $this->loadAndCacheMergedConfig();
+
+        if (is_array($mergedConfig) && array_key_exists($configName, $mergedConfig)) {
+
+            return is_array($mergedConfig[$configName]) ? $mergedConfig[$configName] : $default;
         }
 
-        // We use a request cache to avoid redundant file reads within the same request.
-        $cacheKey = "sitchco_cfg_{$type}_{$configName}";
-        if (isset($this->requestCache[$cacheKey])) {
-            return $this->requestCache[$cacheKey];
+        return $default;
+    }
+
+    /**
+     * Loads, merges, and caches the configuration file contents.
+     * Handles retrieving the *entire* merged configuration from cache or file system.
+     * @return array|null The fully merged configuration array, or null if no files found/loaded.
+     */
+    private function loadAndCacheMergedConfig(): ?array
+    {
+        if (is_array($this->requestCache)) {
+            return $this->requestCache;
         }
 
-        // We use object caching (transients) to persist config data between requests, improving performance.
         $cachedValue = false;
         if ($this->objectCacheEnabled) {
-            $cachedValue = get_transient($cacheKey);
+            $cachedValue = wp_cache_get(self::CACHE_KEY, self::CACHE_GROUP);
         }
         if (is_array($cachedValue)) {
-            $this->requestCache[$cacheKey] = $cachedValue;
+            $this->requestCache = $cachedValue;
 
             return $cachedValue;
         }
 
-        $mergedConfig = $this->loadAndMergeFiles($type, $configName);
-        $finalResult = $mergedConfig === null ? $default : $mergedConfig;
-
-        if ($this->objectCacheEnabled) {
-            set_transient($cacheKey, $finalResult, self::CACHE_TTL);
+        if ($this->basePaths === null) {
+            $this->initializeBasePaths();
         }
 
-        $this->requestCache[$cacheKey] = $finalResult;
+        $mergedConfig = $this->loadAndMergeFiles();
 
-        return $finalResult;
+        if (is_array($mergedConfig) && $this->objectCacheEnabled) {
+            wp_cache_set(self::CACHE_KEY, $mergedConfig, self::CACHE_GROUP, self::CACHE_TTL);
+        }
+
+        $this->requestCache = $mergedConfig;
+
+        return $this->requestCache;
     }
 
     /**
-     * Initializes the base paths using the "Sandwich" filter approach.
+     * Initializes the base paths using the Core Constant, Filter Hook, and Theme Directories.
+     * Order: Core -> Filtered -> Parent Theme -> Child Theme.
      */
     private function initializeBasePaths(): void
     {
-        $core_paths =
-            defined('SITCHCO_CORE_CONFIG_DIR') && is_dir(SITCHCO_CORE_CONFIG_DIR)
-                ? [trailingslashit(SITCHCO_CORE_CONFIG_DIR)]
-                : [];
+        $potentialPaths = [];
+        if (defined('SITCHCO_CORE_CONFIG_DIR')) {
+            $potentialPaths[] = SITCHCO_CORE_CONFIG_DIR;
+        }
+        $additionalPathsRaw = apply_filters(Hooks::name(self::PATH_FILTER_HOOK), []);
+        if (is_array($additionalPathsRaw)) {
+            $potentialPaths = array_merge($potentialPaths, $additionalPathsRaw);
+        }
+        $potentialPaths = array_merge($potentialPaths, [get_template_directory(), get_stylesheet_directory()]);
 
-        // We allow additional paths to be added via a filter hook, providing flexibility for extending config locations.
-        $additional_paths_raw = apply_filters(Hooks::name(self::PATH_FILTER_HOOK), []);
-        $additional_paths = is_array($additional_paths_raw) ? array_map('trailingslashit', $additional_paths_raw) : [];
-        $theme_paths = array_map('trailingslashit', [
-            get_template_directory() . '/config',
-            get_stylesheet_directory() . '/config',
-        ]);
-
-        // The order of paths is important: core, then additional, then parent theme, then child theme.
-        // This ensures that child theme configs override parent theme configs, which override core configs.
-        $combined_paths = array_merge($core_paths, $additional_paths, $theme_paths);
-        $this->basePaths = array_values(array_unique(array_filter($combined_paths, 'is_dir')));
+        $this->basePaths = array_values( // Re-index
+            array_filter( // only directories
+                array_unique( // Remove duplicates
+                    array_map( // Add trailing slashes
+                        'trailingslashit',
+                        array_filter($potentialPaths, fn ($path) => is_string($path) && ! empty($path)),
+                    ),
+                ),
+                'is_dir'
+            )
+        );
     }
 
     /**
-     * Finds files in base paths, loads/parses them, and merges the results.
-     *
-     * @param string $type       'php' or 'json'.
-     * @param string $configName Base name of the config file.
-     *
+     * Finds sitchco.config.php in base paths, loads/parses them, and merges the results recursively.
      * @return array|null Merged array, empty array if files found but were empty/invalid, null if no files found.
      */
-    private function loadAndMergeFiles(string $type, string $configName): ?array
+    private function loadAndMergeFiles(): ?array
     {
         if ($this->basePaths === null) {
             error_log('Sitchco Config Error: Base paths not initialized before loading files.');
 
             return null;
         }
-        $fileNameSuffix = '.' . $type;
+
         $configs = [];
         $foundAnyFile = false;
 
         foreach ($this->basePaths as $path) {
-            $filePath = $path . $configName . $fileNameSuffix;
+            $filePath = $path . self::CONFIG_FILENAME;
             if (file_exists($filePath) && is_readable($filePath)) {
                 $foundAnyFile = true;
                 $configData = null;
                 try {
-                    if ($type === 'php') {
-                        $configData = include $filePath;
-                    } elseif ($type === 'json') {
-                        $jsonData = file_get_contents($filePath);
-                        if ($jsonData === false) {
-                            throw new \RuntimeException('Failed to read file.');
-                        }
-                        $configData = json_decode($jsonData, true, 512, JSON_THROW_ON_ERROR);
-                        if (!is_array($configData)) {
-                            throw new \RuntimeException('JSON did not decode to an array.');
-                        }
-                    }
+                    $configData = include $filePath;
                 } catch (\Throwable $e) {
                     error_log(
                         sprintf(
-                            'Sitchco Config Error: Failed to load/parse %s config file "%s". Error: %s',
-                            strtoupper($type),
+                            'Sitchco Config Error: Failed to load/parse PHP config file "%s". Error: %s',
                             $filePath,
                             $e->getMessage()
                         )
                     );
+
                     continue;
                 }
+
                 if (is_array($configData)) {
                     $configs[] = $configData;
                 } else {
-                    error_log(sprintf('Sitchco Config Warning: Config file did not return an array: %s', $filePath));
+                    error_log(sprintf(
+                        'Sitchco Config Warning: Config file did not return an array: %s',
+                        $filePath
+                    ));
                 }
             }
         }
 
-        if (!$foundAnyFile) {
+        if (! $foundAnyFile) {
             return null;
         }
 
         if (empty($configs)) {
             return [];
         }
+        $configs = array_map([$this, 'normalizeConfig'], $configs);
 
         return ArrayUtil::mergeRecursiveDistinct(...$configs);
+    }
+
+    private function normalizeConfig($config): array
+    {
+        if (!is_array($config)) {
+            return [];
+        }
+
+        $normalized = [];
+        foreach ($config as $key => $value) {
+            if (is_numeric($key)) {
+                if (is_scalar($value) || is_null($value)) {
+                    $normalized[$value] = true;
+                }
+            } else {
+                $normalized[$key] = is_array($value) ? $this->normalizeConfig($value) : $value;
+            }
+        }
+
+        return $normalized;
     }
 }

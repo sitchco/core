@@ -39,13 +39,13 @@ class Bootstrap
     {
         $configRegistry = new ConfigRegistry();
         $builder = new ContainerBuilder();
-        $containerDefinitions = $configRegistry->loadPhpConfig('container');
+        $containerDefinitions = $configRegistry->loadConfig('container');
         if (!empty($containerDefinitions)) {
             $builder->addDefinitions($containerDefinitions);
         }
         $GLOBALS['SitchcoContainer'] = $container = $builder->build();
         $container->set(ConfigRegistry::class, $configRegistry);
-        $moduleConfigs = $configRegistry->loadPhpConfig('modules');
+        $moduleConfigs = $configRegistry->loadConfig('modules');
         $registry = $container->get(ModuleRegistry::class);
         $registry->activateModules($moduleConfigs);
     }
