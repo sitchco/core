@@ -15,7 +15,7 @@ class CoreMuPluginTest extends TestCase
 {
     function test_registers_and_activates_a_module()
     {
-        $loaded_config = $this->container->get(ModuleConfigLoader::class)->load();
+        $loaded_config = $this->container->get(ConfigRegistry::class)->load('modules');
         $this->assertEquals([
             'featureOne' => true,
             'featureTwo' => true,

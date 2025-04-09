@@ -65,12 +65,12 @@ class ConfigRegistry
      *
      * @return array The requested configuration array section, or the default value.
      */
-    public function loadConfig(string $configName, array $default = []): array
+    public function load(string $configName, array $default = []): array
     {
         $configName = trim($configName);
         if (empty($configName)) {
             error_log(
-                "Sitchco Config Error: Invalid configName provided to loadConfig(). Name: {$configName}"
+                "Sitchco Config Error: Invalid configName provided to load(). Name: {$configName}"
             );
 
             return $default;
