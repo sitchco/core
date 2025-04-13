@@ -1,4 +1,5 @@
-<img src="{{ image.getSrc() }}"
+{# @var image \Sitchco\ #}
+<img src="{{ image.resizedSrc }}"
      width="{{ image.width|default(null) }}"
      height="{{ image.height|default(null) }}"
      alt="{{ image.alt|default('') }}"

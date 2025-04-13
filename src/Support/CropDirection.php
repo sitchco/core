@@ -7,7 +7,7 @@ namespace Sitchco\Support;
  */
 enum CropDirection: string
 {
-    case DEFAULT = 'default';
+    case NONE = 'default';
     case CENTER = 'center';
     case TOP = 'top';
     case BOTTOM = 'bottom';
