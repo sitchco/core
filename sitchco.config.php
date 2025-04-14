@@ -9,6 +9,7 @@ use Sitchco\Integration\AmazonCloudfront;
 use Sitchco\Integration\BackgroundEventManager;
 use Sitchco\Integration\Imagify;
 use Sitchco\Integration\Stream;
+use Sitchco\Integration\Wordpress\AllowedBlocksResolver;
 use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Integration\Wordpress\SvgUpload;
@@ -37,16 +38,7 @@ return [
         Stream::class,
         Flash::class,
         AmazonCloudfront::class,
-        SvgUpload::class
-    ],
-    'blocks' => [
-        'core/paragraph',
-        'core/heading',
-        'core/image',
-        'core/list',
-        'core/list-item',
-        'core/quote',
-        'core/separator',
-        'core/spacer',
-    ],
+        SvgUpload::class,
+        AllowedBlocksResolver::class,
+    ]
 ];
