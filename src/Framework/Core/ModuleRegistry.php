@@ -11,11 +11,11 @@ use Sitchco\ModuleExtension\TimberPostModuleExtension;
 use Sitchco\Utils\ArrayUtil;
 
 /**
- * Class Registry
+ * Class ModuleRegistry
  * Manages the registration and activation of modules within the framework.
  * @package Sitchco\Framework\Core
  */
-class Registry
+class ModuleRegistry
 {
     /**
      * @var array<string> List of registered module class names.
@@ -34,7 +34,7 @@ class Registry
 
     protected Container $Container;
 
-    const EXTENSIONS = [
+    public const EXTENSIONS = [
         TimberPostModuleExtension::class,
         AcfPathsModuleExtension::class,
         BlockRegistrationModuleExtension::class,
@@ -60,19 +60,14 @@ class Registry
             return;
         }
 
-        // Skip if the module has already been instantiated.
         if (isset($this->activeModuleInstances[$module])) {
             return;
         }
 
-        // Detect circular dependency.
         if (in_array($module, $this->inProgress, true)) {
-            // Optionally log a warning, e.g.:
-            // error_log("Circular dependency detected for module: {$module}");
             return;
         }
 
-        // Mark this module as in progress.
         $this->inProgress[] = $module;
 
         try {
@@ -87,8 +82,7 @@ class Registry
         } catch (DependencyException|NotFoundException $e) {
             // Optionally log the error, e.g.:
             // error_log("Failed to instantiate module {$module}: " . $e->getMessage());
-        }
-        finally {
+        } finally {
             // Remove the module from the in-progress stack.
             array_pop($this->inProgress);
         }
@@ -107,10 +101,8 @@ class Registry
      */
     public function activateModules(array $module_configs): array
     {
-        // Add all module classes to the registry.
         $this->addModules(array_keys($module_configs));
 
-        // Execute the three activation passes.
         $this->registrationPass($module_configs);
         $this->extensionPass();
         $this->initializationPass($module_configs);
@@ -127,16 +119,8 @@ class Registry
      */
     private function registrationPass(array $module_configs): void
     {
-        // Prepare active modules configuration.
-        // For each module config, if it's an array, filter out any falsy feature flags.
-        $activeModules = array_filter(
-            array_map(
-                fn($features) => is_array($features) ? array_filter($features) : $features,
-                $module_configs
-            )
-        );
+        $activeModules = array_filter($module_configs);
 
-        // Register each active module.
         foreach (array_keys($activeModules) as $module) {
             $this->registerActiveModule($module);
         }
@@ -164,18 +148,14 @@ class Registry
     private function initializationPass(array $module_configs): void
     {
         foreach ($this->activeModuleInstances as $moduleName => $instance) {
-            // Call the module's init method.
             $instance->init();
 
             // Prepare the feature list for the module.
-            $featureList = $module_configs[$moduleName] ?? [];
-            if (! is_array($featureList) && count($instance::FEATURES)) {
-                $featureList = array_fill_keys($instance::FEATURES, true);
-            }
-
-            // Execute each feature method if it exists.
-            foreach ((array)$featureList as $feature => $status) {
-                if (method_exists($instance, $feature) && $status) {
+            $baseFeatures = array_fill_keys($this->valueToArray($instance::FEATURES ?? []), true);
+            $overrideFeatures = $this->valueToArray($module_configs[$moduleName] ?? []);
+            $featureList = array_merge($baseFeatures, $overrideFeatures);
+            foreach ($featureList as $feature => $status) {
+                if ($status && method_exists($instance, $feature)) {
                     call_user_func([$instance, $feature]);
                 }
             }
@@ -222,11 +202,15 @@ class Registry
             $this->addModules($dependency_classnames);
         }
 
-        // Merge the new module classnames and remove duplicates.
         $this->registeredModuleClassnames = array_unique(
             array_merge($this->registeredModuleClassnames, $valid_classnames)
         );
 
         return $this;
+    }
+
+    private function valueToArray($val): array
+    {
+        return is_array($val) && count($val) ? $val : [];
     }
 }

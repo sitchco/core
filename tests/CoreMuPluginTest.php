@@ -4,8 +4,8 @@ namespace Sitchco\Tests;
 
 use DI\DependencyException;
 use DI\NotFoundException;
-use Sitchco\Framework\Config\ModuleConfigLoader;
-use Sitchco\Framework\Core\Registry;
+use Sitchco\Framework\Core\ConfigRegistry;
+use Sitchco\Framework\Core\ModuleRegistry;
 use Sitchco\Tests\Support\ModuleTester;
 use Sitchco\Tests\Support\ParentModuleTester;
 use Sitchco\Tests\Support\PostTester;
@@ -15,14 +15,14 @@ class CoreMuPluginTest extends TestCase
 {
     function test_registers_and_activates_a_module()
     {
-        $loaded_config = $this->container->get(ModuleConfigLoader::class)->load();
+        $loaded_config = $this->container->get(ConfigRegistry::class)->load('modules');
         $this->assertEquals([
             'featureOne' => true,
             'featureTwo' => true,
             'featureThree' => false,
         ], $loaded_config[ModuleTester::class]);
         $this->assertArrayNotHasKey(ParentModuleTester::class, $loaded_config);
-        $full_feature_list = $this->container->get(Registry::class)->getModuleFeatures();
+        $full_feature_list = $this->container->get(ModuleRegistry::class)->getModuleFeatures();
         $this->assertEquals([
             'featureOne',
             'featureTwo',
@@ -36,7 +36,7 @@ class CoreMuPluginTest extends TestCase
      */
     function test_active_module_initialization()
     {
-        $active_modules = $this->container->get(Registry::class)->getActiveModules();
+        $active_modules = $this->container->get(ModuleRegistry::class)->getActiveModules();
         $ModuleInstance = $this->container->get(ModuleTester::class);
         $this->assertEquals($ModuleInstance, $active_modules[ModuleTester::class]);
         $this->assertArrayHasKey(ParentModuleTester::class, $active_modules);

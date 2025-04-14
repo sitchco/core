@@ -6,14 +6,13 @@ use DI\ContainerBuilder;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
-use Sitchco\Framework\Config\ContainerDefinitionConfigLoader;
-use Sitchco\Framework\Config\ModuleConfigLoader;
+use Sitchco\Framework\Core\ConfigRegistry;
+use Sitchco\Framework\Core\ModuleRegistry;
 use Sitchco\Utils\Hooks;
 use Timber\Loader;
 
 class Bootstrap
 {
-
     public function __construct()
     {
         add_action('after_setup_theme', [$this, 'initialize'], 5);
@@ -23,9 +22,9 @@ class Bootstrap
         }
 
         if (defined('WP_TESTS_CONFIG_FILE_PATH')) {
-
-            add_filter(Hooks::name('config_paths', 'modules'), function(array $paths) {
+            add_filter(Hooks::name(ConfigRegistry::PATH_FILTER_HOOK), function (array $paths) {
                 $paths[] = SITCHCO_CORE_FIXTURES_DIR;
+
                 return $paths;
             });
         }
@@ -38,10 +37,16 @@ class Bootstrap
      */
     public function initialize(): void
     {
-        $Builder = new ContainerBuilder();
-        $ContainerDefinitionLoader = new ContainerDefinitionConfigLoader($Builder);
-        $ContainerDefinitionLoader->load();
-        $GLOBALS['SitchcoContainer'] = $container = $Builder->build();
-        $container->get(ModuleConfigLoader::class)->load();
+        $configRegistry = new ConfigRegistry();
+        $builder = new ContainerBuilder();
+        $containerDefinitions = $configRegistry->load('container');
+        if (!empty($containerDefinitions)) {
+            $builder->addDefinitions($containerDefinitions);
+        }
+        $GLOBALS['SitchcoContainer'] = $container = $builder->build();
+        $container->set(ConfigRegistry::class, $configRegistry);
+        $moduleConfigs = $configRegistry->load('modules');
+        $registry = $container->get(ModuleRegistry::class);
+        $registry->activateModules($moduleConfigs);
     }
 }
