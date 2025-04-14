@@ -40,7 +40,7 @@ class ConfigRegistry
     private const CONFIG_FILENAME = 'sitchco.config.php';
 
     /** @var string Filter hook for adding additional config paths */
-    public const PATH_FILTER_HOOK = 'additional_config_paths';
+    public const PATH_FILTER_HOOK = 'config_paths';
 
     /**
      * Constructor.
