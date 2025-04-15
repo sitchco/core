@@ -3,6 +3,7 @@
 namespace Sitchco\Tests\Model;
 
 use Sitchco\Model\Image;
+use Sitchco\Support\CropDirection;
 use Sitchco\Tests\Support\TestCase;
 
 class ImageTest extends TestCase
@@ -78,6 +79,17 @@ class ImageTest extends TestCase
         );
     }
 
+    public function test_resize_image_crop_direction()
+    {
+        $image = Image::buildFromAttachmentId($this->attachment_id);
+        $image->resize(330, 330)->crop(CropDirection::LEFT);
+        $resized_src = str_replace('.jpg', '-330x330-c-left.jpg', $image->src());
+        $this->assertHTMLEquals(
+            '<img src="' . $resized_src . '" width="330" height="330" alt="Image Description" loading="lazy" />',
+            (string) $image
+        );
+    }
+
     public function test_dont_resize_larger_one_dimension()
     {
         $image = Image::buildFromAttachmentId($this->attachment_id);
@@ -94,6 +106,17 @@ class ImageTest extends TestCase
         $image->resize(1100, 825);
         $this->assertHTMLEquals(
             '<img src="' . $image->src() . '" width="1100" height="825" alt="Image Description" loading="lazy" />',
+            (string) $image
+        );
+    }
+
+    public function test_crop_larger_image()
+    {
+        $image = Image::buildFromAttachmentId($this->attachment_id);
+        $image->resize(1000, 1000);
+        $resized_src = str_replace('.jpg', '-660x660-c-center.jpg', $image->src());
+        $this->assertHTMLEquals(
+            '<img src="' . $resized_src . '" width="1000" height="1000" alt="Image Description" loading="lazy" />',
             (string) $image
         );
     }

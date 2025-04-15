@@ -83,6 +83,11 @@ class Image extends \Timber\Image
         return $this->resize_height ?: parent::height();
     }
 
+    public function resizeAspect(): float
+    {
+        return $this->resize_width / $this->resize_height;
+    }
+
     public function setWidth(int $resize_width): static
     {
         $this->resize_width = $resize_width;
@@ -113,38 +118,28 @@ class Image extends \Timber\Image
             return $image_data ? $image_data[0] : $this->src();
         }
 
-        $this->resetDimensionsForSameImage();
+        $this->fillMissingDimension();
 
-        // Use original image if no resizing set
-        if (!($this->resize_width || $this->resize_height)) {
+        // Use original image if resizing not needed
+        if (!$this->shouldResize()) {
             return $this->src();
         }
 
-        $this->fillDimensionsForLargerImage();
-
-        // Use original image if larger dimensions
-        if ($this->isLargerImage()) {
-            return $this->src();
-        }
-
-        // Set center crop if both dimensions set, otherwise reset crop
+        list($width, $height) = $this->getDimensionsForResizing();
         $crop = $this->getCropForResizing();
-
-        // Constrain any missing dimension so we always have both
-        $this->fillDimensionsForSmallerImage();
 
         // Hook to bypass filesystem resize: sitchco/image/resize
         $resized = apply_filters(Hooks::name('image/resize'), false, [
             'src' => $this->src(),
-            'width' => $this->resize_width,
-            'height' => $this->resize_height,
+            'width' => $width,
+            'height' => $height,
             'crop' => $crop,
         ]);
         if (false !== $resized) {
             return $resized;
         }
 
-        return ImageHelper::resize($this->src(), $this->resize_width, $this->resize_height, $crop->value);
+        return ImageHelper::resize($this->src(), $width, $height, $crop->value);
 
     }
 
@@ -171,7 +166,7 @@ class Image extends \Timber\Image
         return new static();
     }
 
-    public function isLargerImage(bool $in_both_dimensions = true): bool
+    public function isLargerSize(bool $in_both_dimensions = true): bool
     {
         $larger_width = $this->resize_width > parent::width();
         $larger_height = $this->resize_height > parent::height();
@@ -180,7 +175,7 @@ class Image extends \Timber\Image
             ($larger_width || $larger_height);
     }
 
-    public function isSmallerImage(bool $in_both_dimensions = true): bool
+    public function isSmallerSize(bool $in_both_dimensions = true): bool
     {
         $smaller_width = $this->resize_width < parent::width();
         $smaller_height = $this->resize_height < parent::height();
@@ -194,31 +189,39 @@ class Image extends \Timber\Image
         return isset($this->resize_width) && isset($this->resize_height);
     }
 
-    private function resetDimensionsForSameImage(): void
+    private function isSameSize(): bool
     {
-        if ($this->resize_width === parent::width() && $this->resize_height === parent::height()) {
-            $this->resize_width = $this->resize_height = null;
-        }
+        return $this->resize_width === parent::width() && $this->resize_height === parent::height();
     }
 
-    private function fillDimensionsForLargerImage(): void
+    private function getDimensionsForResizing(): array
     {
-        if ($this->hasBothDimensions() || !$this->isLargerImage(false)) {
+        $width = $this->resize_width;
+        $height = $this->resize_height;
+        // Larger image with one dimension, calculate missing width or height
+        if ($this->isLargerSize()) {
+            list($width, $height) = wp_constrain_dimensions(
+                $this->resize_width,
+                $this->resize_height,
+                parent::width(),
+                parent::height(),
+            );
+        }
+        return [$width, $height];
+    }
+
+    private function fillMissingDimension(): void
+    {
+        if ($this->hasBothDimensions() || $this->isSameSize()) {
             return;
         }
-        // Calculate missing width
-        if (!$this->resize_width) {
-            $this->resize_width = round(parent::width() * ($this->resize_height / parent::height()));
-        }
-        // Calculate missing height
-        if (!$this->resize_height) {
-            $this->resize_height = round(parent::height() * ($this->resize_width / parent::width()));
-        }
-    }
-
-    private function fillDimensionsForSmallerImage(): void
-    {
-        if ($this->hasBothDimensions()) {
+        if ($this->isLargerSize(false)) {
+            if (!$this->resize_width) {
+                $this->resize_width = round(parent::width() * ($this->resize_height / parent::height()));
+            }
+            if (!$this->resize_height) {
+                $this->resize_height = round(parent::height() * ($this->resize_width / parent::width()));
+            }
             return;
         }
         list($this->resize_width, $this->resize_height) = wp_constrain_dimensions(
@@ -231,13 +234,23 @@ class Image extends \Timber\Image
 
     private function getCropForResizing(): CropDirection
     {
-        if (!$this->hasBothDimensions()) {
-            return CropDirection::NONE;
-        }
-        // Don't crop if same aspect ratio
-        if ($this->resize_width / $this->resize_height == $this->aspect()) {
+        if ($this->resizeAspect() == $this->aspect()) {
             return CropDirection::NONE;
         }
         return $this->crop === CropDirection::NONE ? CropDirection::CENTER : $this->crop;
     }
+
+    private function shouldResize(): bool
+    {
+        // same size image
+        if ($this->isSameSize()) {
+            return false;
+        }
+        $crop = $this->getCropForResizing();
+        if ($this->isLargerSize() && $crop === CropDirection::NONE) {
+            return false;
+        }
+        return true;
+    }
+
 }
