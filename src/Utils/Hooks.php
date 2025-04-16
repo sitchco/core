@@ -20,7 +20,12 @@ class Hooks
      */
     public static function name(string ...$parts): string
     {
-        return implode('/', array_filter([self::ROOT, ...$parts]));
+        return static::join(self::ROOT, ...$parts);
+    }
+
+    public static function join(string ...$parts): string
+    {
+        return implode('/', array_filter($parts));
     }
 
     public static function callOrAddAction(string $hook_name, callable $callback, int $priority = 10, ...$args): void

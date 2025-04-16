@@ -23,7 +23,7 @@ trait HasHooks
      * @param string ...$name_parts
      * @return string
      */
-    protected static function hookName(...$name_parts): string
+    public static function hookName(...$name_parts): string
     {
         $prefix = defined('static::HOOK_PREFIX') ? static::HOOK_PREFIX : '';
         return Hooks::name($prefix, static::HOOK_NAME, ...$name_parts);
