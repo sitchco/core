@@ -1,0 +1,13 @@
+{
+    "name": "@sitchco/prettier-config",
+    "version": "1.0.0",
+    "description": "Shared Prettier config for sitchco projects",
+    "main": "index.json",
+    "license": "ISC",
+    "publishConfig": {
+        "access": "public"
+    },
+    "dependencies": {
+        "prettier": "^3.5.3"
+    }
+}
