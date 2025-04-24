@@ -12,13 +12,13 @@ use Sitchco\Utils\Hooks;
 
 class SavePostQueueEvent extends BackgroundQueueEvent
 {
-    const HOOK_NAME = 'after_save_post';
+    const HOOK_SUFFIX = 'after_save_post';
 
 
     public function init(): void
     {
         add_action('wp_after_insert_post', [$this, 'onSavePost'], 10, 2);
-        add_action(Hooks::name(BackgroundActionQueue::HOOK_NAME, 'bulk_posts'), [$this, 'onBulkPost']);
+        add_action(Hooks::name(BackgroundActionQueue::HOOK_SUFFIX, 'bulk_posts'), [$this, 'onBulkPost']);
     }
     public function onSavePost(int $post_id, \WP_Post $post): void
     {

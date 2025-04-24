@@ -2,9 +2,9 @@
 
 namespace Sitchco\Integration\BackgroundProcessing;
 
-use DI\Container;
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Events\SavePostQueueEvent;
+use Sitchco\Support\HookName;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -20,14 +20,14 @@ use Sitchco\Utils\Hooks;
  */
 class BackgroundActionQueue extends \WP_Background_Process
 {
-    public const HOOK_NAME = 'background_queue';
+    public const HOOK_SUFFIX = 'background_queue';
 
-    protected $action = self::HOOK_NAME;
+    protected $action = self::HOOK_SUFFIX;
 
     /**
      * @var string
      */
-    protected $prefix = Hooks::ROOT;
+    protected $prefix = HookName::ROOT;
 
     protected array|\WP_Error $dispatch_response;
 
@@ -60,11 +60,11 @@ class BackgroundActionQueue extends \WP_Background_Process
      */
     public function queueAction(string $action, array $args = [], array $sub_actions = []): static
     {
-        if (!has_action(Hooks::name(static::HOOK_NAME, $action))) {
+        if (!has_action(Hooks::name(static::HOOK_SUFFIX, $action))) {
             return $this;
         }
         foreach ($sub_actions as $sub_action) {
-            $this->queueAction(Hooks::join(static::HOOK_NAME, $sub_action), $args);
+            $this->queueAction(HookName::join(static::HOOK_SUFFIX, $sub_action), $args);
         }
         return parent::push_to_queue(compact('action', 'args'));
     }
@@ -79,7 +79,7 @@ class BackgroundActionQueue extends \WP_Background_Process
      */
     public function addTask(string $action, callable $task_callback, int $priority = 10): void
     {
-        add_action(Hooks::name(static::HOOK_NAME, $action), $task_callback, $priority);
+        add_action(Hooks::name(static::HOOK_SUFFIX, $action), $task_callback, $priority);
     }
 
 
@@ -99,7 +99,7 @@ class BackgroundActionQueue extends \WP_Background_Process
             $posts = get_posts($query);
             $this->addTask($task_action, $task_callback, $priority);
             foreach ($posts as $post) {
-                do_action(Hooks::name(static::HOOK_NAME, 'bulk_posts'), $post);
+                do_action(Hooks::name(static::HOOK_SUFFIX, 'bulk_posts'), $post);
             }
         });
     }
@@ -112,7 +112,7 @@ class BackgroundActionQueue extends \WP_Background_Process
     {
         $this->addBulkPostsTask(
             SavePermalinksRequestEvent::hookName(),
-            SavePostQueueEvent::HOOK_NAME,
+            SavePostQueueEvent::HOOK_SUFFIX,
             $task_callback,
             $priority,
             $query_args
@@ -132,7 +132,7 @@ class BackgroundActionQueue extends \WP_Background_Process
     protected function task($item)
     {
         // Hook: sitchco/background_queue/{action}
-        do_action(Hooks::name(static::HOOK_NAME, $item['action']), $item['args']);
+        do_action(Hooks::name(static::HOOK_SUFFIX, $item['action']), $item['args']);
         return false;
     }
 

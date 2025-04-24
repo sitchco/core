@@ -12,7 +12,7 @@ abstract class BackgroundQueueEvent
 {
     use HasHooks;
 
-    const HOOK_PREFIX = BackgroundActionQueue::HOOK_NAME;
+    const HOOK_PREFIX = BackgroundActionQueue::HOOK_SUFFIX;
 
     protected BackgroundActionQueue $Queue;
 
@@ -23,7 +23,7 @@ abstract class BackgroundQueueEvent
 
     protected function enqueue(array $args, array $sub_actions = []): void
     {
-        $this->Queue->queueAction(static::HOOK_NAME, $args, $sub_actions);
+        $this->Queue->queueAction(static::HOOK_SUFFIX, $args, $sub_actions);
     }
 
     abstract public function init();

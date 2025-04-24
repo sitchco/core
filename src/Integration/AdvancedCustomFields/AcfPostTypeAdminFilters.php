@@ -19,7 +19,7 @@ class AcfPostTypeAdminFilters extends Module
 {
     protected AcfSettings $settings;
 
-    const HOOK_NAME = 'acf_post_type_admin_filters';
+    const HOOK_SUFFIX = 'acf_post_type_admin_filters';
 
     const DEPENDENCIES = [
         AcfPostTypeAdminColumns::class,

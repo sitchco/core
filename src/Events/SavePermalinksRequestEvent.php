@@ -3,6 +3,7 @@
 namespace Sitchco\Events;
 
 use Sitchco\Integration\BackgroundProcessing\BackgroundRequestEvent;
+use Sitchco\Support\HookName;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -23,7 +24,7 @@ use Sitchco\Utils\Hooks;
 
 class SavePermalinksRequestEvent extends BackgroundRequestEvent
 {
-    const HOOK_NAME = 'after_save_permalinks';
+    const HOOK_SUFFIX = 'after_save_permalinks';
 
     public function init(): void
     {

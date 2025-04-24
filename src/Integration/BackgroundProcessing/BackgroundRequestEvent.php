@@ -3,7 +3,7 @@
 namespace Sitchco\Integration\BackgroundProcessing;
 
 use Sitchco\Support\HasHooks;
-use Sitchco\Utils\Hooks;
+use Sitchco\Support\HookName;
 
 /**
  *
@@ -26,7 +26,7 @@ abstract class BackgroundRequestEvent extends \WP_Async_Request
     /**
      * @var string
      */
-    protected $prefix = Hooks::ROOT;
+    protected $prefix = HookName::ROOT;
 
     const HOOK_PREFIX = 'background_event';
 
@@ -34,7 +34,7 @@ abstract class BackgroundRequestEvent extends \WP_Async_Request
 
     public function __construct()
     {
-        $this->action = static::HOOK_NAME;
+        $this->action = static::HOOK_SUFFIX;
         parent::__construct();
     }
 

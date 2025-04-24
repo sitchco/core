@@ -2,6 +2,8 @@
 
 namespace Sitchco\Utils;
 
+use Sitchco\Support\HookName;
+
 /**
  * Class Hooks
  * @package Sitchco\Utils
@@ -16,16 +18,11 @@ class Hooks
      *
      * @param string ...$parts Additional segments to append to the root namespace.
      *
-     * @return string The fully qualified hook name.
+     * @return string The fully qualified hook name value object.
      */
     public static function name(string ...$parts): string
     {
-        return static::join(self::ROOT, ...$parts);
-    }
-
-    public static function join(string ...$parts): string
-    {
-        return implode('/', array_filter($parts));
+        return (new HookName( ...$parts))->value();
     }
 
     public static function callOrAddAction(string $hook_name, callable $callback, int $priority = 10, ...$args): void

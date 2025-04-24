@@ -16,7 +16,7 @@ class AcfPostTypeQueries extends Module
 {
     protected AcfSettings $settings;
 
-    const HOOK_NAME = 'acf_post_type_queries';
+    const HOOK_SUFFIX = 'acf_post_type_queries';
 
     public function __construct(AcfSettings $settings)
     {
