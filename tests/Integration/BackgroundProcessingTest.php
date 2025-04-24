@@ -58,16 +58,50 @@ class BackgroundProcessingTest extends TestCase
         });
         $post = $this->factory()->post->create_and_get();
         $this->assertEquals([
-//            ['action' => SavePostQueueEvent::HOOK_NAME . '/post', 'args' => ['post_id' => $post->ID]],
             ['action' => SavePostQueueEvent::HOOK_NAME, 'args' => ['post_id' => $post->ID]],
         ], $Queue->getQueuedItems());
+        $url = $this->saveQueue();
+        $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_NAME);
+        $Queue->maybe_handle();
+        $this->assertEquals($post->ID, $processed);
+    }
+
+    function test_save_permalinks_bulk_save_posts_task()
+    {
+        $event = $this->container->get(SavePermalinksRequestEvent::class);
+        $event->init();
+        $this->container->get(SavePostQueueEvent::class)->init();
+        $post_ids = $this->factory()->post->create_many(3);
+        $Queue = $this->container->get(BackgroundActionQueue::class);
+        $processed = [];
+        $Queue->addSavePermalinksBulkSavePostsTask(function(array $args) use (&$processed) {
+            $processed[] = $args['post_id'];
+        });
+        // Process save permalinks
+        do_action('sitchco/after_save_permalinks');
+        $url = $event->getDispatchResponse()['url'];
+        $this->assertStringContainsString('admin-ajax.php?action=sitchco_after_save_permalinks', $url);
+        $this->setupAjaxHandle($url, SavePermalinksRequestEvent::HOOK_NAME);
+        $event->maybe_handle();
+        $this->assertEquals([
+            ['action' => SavePostQueueEvent::HOOK_NAME, 'args' => ['post_id' => $post_ids[0]]],
+            ['action' => SavePostQueueEvent::HOOK_NAME, 'args' => ['post_id' => $post_ids[1]]],
+            ['action' => SavePostQueueEvent::HOOK_NAME, 'args' => ['post_id' => $post_ids[2]]],
+        ], $Queue->getQueuedItems());
+        $url = $this->saveQueue();
+        $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_NAME);
+        $Queue->maybe_handle();
+        $this->assertEquals($post_ids, $processed);
+    }
+
+    protected function saveQueue()
+    {
+        $Queue = $this->container->get(BackgroundActionQueue::class);
         do_action(Hooks::name('save_background_queue'));
         $this->assertFalse($Queue->hasQueuedItems());
         $url = $Queue->getDispatchResponse()['url'];
         $this->assertStringContainsString('admin-ajax.php?action=sitchco_background_queue', $url);
-        $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_NAME);
-        $Queue->maybe_handle();
-        $this->assertEquals($post->ID, $processed);
+        return $url;
     }
 
     protected function setupAjaxHandle(string $url, string $identifier): void

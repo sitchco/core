@@ -2,6 +2,9 @@
 
 namespace Sitchco\Integration\BackgroundProcessing;
 
+use DI\Container;
+use Sitchco\Events\SavePermalinksRequestEvent;
+use Sitchco\Events\SavePostQueueEvent;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -72,12 +75,48 @@ class BackgroundActionQueue extends \WP_Background_Process
      * @param string $action
      * @param callable $task_callback
      * @param int $priority
-     * @param int $accepted_args
      * @return void
      */
     public function addTask(string $action, callable $task_callback, int $priority = 10): void
     {
         add_action(Hooks::name(static::HOOK_NAME, $action), $task_callback, $priority);
+    }
+
+
+    public function addBulkPostsTask(
+        string $trigger_action,
+        string $task_action,
+        callable $task_callback,
+        int $priority = 10,
+        array $query_args = []
+    ): void
+    {
+        add_action($trigger_action, function() use ($query_args, $task_action, $task_callback, $priority) {
+            $query = wp_parse_args($query_args, [
+                'post_type' => 'post',
+                'posts_per_page' => -1,
+            ]);
+            $posts = get_posts($query);
+            $this->addTask($task_action, $task_callback, $priority);
+            foreach ($posts as $post) {
+                do_action(Hooks::name(static::HOOK_NAME, 'bulk_posts'), $post);
+            }
+        });
+    }
+
+    public function addSavePermalinksBulkSavePostsTask(
+        callable $task_callback,
+        int $priority = 10,
+        array $query_args = []
+    ): void
+    {
+        $this->addBulkPostsTask(
+            SavePermalinksRequestEvent::hookName(),
+            SavePostQueueEvent::HOOK_NAME,
+            $task_callback,
+            $priority,
+            $query_args
+        );
     }
 
     public function hasQueuedItems(): bool

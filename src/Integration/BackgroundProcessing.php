@@ -18,6 +18,7 @@ class BackgroundProcessing extends Module
     public const FEATURES = [
         'savePermalinksRequestEvent',
         'savePostQueueEvent',
+        'processPostsAfterSavePermalinks'
     ];
 
     protected Container $Container;
