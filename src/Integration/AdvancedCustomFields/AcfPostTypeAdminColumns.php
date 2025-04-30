@@ -17,7 +17,7 @@ class AcfPostTypeAdminColumns extends Module
 {
     protected AcfSettings $settings;
 
-    const HOOK_NAME = 'acf_post_type_admin_columns';
+    const HOOK_SUFFIX = 'acf_post_type_admin_columns';
 
     public function __construct(AcfSettings $settings)
     {

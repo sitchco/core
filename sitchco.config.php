@@ -6,7 +6,7 @@ use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminFilters;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Integration\AmazonCloudfront;
-use Sitchco\Integration\BackgroundEventManager;
+use Sitchco\Integration\BackgroundProcessing;
 use Sitchco\Integration\Imagify;
 use Sitchco\Integration\Stream;
 use Sitchco\Integration\Wordpress\AllowedBlocksResolver;
@@ -24,7 +24,7 @@ return [
     'modules' => [
         Cleanup::class,
         SearchRewrite::class,
-        BackgroundEventManager::class,
+        BackgroundProcessing::class,
         PostModel::class,
         TermModel::class,
         ImageModel::class,

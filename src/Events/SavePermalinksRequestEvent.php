@@ -2,6 +2,10 @@
 
 namespace Sitchco\Events;
 
+use Sitchco\Integration\BackgroundProcessing\BackgroundRequestEvent;
+use Sitchco\Support\HookName;
+use Sitchco\Utils\Hooks;
+
 /**
  * Class SavePermalinksAsyncHook
  * This class provides an asynchronous hook for handling permalink saves in WordPress. It extends the
@@ -18,21 +22,12 @@ namespace Sitchco\Events;
  * @package Sitchco\Events
  */
 
-class SavePermalinksAsyncHook extends BackgroundEvent
+class SavePermalinksRequestEvent extends BackgroundRequestEvent
 {
-    const HOOK_NAME = 'after_save_permalinks';
+    const HOOK_SUFFIX = 'after_save_permalinks';
 
-    protected $action = 'save_permalinks';
-
-    public function __construct()
+    public function init(): void
     {
-        parent::__construct();
-        add_action('current_screen', [$this, 'onSavePermalinks']);
-    }
-    public function onSavePermalinks($screen): void
-    {
-        if ($screen->id === 'options-permalink' && ! empty($_POST['permalink_structure'])) {
-            $this->dispatch();
-        }
+        add_action(Hooks::name('after_save_permalinks'), [$this, 'dispatchIfHooked']);
     }
 }
