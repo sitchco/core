@@ -7,9 +7,9 @@ use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Integration\AmazonCloudfront;
 use Sitchco\Integration\BackgroundProcessing;
+use Sitchco\Integration\BlockManager;
 use Sitchco\Integration\Imagify;
 use Sitchco\Integration\Stream;
-use Sitchco\Integration\Wordpress\AllowedBlocksResolver;
 use Sitchco\Integration\Wordpress\Cleanup;
 use Sitchco\Integration\Wordpress\SearchRewrite;
 use Sitchco\Integration\Wordpress\SvgUpload;
@@ -39,6 +39,7 @@ return [
         Flash::class,
         AmazonCloudfront::class,
         SvgUpload::class,
-        AllowedBlocksResolver::class,
-    ]
+        BlockManager::class
+    ],
+    'disallowedBlocks' => [],
 ];

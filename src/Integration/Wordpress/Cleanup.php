@@ -284,6 +284,12 @@ class Cleanup extends Module
      */
     public function disableDefaultBlockPatterns(): void
     {
+        if (defined('BLOCK_MANAGER_OPTION')) {
+            add_filter('gbm_disabled_patterns', fn() => ['gbm/core-patterns', 'gbm/remote-patterns']);
+
+            return;
+        }
+
         add_action('init', function () {
             // Remove 95% of patterns (everything but posts)
             add_filter('should_load_remote_block_patterns', '__return_false');
