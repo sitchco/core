@@ -21,6 +21,7 @@ class BlockConfig extends Module
     {
         add_filter('gbm_disabled_blocks', [$this, 'filterDisabledBlocks']);
         add_filter('allowed_block_types_all', [$this, 'configureCustomVisibility'], 10, 2);
+        add_filter('block_categories_all', array($this, 'blockCategories'));
     }
 
     public function filterDisabledBlocks(): array
@@ -85,5 +86,29 @@ class BlockConfig extends Module
 
         // if $allowedBlocks is false (none allowed), keep it as-is
         return $allowedBlocks;
+    }
+    public function blockCategories($categories)
+    {
+        $sitchco_category = [
+            'slug' => 'sitchco',
+            'title' => 'Situation',
+        ];
+
+        $new_categories = [];
+        $inserted = false;
+
+        foreach ($categories as $category) {
+            $new_categories[] = $category;
+            if ($category['slug'] === 'text') {
+                $new_categories[] = $sitchco_category;
+                $inserted = true;
+            }
+        }
+
+        if (! $inserted) {
+            array_unshift($new_categories, $sitchco_category);
+        }
+
+        return $new_categories;
     }
 }
