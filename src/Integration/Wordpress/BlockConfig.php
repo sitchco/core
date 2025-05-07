@@ -35,7 +35,8 @@ class BlockConfig extends Module
         array|bool $allowedBlocks,
         WP_Block_Editor_Context $blockEditorContext
     ): array|bool {
-        $postType = $blockEditorContext->post->post_type ?? false;
+        $postType = $blockEditorContext->post->post_type ?? ($blockEditorContext->name === 'core/edit-site' ? 'patterns' : false);
+
         if (! $postType) {
             return $allowedBlocks;
         }
@@ -87,6 +88,7 @@ class BlockConfig extends Module
         // if $allowedBlocks is false (none allowed), keep it as-is
         return $allowedBlocks;
     }
+
     public function blockCategories($categories)
     {
         $sitchco_category = [
