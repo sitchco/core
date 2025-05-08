@@ -9,6 +9,11 @@ use WP_Block_Type_Registry;
 
 class BlockConfig extends Module
 {
+    const FEATURES = [
+        'enableBlockFilter',
+        'postTypeBlockVisibility',
+        'registerBlockCategory',
+    ];
     /**
      * @param ConfigRegistry $configRegistry Used to load block configuration settings
      */
@@ -17,10 +22,18 @@ class BlockConfig extends Module
     ) {
     }
 
-    public function init(): void
+    public function enableBlockFilter(): void
     {
         add_filter('gbm_disabled_blocks', [$this, 'filterDisabledBlocks']);
+    }
+
+    public function postTypeBlockVisibility(): void
+    {
         add_filter('allowed_block_types_all', [$this, 'configureCustomVisibility'], 10, 2);
+    }
+
+    public function registerBlockCategory(): void
+    {
         add_filter('block_categories_all', array($this, 'blockCategories'));
     }
 
