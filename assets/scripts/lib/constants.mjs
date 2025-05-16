@@ -1,3 +1,4 @@
+export const NAMESPACE = 'sitchco'
 export const INIT = 'init';
 export const REGISTER = 'initRegister';
 export const READY = 'initReady';

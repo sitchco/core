@@ -1,7 +1,7 @@
 import * as constants from './lib/constants.mjs';
 import * as util from './lib/util.mjs';
 import * as viewport from './lib/viewport.mjs';
-import hooks from './lib/hooks.mjs';
+import * as hooks from './lib/hooks.mjs';
 import { loadScript, registerScript } from './lib/script-registration.js'
 import { hashState, registerHashStateActions } from './lib/hash-state.mjs'
 import { registerLayoutActions, updateLayout } from './lib/event-actions.mjs'
