@@ -14,6 +14,7 @@ class BlockConfig extends Module
         'postTypeBlockVisibility',
         'registerBlockCategory',
     ];
+
     /**
      * @param ConfigRegistry $configRegistry Used to load block configuration settings
      */
@@ -48,11 +49,9 @@ class BlockConfig extends Module
         array|bool $allowedBlocks,
         WP_Block_Editor_Context $blockEditorContext
     ): array|bool {
-        $postType = $blockEditorContext->post->post_type ?? ($blockEditorContext->name === 'core/edit-site' ? 'patterns' : false);
+        $postType = $blockEditorContext->post->post_type ?? false;
+        $context = $blockEditorContext->name;
 
-        if (! $postType) {
-            return $allowedBlocks;
-        }
         $blockSettings = $this->configRegistry->load('disallowedBlocks');
         $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
 
@@ -64,20 +63,20 @@ class BlockConfig extends Module
 
         $filtered = array_filter(
             $registeredBlocks,
-            function (string $blockName) use ($customBlocks, $postType) {
-                // no custom rule → leave it in
+            function (string $blockName) use ($customBlocks, $postType, $context) {
                 if (! isset($customBlocks[$blockName])) {
                     return true;
                 }
 
                 $cfg = $customBlocks[$blockName];
 
-                // explicit allow list for this post type
-                if (isset($cfg['allowPostType'])) {
+                if ($postType && isset($cfg['allowPostType'])) {
                     return (bool)($cfg['allowPostType'][$postType] ?? false);
                 }
+                if ($context && isset($cfg['allowContext'])) {
+                    return (bool)($cfg['allowContext'][$context] ?? false);
+                }
 
-                // no post-type rule → leave it in
                 return true;
             }
         );
