@@ -323,20 +323,137 @@ class Cleanup extends Module
      *
      * @return array
      */
-    public function cleanBodyClass(array $classes, array $disallowedClasses = ['page-template-default']): array
+    public function cleanBodyClass(array $classes): array
     {
-        if (is_single() || (is_page() && !is_front_page())) {
-            $slug = basename(get_permalink());
-            if (!in_array($slug, $classes, true)) {
-                $classes[] = $slug;
+        global $wp_query;
+
+        $exclude = ['home', 'blog', 'privacy-policy', 'page-template-default'];
+
+        // ——————————————————————————————————————————————————————————————
+        // Singular/ID-based classes (numeric IDs change across environments)
+        if (is_singular()) {
+            $post = $wp_query->get_queried_object();
+            $post_id = $post->ID;
+            $exclude[] = $post->post_type;
+            $exclude[] = "{$post->post_type}-template-default";
+            $classes[] = "single-{$post->post_type}";
+
+            // Post/page/attachment ID
+            $exclude[] = 'postid-' . $post_id;
+            if (is_attachment()) {
+                $exclude[] = 'attachmentid-' . $post_id;
+            }
+            if (is_page()) {
+                $exclude[] = 'page-id-' . $post_id;
+
+                // Parent-page ID
+                if ($post->post_parent) {
+                    $exclude[] = 'parent-pageid-' . $post->post_parent;
+                }
             }
         }
 
-        if (is_front_page()) {
-            $disallowedClasses[] = 'page-id-' . get_option('page_on_front');
+        // ——————————————————————————————————————————————————————————————
+        // Author‐specific (user nicename & ID)
+        if (is_author()) {
+            $author = $wp_query->get_queried_object();
+            if (isset($author->user_nicename)) {
+                $exclude[] = 'author-' . sanitize_html_class($author->user_nicename, $author->ID);
+                $exclude[] = 'author-' . $author->ID;
+            }
         }
 
-        return array_values(array_diff($classes, $disallowedClasses));
+        // ——————————————————————————————————————————————————————————————
+        // Category slug & ID
+        if (is_category()) {
+            $cat = $wp_query->get_queried_object();
+            if (isset($cat->term_id)) {
+                $slug = sanitize_html_class($cat->slug, $cat->term_id);
+                if (is_numeric($slug) || ! trim($slug, '-')) {
+                    $slug = $cat->term_id;
+                }
+                $exclude[] = 'category-' . $slug;
+                $exclude[] = 'category-' . $cat->term_id;
+            }
+        }
+
+        // ——————————————————————————————————————————————————————————————
+        // Tag slug & ID
+        if (is_tag()) {
+            $tag = $wp_query->get_queried_object();
+            if (isset($tag->term_id)) {
+                $slug = sanitize_html_class($tag->slug, $tag->term_id);
+                if (is_numeric($slug) || ! trim($slug, '-')) {
+                    $slug = $tag->term_id;
+                }
+                $exclude[] = 'tag-' . $slug;
+                $exclude[] = 'tag-' . $tag->term_id;
+            }
+        }
+
+        // ——————————————————————————————————————————————————————————————
+        // Taxonomy term slug & ID
+        if (is_tax()) {
+            $term = $wp_query->get_queried_object();
+            if (isset($term->term_id)) {
+                $slug = sanitize_html_class($term->slug, $term->term_id);
+                if (is_numeric($slug) || ! trim($slug, '-')) {
+                    $slug = $term->term_id;
+                }
+                $exclude[] = 'term-' . $slug;
+                $exclude[] = 'term-' . $term->term_id;
+            }
+        }
+
+        // ——————————————————————————————————————————————————————————————
+        // Paginated views by page number (avoid styling “page 5” etc. differently)
+        $page = $wp_query->get('page') ?: $wp_query->get('paged');
+        if ($page && $page > 1 && ! is_404()) {
+            $exclude[] = 'paged-' . $page;
+
+            if (is_single()) {
+                $exclude[] = 'single-paged-' . $page;
+            } elseif (is_page()) {
+                $exclude[] = 'page-paged-' . $page;
+            } elseif (is_category()) {
+                $exclude[] = 'category-paged-' . $page;
+            } elseif (is_tag()) {
+                $exclude[] = 'tag-paged-' . $page;
+            } elseif (is_date()) {
+                $exclude[] = 'date-paged-' . $page;
+            } elseif (is_author()) {
+                $exclude[] = 'author-paged-' . $page;
+            } elseif (is_search()) {
+                $exclude[] = 'search-paged-' . $page;
+            } elseif (is_post_type_archive()) {
+                $exclude[] = 'post-type-paged-' . $page;
+            }
+        }
+
+        if (
+            current_theme_supports('custom-background')
+            && (
+                get_background_color() !== get_theme_support('custom-background', 'default-color')
+                || get_background_image()
+            )
+        ) {
+            $exclude[] = 'custom-background';
+        }
+        if (has_custom_logo()) {
+            $exclude[] = 'wp-custom-logo';
+        }
+
+        // ——————————————————————————————————————————————————————————————
+        // Theme directory names (can change on rename/switch)
+        $exclude[] = 'wp-theme-' . sanitize_html_class(get_template());
+        if (is_child_theme()) {
+            $exclude[] = 'wp-child-theme-' . sanitize_html_class(get_stylesheet());
+        }
+
+        // ——————————————————————————————————————————————————————————————
+        // Finally, strip out any class in our exclusion array:
+
+        return array_values(array_diff($classes, $exclude));
     }
 
     /**
