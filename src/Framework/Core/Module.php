@@ -40,26 +40,132 @@ abstract class Module
      * @var array<string>
      */
     public const POST_CLASSES = [];
-    protected string $basePath;
+
+    private ?string $modulePath = null;
+    private ?string $moduleRoot = null;
 
     /**
      * Default initialization feature that is always called when module is activated
      * @return void
      */
-    public function init() {}
-
-    public function getModuleBasePath(): ?string
+    public function init()
     {
-        if (empty($this->basePath)) {
-            $reflector = new \ReflectionClass($this);
-            $this->basePath = trailingslashit(dirname($reflector->getFileName()));
-        }
-
-        return $this->basePath;
     }
 
-    public function getAcfJsonPaths(): array
+    /**
+     * Filesystem path to this module's directory or subpath.
+     */
+    public function path(string $relative = ''): string
     {
-        return array_filter([realpath($this->getModuleBasePath() . 'acf-json')]);
+        $base = $this->modulePath ??= $this->discoverModulePath();
+
+        return $this->join($base, $relative);
+    }
+
+    /**
+     * URL to this module's directory or asset.
+     */
+    public function url(string $relative = ''): string
+    {
+        $absolute = $this->path($relative);
+        $relativeToContent = str_replace(
+            wp_normalize_path(WP_CONTENT_DIR),
+            '',
+            wp_normalize_path($absolute)
+        );
+
+        return $this->trail(content_url($relativeToContent));
+    }
+
+    /**
+     * Locate the logical root of the module (folder with sitchco.config.php).
+     */
+    public function root(string $relative = ''): string
+    {
+        $base = $this->moduleRoot ??= $this->discoverModuleRoot();
+
+        return $this->join($base, $relative);
+    }
+
+    /**
+     * URL for the module root or subpath.
+     */
+    public function rootUrl(string $relative = ''): string
+    {
+        $absolute = $this->root($relative);
+        $relativeToContent = str_replace(
+            wp_normalize_path(WP_CONTENT_DIR),
+            '',
+            wp_normalize_path($absolute)
+        );
+
+        return $this->trail(content_url($relativeToContent));
+    }
+
+    /**
+     * Return the ACF JSON sync directory, if it exists.
+     */
+    public function getAcfJsonPaths(): ?array
+    {
+        $path = $this->path('acf-json');
+
+        return is_dir($path) ? [$path] : [];
+    }
+
+    /**
+     * Discover where this class file lives.
+     */
+    private function discoverModulePath(): string
+    {
+        $reflector = new \ReflectionClass($this);
+
+        return $this->trail(
+            wp_normalize_path(dirname($reflector->getFileName()))
+        );
+    }
+
+    /**
+     * Walk upwards to find the module root (sitchco.config.php) or fallback.
+     */
+    private function discoverModuleRoot(): string
+    {
+        $path = $this->path();
+        $contentRoot = wp_normalize_path(WP_CONTENT_DIR);
+
+        while (is_dir($path)) {
+            if (file_exists($path . DIRECTORY_SEPARATOR . SITCHCO_CONFIG_FILENAME)) {
+                return $this->trail($path);
+            }
+
+            if ($path === $contentRoot || dirname($path) === $path) {
+                break;
+            }
+
+            $path = dirname($path);
+        }
+
+        return $this->trail($this->path());
+    }
+
+    /**
+     * Helper to merge base path with relative and ensure trailing slash.
+     */
+    private function join(string $base, string $relative): string
+    {
+        if ($relative === '') {
+            return $this->trail($base);
+        }
+
+        return wp_normalize_path(
+            $this->trail($base) . ltrim($relative, '/')
+        );
+    }
+
+    /**
+     * Ensure a trailing slash on paths/URLs.
+     */
+    private function trail(string $path): string
+    {
+        return trailingslashit($path);
     }
 }

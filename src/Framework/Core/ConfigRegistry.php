@@ -36,9 +36,6 @@ class ConfigRegistry
     /** @var string Cache key for the merged configuration */
     private const CACHE_KEY = 'sitchco_config';
 
-    /** @var string The standard filename for the configuration file */
-    private const CONFIG_FILENAME = 'sitchco.config.php';
-
     /** @var string Filter hook for adding additional config paths */
     public const PATH_FILTER_HOOK = 'config_paths';
 
@@ -167,7 +164,7 @@ class ConfigRegistry
         $foundAnyFile = false;
 
         foreach ($this->basePaths as $path) {
-            $filePath = $path . self::CONFIG_FILENAME;
+            $filePath = $path . SITCHCO_CONFIG_FILENAME;
             if (file_exists($filePath) && is_readable($filePath)) {
                 $foundAnyFile = true;
                 $configData = null;

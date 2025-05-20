@@ -35,12 +35,7 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     public function init(): void
     {
         foreach ($this->modules as $module) {
-            // Ensure the module provides its base path.
-            if (!method_exists($module, 'getModuleBasePath')) {
-                continue;
-            }
-
-            $basePath = $module->getModuleBasePath();
+            $basePath = $module->path();
             $blocksDir = $basePath . 'blocks/';
 
             // Skip modules without a blocks folder.

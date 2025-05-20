@@ -1,5 +1,6 @@
 <?php
 
+use Sitchco\Components\CoreBlocks\CoreBlockModifier;
 use Sitchco\Flash\Flash;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminColumns;
 use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminFilters;
@@ -39,7 +40,8 @@ return [
         Flash::class,
         AmazonCloudfront::class,
         SvgUpload::class,
-        BlockConfig::class
+        BlockConfig::class,
+        CoreBlockModifier::class
     ],
     'disallowedBlocks' => [],
 ];
