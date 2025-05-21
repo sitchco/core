@@ -6,8 +6,6 @@ use DI\ContainerBuilder;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
-use Sitchco\Framework\Core\ConfigRegistry;
-use Sitchco\Framework\Core\ModuleRegistry;
 use Sitchco\Utils\Hooks;
 use Timber\Loader;
 

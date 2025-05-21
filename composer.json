@@ -4,7 +4,7 @@
     "autoload": {
         "psr-4": {
             "Sitchco\\": "src",
-            "Sitchco\\Components\\": "components"
+            "Sitchco\\Modules\\": "modules"
         }
     },
     "autoload-dev": {

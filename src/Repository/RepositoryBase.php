@@ -5,7 +5,7 @@ namespace Sitchco\Repository;
 use InvalidArgumentException;
 use Sitchco\Collection;
 use Sitchco\Model\PostBase;
-use Sitchco\Repository\Support\Repository;
+use Sitchco\Support\Repository\Repository;
 use Timber\Post;
 use Timber\PostQuery;
 use Timber\Timber;

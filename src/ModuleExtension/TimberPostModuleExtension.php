@@ -2,7 +2,7 @@
 
 namespace Sitchco\ModuleExtension;
 
-use Sitchco\Framework\Core\Module;
+use Sitchco\Framework\Module;
 use Sitchco\Model\PostBase;
 use Sitchco\Utils\ArrayUtil;
 

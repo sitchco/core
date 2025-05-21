@@ -2,7 +2,7 @@
 
 namespace Sitchco\ModuleExtension;
 
-use Sitchco\Integration\AdvancedCustomFields\AcfJsonSupport;
+use Sitchco\Support\AcfJsonSupport;
 
 class AcfPathsModuleExtension implements ModuleExtension
 {

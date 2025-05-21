@@ -2,8 +2,7 @@
 
 namespace Sitchco\Events;
 
-use Sitchco\Integration\BackgroundProcessing\BackgroundRequestEvent;
-use Sitchco\Support\HookName;
+use Sitchco\BackgroundProcessing\BackgroundRequestEvent;
 use Sitchco\Utils\Hooks;
 
 /**

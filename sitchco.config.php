@@ -1,24 +1,24 @@
 <?php
 
-use Sitchco\Components\CoreBlocks\CoreBlockModifier;
-use Sitchco\Flash\Flash;
-use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminColumns;
-use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminFilters;
-use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeAdminSort;
-use Sitchco\Integration\AdvancedCustomFields\AcfPostTypeQueries;
-use Sitchco\Integration\AmazonCloudfront;
-use Sitchco\Integration\BackgroundProcessing;
-use Sitchco\Integration\Imagify;
-use Sitchco\Integration\Stream;
-use Sitchco\Integration\Wordpress\BlockConfig;
-use Sitchco\Integration\Wordpress\Cleanup;
-use Sitchco\Integration\Wordpress\SearchRewrite;
-use Sitchco\Integration\Wordpress\SvgUpload;
-use Sitchco\Integration\WPRocket;
-use Sitchco\Integration\YoastSEO;
-use Sitchco\Model\ImageModel;
-use Sitchco\Model\PostModel;
-use Sitchco\Model\TermModel;
+use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminColumns;
+use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminFilters;
+use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
+use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeQueries;
+use Sitchco\Modules\AmazonCloudfront;
+use Sitchco\Modules\BackgroundProcessing;
+use Sitchco\Modules\CoreBlocks\CoreBlockModifier;
+use Sitchco\Modules\Flash;
+use Sitchco\Modules\Imagify;
+use Sitchco\Modules\Model\ImageModel;
+use Sitchco\Modules\Model\PostModel;
+use Sitchco\Modules\Model\TermModel;
+use Sitchco\Modules\Stream;
+use Sitchco\Modules\Wordpress\BlockConfig;
+use Sitchco\Modules\Wordpress\Cleanup;
+use Sitchco\Modules\Wordpress\SearchRewrite;
+use Sitchco\Modules\Wordpress\SvgUpload;
+use Sitchco\Modules\WPRocket;
+use Sitchco\Modules\YoastSEO;
 
 return [
     'container' => [],

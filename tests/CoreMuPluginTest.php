@@ -4,8 +4,8 @@ namespace Sitchco\Tests;
 
 use DI\DependencyException;
 use DI\NotFoundException;
-use Sitchco\Framework\Core\ConfigRegistry;
-use Sitchco\Framework\Core\ModuleRegistry;
+use Sitchco\Framework\ConfigRegistry;
+use Sitchco\Framework\ModuleRegistry;
 use Sitchco\Tests\Support\ModuleTester;
 use Sitchco\Tests\Support\ParentModuleTester;
 use Sitchco\Tests\Support\PostTester;

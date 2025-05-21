@@ -2,8 +2,8 @@
 
 namespace Sitchco\Events;
 
-use Sitchco\Integration\BackgroundProcessing\BackgroundActionQueue;
-use Sitchco\Integration\BackgroundProcessing\BackgroundQueueEvent;
+use Sitchco\BackgroundProcessing\BackgroundActionQueue;
+use Sitchco\BackgroundProcessing\BackgroundQueueEvent;
 use Sitchco\Utils\Hooks;
 
 /**

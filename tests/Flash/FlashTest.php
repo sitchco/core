@@ -3,7 +3,7 @@
 namespace Sitchco\Tests\Flash;
 
 use Sitchco\Flash\AdminNotificationService;
-use Sitchco\Flash\Flash;
+use Sitchco\Modules\Flash;
 use Sitchco\Tests\Support\TestCase;
 
 /**
