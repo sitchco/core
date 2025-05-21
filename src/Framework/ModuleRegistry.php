@@ -13,7 +13,7 @@ use Sitchco\Utils\ArrayUtil;
 /**
  * Class ModuleRegistry
  * Manages the registration and activation of modules within the framework.
- * @package Sitchco\Framework\Core
+ * @package Sitchco\Framework\Module
  */
 class ModuleRegistry
 {
