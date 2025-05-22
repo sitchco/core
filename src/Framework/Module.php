@@ -2,6 +2,7 @@
 
 namespace Sitchco\Framework;
 
+use Sitchco\Support\FilePath;
 use Sitchco\Support\HasHooks;
 
 /**
@@ -41,8 +42,7 @@ abstract class Module
      */
     public const POST_CLASSES = [];
 
-    private ?string $modulePath = null;
-    private ?string $moduleRoot = null;
+    private ?FilePath $modulePath = null;
 
     /**
      * Default initialization feature that is always called when module is activated
@@ -55,11 +55,13 @@ abstract class Module
     /**
      * Filesystem path to this module's directory or subpath.
      */
-    public function path(string $relative = ''): string
+    public function path(string $relative = ''): FilePath
     {
-        $base = $this->modulePath ??= $this->discoverModulePath();
+        if (!isset($this->modulePath)) {
+            $this->modulePath = FilePath::createFromClassDir($this);
+        }
 
-        return $this->join($base, $relative);
+        return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
     /**
@@ -67,39 +69,17 @@ abstract class Module
      */
     public function url(string $relative = ''): string
     {
-        $absolute = $this->path($relative);
-        $relativeToContent = str_replace(
-            wp_normalize_path(WP_CONTENT_DIR),
-            '',
-            wp_normalize_path($absolute)
-        );
-
-        return $this->trail(content_url($relativeToContent));
+        return $this->path($relative)->url();
     }
 
-    /**
-     * Locate the logical root of the module (folder with sitchco.config.php).
-     */
-    public function root(string $relative = ''): string
+    protected function scriptUrl(string $relative): string
     {
-        $base = $this->moduleRoot ??= $this->discoverModuleRoot();
-
-        return $this->join($base, $relative);
+        return $this->path('assets/scripts')->append($relative)->url();
     }
 
-    /**
-     * URL for the module root or subpath.
-     */
-    public function rootUrl(string $relative = ''): string
+    protected function styleUrl(string $relative): string
     {
-        $absolute = $this->root($relative);
-        $relativeToContent = str_replace(
-            wp_normalize_path(WP_CONTENT_DIR),
-            '',
-            wp_normalize_path($absolute)
-        );
-
-        return $this->trail(content_url($relativeToContent));
+        return $this->path('assets/styles')->append($relative)->url();
     }
 
     /**
@@ -109,63 +89,7 @@ abstract class Module
     {
         $path = $this->path('acf-json');
 
-        return is_dir($path) ? [$path] : [];
+        return $path->isDir() ? [$path->value()] : [];
     }
 
-    /**
-     * Discover where this class file lives.
-     */
-    private function discoverModulePath(): string
-    {
-        $reflector = new \ReflectionClass($this);
-
-        return $this->trail(
-            wp_normalize_path(dirname($reflector->getFileName()))
-        );
-    }
-
-    /**
-     * Walk upwards to find the module root (sitchco.config.php) or fallback.
-     */
-    private function discoverModuleRoot(): string
-    {
-        $path = $this->path();
-        $contentRoot = wp_normalize_path(WP_CONTENT_DIR);
-
-        while (is_dir($path)) {
-            if (file_exists($path . DIRECTORY_SEPARATOR . SITCHCO_CONFIG_FILENAME)) {
-                return $this->trail($path);
-            }
-
-            if ($path === $contentRoot || dirname($path) === $path) {
-                break;
-            }
-
-            $path = dirname($path);
-        }
-
-        return $this->trail($this->path());
-    }
-
-    /**
-     * Helper to merge base path with relative and ensure trailing slash.
-     */
-    private function join(string $base, string $relative): string
-    {
-        if ($relative === '') {
-            return $this->trail($base);
-        }
-
-        return wp_normalize_path(
-            $this->trail($base) . ltrim($relative, '/')
-        );
-    }
-
-    /**
-     * Ensure a trailing slash on paths/URLs.
-     */
-    private function trail(string $path): string
-    {
-        return trailingslashit($path);
-    }
 }

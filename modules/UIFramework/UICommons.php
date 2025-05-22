@@ -15,7 +15,7 @@ class UIFramework extends Module
     {
         wp_register_script(
             'sitchco/ui-framework',
-            $this->url('assets/scripts/main.mjs'),
+            $this->scriptUrl('main.mjs'),
             ['wp-hooks']
         );
         add_filter('body_class', fn($classes) => array_merge($classes, ['sd-app-loading']));

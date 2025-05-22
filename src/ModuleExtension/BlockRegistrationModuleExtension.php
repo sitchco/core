@@ -3,6 +3,7 @@
 namespace Sitchco\ModuleExtension;
 
 use Sitchco\Framework\Module;
+use Sitchco\Support\FilePath;
 
 /**
  * Class BlockRegistrationModuleExtension
@@ -17,6 +18,9 @@ use Sitchco\Framework\Module;
  */
 class BlockRegistrationModuleExtension implements ModuleExtension
 {
+    /**
+     * @var Module[]
+     */
     protected array $modules;
 
     /**
@@ -35,26 +39,25 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     public function init(): void
     {
         foreach ($this->modules as $module) {
-            $basePath = $module->path();
-            $blocksDir = $basePath . 'blocks/';
+            $blocksPath = $module->path('blocks');
 
             // Skip modules without a blocks folder.
-            if (!is_dir($blocksDir)) {
+            if (!$blocksPath->isDir()) {
                 continue;
             }
 
-            $configFile = $blocksDir . 'blocks-config.php';
-            if (file_exists($configFile)) {
+            $configFilePath = $blocksPath->append('blocks-config.php');
+            if ($configFilePath->isFile()) {
                 // Load the previously generated configuration mapping.
-                $blocksConfig = include $configFile;
+                $blocksConfig = include $configFilePath;
             } else {
                 // Otherwise, glob the blocks folder and build the configuration mapping.
                 $blocksConfig = [];
-                $directories = glob($blocksDir . '*', GLOB_ONLYDIR);
+                $directories = glob($blocksPath . '*', GLOB_ONLYDIR);
                 if ($directories !== false) {
                     foreach ($directories as $dir) {
-                        $blockJsonPath = trailingslashit($dir) . 'block.json';
-                        if (file_exists($blockJsonPath)) {
+                        $blockJsonPath = (new FilePath($dir))->append('block.json');
+                        if ($blockJsonPath->isFile()) {
                             // Use the directory name as the block identifier.
                             $blockName = basename($dir);
                             // Store only the relative directory name.
@@ -66,13 +69,13 @@ class BlockRegistrationModuleExtension implements ModuleExtension
                 // Write the configuration array to a PHP file for future use.
                 $export = var_export($blocksConfig, true);
                 $phpContent = "<?php\n\nreturn " . $export . ";\n";
-                file_put_contents($configFile, $phpContent);
+                file_put_contents($configFilePath, $phpContent);
             }
 
             // Register each block using register_block_type which accepts a directory containing block.json.
             foreach ($blocksConfig as $blockName => $relativeDir) {
                 // Rebuild the full path using the base blocks directory and the relative directory.
-                $fullPath = $blocksDir . $relativeDir;
+                $fullPath = $blocksPath->append($relativeDir)->value();
                 register_block_type($fullPath);
             }
         }

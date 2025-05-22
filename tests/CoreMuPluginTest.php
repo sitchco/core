@@ -55,4 +55,11 @@ class CoreMuPluginTest extends TestCase
         $this->assertInstanceOf(PostTester::class, $post);
     }
 
+    function test_active_module_path()
+    {
+        $ModuleInstance = $this->container->get(ModuleTester::class);
+        $this->assertEquals(WP_CONTENT_DIR . '/mu-plugins/sitchco-core/tests/Support/', $ModuleInstance->path()->value());
+        $this->assertEquals(WP_CONTENT_URL . '/mu-plugins/sitchco-core/tests/Support', $ModuleInstance->url());
+    }
+
 }
