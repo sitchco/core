@@ -12,7 +12,7 @@ class FilePath
     public function __construct(string $filename)
     {
         $this->filename = wp_normalize_path($filename);
-        $this->isFile = is_file($filename);
+        $this->isFile = is_file($this->filename);
         $this->isDirectory = is_dir($this->filename);
     }
 

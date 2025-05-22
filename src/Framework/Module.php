@@ -64,14 +64,6 @@ abstract class Module
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
-    /**
-     * URL to this module's directory or asset.
-     */
-    public function url(string $relative = ''): string
-    {
-        return $this->path($relative)->url();
-    }
-
     protected function scriptUrl(string $relative): string
     {
         return $this->path('assets/scripts')->append($relative)->url();
@@ -80,16 +72,6 @@ abstract class Module
     protected function styleUrl(string $relative): string
     {
         return $this->path('assets/styles')->append($relative)->url();
-    }
-
-    /**
-     * Return the ACF JSON sync directory, if it exists.
-     */
-    public function getAcfJsonPaths(): ?array
-    {
-        $path = $this->path('acf-json');
-
-        return $path->isDir() ? [$path->value()] : [];
     }
 
 }
