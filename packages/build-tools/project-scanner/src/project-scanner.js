@@ -1,6 +1,8 @@
 import { glob } from 'glob';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import chalk from 'chalk';
+import PlatformUnitDetector from './platform-unit-detector.js';
 
 /**
  * Configuration constants for project structure scanning.
@@ -15,10 +17,16 @@ export const SCRIPTS_SUBFOLDER = 'scripts';
 
 export const STYLES_SUBFOLDER = 'styles';
 
+export const PLATFORM_UNIT_TYPES = {
+    THEME: 'theme',
+    PLUGIN: 'plugin',
+    MU_PLUGIN: 'mu-plugin',
+};
+
 /**
- * Scans a project structure to discover Sitchco modules, their asset directories,
- * entry points (JS/SCSS), and source files by extension. Caches discovered paths
- * for efficiency.
+ * Scans a project structure to discover WordPress platform units (themes, plugins, mu-plugins),
+ * Sitchco modules, their asset directories, entry points (JS/SCSS), and source files by extension.
+ * Caches discovered paths for efficiency.
  */
 export default class ProjectScanner {
     /** @type {string} The absolute path to the project root. */
@@ -31,6 +39,10 @@ export default class ProjectScanner {
     _entrypoints = null;
     /** @type {string | null} Cached absolute path to the WordPress web root. */
     _webRoot = null;
+    /** @type {object[] | null} Cached array of platform units. */
+    _platformUnits = null;
+    /** @type {boolean} Whether to log verbose information. */
+    verbose;
     static DEFAULT_IGNORE = ['**/node_modules/**', '**/.git/**', '**/vendor/**', '**/dist/**', '**/build/**'];
 
     /**
@@ -38,10 +50,12 @@ export default class ProjectScanner {
      * @param {object} [options={}] - Configuration options.
      * @param {string} [options.projectRoot=process.cwd()] - The root directory of the project to scan.
      * @param {string[]} [options.ignorePatterns=ProjectScanner.DEFAULT_IGNORE] - Glob patterns to ignore.
+     * @param {boolean} [options.verbose=false] - Whether to log verbose information.
      */
     constructor(options = {}) {
         this.projectRoot = path.resolve(options.projectRoot || process.cwd());
         this.ignorePatterns = options.ignorePatterns || ProjectScanner.DEFAULT_IGNORE;
+        this.verbose = options.verbose || false;
     }
 
     /**
@@ -272,13 +286,94 @@ export default class ProjectScanner {
     }
 
     /**
-     * Clears the internal cache for module directories, asset directories, and entrypoints.
+     * Clears the internal cache for module directories, asset directories, entrypoints, and platform units.
      * Subsequent calls to getters will trigger a fresh scan.
      */
     clearCache() {
         this._moduleDirs = null;
         this._entrypoints = null;
         this._webRoot = null;
+        this._platformUnits = null;
+    }
+
+    /**
+     * Scans the project for platform units (themes, plugins, mu-plugins).
+     * @returns {Promise<object[]>} A promise resolving to an array of platform unit objects.
+     * @private
+     */
+    async _scanForPlatformUnits() {
+        const webRoot = await this.getWebRoot();
+        const detector = new PlatformUnitDetector({
+            webRoot,
+            verbose: this.verbose,
+        });
+
+        console.log('Scanning for platform units...');
+        const units = await detector.detectAllUnits();
+        
+        // Log the detected units
+        if (this.verbose) {
+            const unitsByType = {
+                [PLATFORM_UNIT_TYPES.THEME]: units.filter(unit => unit.type === PLATFORM_UNIT_TYPES.THEME),
+                [PLATFORM_UNIT_TYPES.PLUGIN]: units.filter(unit => unit.type === PLATFORM_UNIT_TYPES.PLUGIN),
+                [PLATFORM_UNIT_TYPES.MU_PLUGIN]: units.filter(unit => unit.type === PLATFORM_UNIT_TYPES.MU_PLUGIN),
+            };
+            
+            console.log(chalk.blue('[ProjectScanner]'), `Detected ${units.length} platform units:`);
+            console.log(chalk.blue('[ProjectScanner]'), `- ${unitsByType[PLATFORM_UNIT_TYPES.THEME].length} themes`);
+            console.log(chalk.blue('[ProjectScanner]'), `- ${unitsByType[PLATFORM_UNIT_TYPES.PLUGIN].length} plugins`);
+            console.log(chalk.blue('[ProjectScanner]'), `- ${unitsByType[PLATFORM_UNIT_TYPES.MU_PLUGIN].length} mu-plugins`);
+        }
+
+        return units;
+    }
+
+    /**
+     * Gets the list of platform units, using cache if available.
+     * @returns {Promise<object[]>} A promise resolving to an array of platform unit objects.
+     */
+    async getPlatformUnits() {
+        if (this._platformUnits === null) {
+            this._platformUnits = await this._scanForPlatformUnits();
+        }
+        return this._platformUnits;
+    }
+
+    /**
+     * Gets platform units of a specific type.
+     * @param {string} type - The type of platform units to get (theme, plugin, mu-plugin).
+     * @returns {Promise<object[]>} A promise resolving to an array of platform units of the specified type.
+     */
+    async getPlatformUnitsByType(type) {
+        const units = await this.getPlatformUnits();
+        return units.filter(unit => unit.type === type);
+    }
+
+    /**
+     * Gets a platform unit by name.
+     * @param {string} name - The name of the platform unit to get.
+     * @returns {Promise<object|null>} A promise resolving to the platform unit object, or null if not found.
+     */
+    async getPlatformUnitByName(name) {
+        const units = await this.getPlatformUnits();
+        return units.find(unit => unit.name === name) || null;
+    }
+
+    /**
+     * Validates all platform units against their requirements.
+     * @returns {Promise<object[]>} A promise resolving to an array of validation results.
+     */
+    async validatePlatformUnits() {
+        const units = await this.getPlatformUnits();
+        const detector = new PlatformUnitDetector({ webRoot: await this.getWebRoot() });
+        
+        return units.map(unit => {
+            const validation = detector.validateUnit(unit);
+            return {
+                unit,
+                ...validation,
+            };
+        });
     }
 }
 
