@@ -2,7 +2,6 @@
     "name": "@sitchco/dev-scripts",
     "version": "1.0.0",
     "description": "Provides stable script interfaces for linting and formatting for Sitchco projects",
-    "private": true,
     "type": "module",
     "bin": {
         "sitchco-lint": "bin/lint.js",
@@ -26,5 +25,9 @@
     "engines": {
         "node": ">=18.0.0"
     },
-    "license": "ISC"
+    "license": "ISC",
+    "private": false,
+    "publishConfig": {
+        "access": "public"
+    }
 }

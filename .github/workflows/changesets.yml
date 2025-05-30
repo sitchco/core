@@ -1,0 +1,38 @@
+name: Generate Changesets for Changed Packages
+
+on:
+  workflow_call:
+    outputs:
+      matrix:
+        description: "Changed packages matrix"
+        value: ${{ jobs.list.outputs.matrix }}
+  workflow_dispatch:
+
+jobs:
+  list:
+    uses: ./.github/workflows/list-changed-packages.yml
+
+  generate-changesets:
+    name: Generate Changeset Entries
+    needs: list
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{fromJson(needs.list.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - run: pnpm install
+      - name: Build changeset data
+        run: |
+          node packages/build-tools/dev-scripts/src/packages/build-changeset.mjs ${{ matrix.package }}
+        shell: bash
+
+      - name: Generate changeset for ${{ matrix.package }}
+        run: |
+          pnpm changeset add --empty --summary "$(cat temp-changeset.md)"
+        shell: bash
