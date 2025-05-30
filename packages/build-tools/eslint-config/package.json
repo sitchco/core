@@ -10,6 +10,7 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
+    "private": false,
     "publishConfig": {
         "access": "public"
     },
