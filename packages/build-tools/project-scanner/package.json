@@ -2,7 +2,6 @@
     "name": "@sitchco/project-scanner",
     "version": "1.0.0",
     "description": "Scans project structure for Sitchco modules and assets",
-    "private": true,
     "type": "module",
     "main": "./src/project-scanner.js",
     "exports": {
@@ -16,5 +15,19 @@
     "engines": {
         "node": ">=18.0.0"
     },
-    "license": "ISC"
+    "license": "ISC",
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sitchco/sitchco-core.git",
+        "directory": "packages/build-tools/project-scanner"
+    },
+    "keywords": [
+        "sitchco",
+        "wordpress",
+        "project-scanner",
+        "module-discovery"
+    ]
 }

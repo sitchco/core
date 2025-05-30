@@ -1,0 +1,38 @@
+name: Publish Packages
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  list:
+    uses: ./.github/workflows/list-changed-packages.yml
+
+  publish:
+    needs: list
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.list.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Conditionally Build Package
+        run: node packages/build-tools/dev-scripts/src/packages/prep-package.js ${{ matrix.package.name }}
+
+      - name: Publish Package
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish packages/${{ matrix.package.name }} --access public
