@@ -57,6 +57,11 @@ class FilePath
         return implode(DIRECTORY_SEPARATOR, array_filter($parts));
     }
 
+    public function relativeTo(string $rootPath): string
+    {
+        return str_replace($rootPath, '', $this->value());
+    }
+
     public function url(): string
     {
         $relativeToContent = str_replace(

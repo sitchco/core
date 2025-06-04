@@ -5,7 +5,7 @@ import fs from 'node:fs/promises';
 /**
  * Configuration constants for project structure scanning.
  */
-export const MODULE_MARKER_FILE = '.sitchco-module';
+export const MODULES_FOLDER = 'modules';
 
 export const ASSETS_FOLDER = 'assets';
 
@@ -14,6 +14,8 @@ export const BLOCKS_FOLDER = 'blocks';
 export const SCRIPTS_SUBFOLDER = 'scripts';
 
 export const STYLES_SUBFOLDER = 'styles';
+
+export const ENTRY_FILE_PATTERN = '*.{js,mjs,scss,css}';
 
 /**
  * Scans a project structure to discover Sitchco modules, their asset directories,
@@ -70,14 +72,13 @@ export default class ProjectScanner {
      * @private
      */
     async _scanForModuleDirs() {
-        const markerPattern = `**/${MODULE_MARKER_FILE}`;
-        const markerFiles = await glob(markerPattern, {
+        const markerPattern = `${MODULES_FOLDER}/*/`;
+        return await glob(markerPattern, {
             cwd: this.projectRoot,
             absolute: true,
             dot: true,
             ignore: this.ignorePatterns,
         });
-        return markerFiles.map((markerPath) => path.dirname(markerPath));
     }
 
     /**
@@ -105,10 +106,10 @@ export default class ProjectScanner {
         }
 
         const entrypointPatterns = [
-            '*.{js,mjs,scss}',
-            `${ASSETS_FOLDER}/{${SCRIPTS_SUBFOLDER},${STYLES_SUBFOLDER}}/*.{js,mjs,scss}`,
-            `${BLOCKS_FOLDER}/*/*.{js,mjs,scss}`,
-            `${BLOCKS_FOLDER}/*/${ASSETS_FOLDER}/{${SCRIPTS_SUBFOLDER},${STYLES_SUBFOLDER}}/*.{js,mjs,scss}`,
+            ENTRY_FILE_PATTERN,
+            `${ASSETS_FOLDER}/{${SCRIPTS_SUBFOLDER},${STYLES_SUBFOLDER}}/${ENTRY_FILE_PATTERN}`,
+            `${BLOCKS_FOLDER}/*/${ENTRY_FILE_PATTERN}`,
+            `${BLOCKS_FOLDER}/*/${ASSETS_FOLDER}/{${SCRIPTS_SUBFOLDER},${STYLES_SUBFOLDER}}/${ENTRY_FILE_PATTERN}`,
         ];
         const promises = moduleDirs.map(
             async (moduleDir) =>

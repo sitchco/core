@@ -44,6 +44,10 @@ abstract class Module
 
     private ?FilePath $modulePath = null;
 
+    private ?FilePath $buildRoot = null;
+
+    private static array $manifestCache = [];
+
     /**
      * Default initialization feature that is always called when module is activated
      * @return void
@@ -66,12 +70,39 @@ abstract class Module
 
     protected function scriptUrl(string $relative): string
     {
-        return $this->path('assets/scripts')->append($relative)->url();
+        $assetPath = $this->path('assets/scripts')->append($relative);
+        $buildAssetPath = $this->buildAssetPath($assetPath);
+        return $buildAssetPath ? $buildAssetPath->url() : '';
     }
 
     protected function styleUrl(string $relative): string
     {
-        return $this->path('assets/styles')->append($relative)->url();
+        $assetPath = $this->path('assets/styles')->append($relative);
+        $buildAssetPath = $this->buildAssetPath($assetPath);
+        return $buildAssetPath ? $buildAssetPath->url() : '';
+    }
+
+    protected function buildAssetPath(FilePath $assetPath): ?FilePath
+    {
+
+        if (!isset($this->buildRoot)) {
+            $this->buildRoot = $this->path()->parent()->parent();
+        }
+        $buildPath = $this->buildRoot->append('dist');
+        $manifestPath = $buildPath->append('.vite/manifest.json');
+        if (!$manifestPath->exists()) {
+            return null;
+        }
+        $manifestKey = $manifestPath->value();
+        if (!isset($this->manifestCache[$manifestKey])) {
+            static::$manifestCache[$manifestKey] = json_decode(file_get_contents($manifestPath), true);
+        }
+        $manifest = static::$manifestCache[$manifestKey];
+        $assetKey = $assetPath->relativeTo($this->buildRoot);
+        if (!isset($manifest[$assetKey])) {
+            return null;
+        }
+        return $buildPath->append($manifest[$assetKey]['file']);
     }
 
 }

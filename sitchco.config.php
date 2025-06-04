@@ -13,6 +13,7 @@ use Sitchco\Modules\Model\ImageModel;
 use Sitchco\Modules\Model\PostModel;
 use Sitchco\Modules\Model\TermModel;
 use Sitchco\Modules\Stream;
+use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Modules\Wordpress\BlockConfig;
 use Sitchco\Modules\Wordpress\Cleanup;
 use Sitchco\Modules\Wordpress\SearchRewrite;
@@ -41,7 +42,8 @@ return [
         AmazonCloudfront::class,
         SvgUpload::class,
         BlockConfig::class,
-        CoreBlockModifier::class
+        CoreBlockModifier::class,
+        UIFramework::class
     ],
     'disallowedBlocks' => [],
 ];

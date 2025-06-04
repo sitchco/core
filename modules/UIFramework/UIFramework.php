@@ -1,11 +1,17 @@
 <?php
 
-namespace Sitchco\Modules\CommonUI;
+namespace Sitchco\Modules\UIFramework;
 
 use Sitchco\Framework\Module;
 
 class UIFramework extends Module
 {
+    const FEATURES = [
+        'loadAssets',
+    ];
+
+    const HOOK_SUFFIX = 'ui-framework';
+
     public function init(): void
     {
         add_action('init', [$this, 'setupAssets'], 5);
@@ -14,20 +20,28 @@ class UIFramework extends Module
     public function setupAssets(): void
     {
         wp_register_script(
-            'sitchco/ui-framework',
+            static::hookName(),
             $this->scriptUrl('main.mjs'),
             ['wp-hooks']
         );
-        add_filter('body_class', fn($classes) => array_merge($classes, ['sd-app-loading']));
+        wp_register_style(
+            static::hookName(),
+            $this->styleUrl('main.css'),
+        );
+        add_filter('body_class', fn($classes) => array_merge($classes, ['sitchco-app-loading']));
         add_action('wp_head', function () {
-            ?>
-            <script>
-                window.onload = function() {
-                    document.body.classList.remove('sd-app-loading');
-                }
-            </script>
-            <noscript><style>body.sd-app-loading { opacity: 1; } </style></noscript>
-            <?php
+?>
+<script>window.onload = () => document.body.classList.remove('sitchco-app-loading');</script>
+<noscript><style>body.sitchco-app-loading { opacity: 1; } </style></noscript>
+<?php
+        });
+    }
+
+    public function loadAssets(): void
+    {
+        add_action('wp_enqueue_scripts', function () {
+            wp_enqueue_script(static::hookName());
+            wp_enqueue_style(static::hookName());
         });
     }
 }

@@ -63,7 +63,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Reveal page after everything is initialized
     requestAnimationFrame(function () {
-        document.body.classList.remove('sd-app-loading');
+        document.body.classList.remove('sitchco-app-loading');
 
     });
 });
