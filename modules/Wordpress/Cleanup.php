@@ -269,12 +269,11 @@ class Cleanup extends Module
         add_action('wp_enqueue_scripts', function (): void {
             wp_deregister_style('wp-block-library');
             wp_deregister_style('wp-block-library-theme');
+            wp_dequeue_style('global-styles');
+            wp_dequeue_style('classic-theme-styles');
         }, 200);
-//        add_action('wp_enqueue_scripts', function(): void {
-//            wp_dequeue_style('global-styles');
-//        });
         add_action('wp_footer', fn() => wp_dequeue_style('core-block-supports'), 5);
-        add_action('wp_enqueue_scripts', fn() => wp_dequeue_style('classic-theme-styles'));
+        add_filter('wp_img_tag_add_auto_sizes', '__return_false');
     }
 
     /**
