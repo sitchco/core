@@ -30,7 +30,7 @@ async function generateViteConfig(target, isWatchMode) {
 }
 
 export async function runBuild(target, isWatchMode) {
-    if (!target.length) {
+    if (!target.viteInput.length) {
         console.log(chalk.yellow(`No targets found. Nothing to build.`));
         return;
     }
