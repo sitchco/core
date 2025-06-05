@@ -51,10 +51,9 @@ class Debug
         if (class_exists(Kint::class)) {
             Kint::$display_called_from = false;
             Kint::$expanded = true;
-            Kint::$return = true;
+            Kint::$return = $return;
 
-            // Handle return or echo behavior
-            return $return ? Kint::dump($d) : print_r($d, true);
+            return Kint::dump($d);
         }
 
         // Fallback to print_r if Kint is not available
