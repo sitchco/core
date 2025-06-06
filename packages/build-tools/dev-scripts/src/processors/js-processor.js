@@ -23,6 +23,10 @@ export class JsProcessor extends BaseProcessor {
                 ecma: 2018,
                 quote_style: 3,
             },
+            parse: {
+                ecma: 2022,
+                module: true,
+            },
             mangle: false,
             compress: false,
         };

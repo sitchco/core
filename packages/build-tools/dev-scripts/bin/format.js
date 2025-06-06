@@ -6,9 +6,10 @@ import ProjectScanner from '@sitchco/project-scanner';
 import sitchcoPrettierConfig from '@sitchco/prettier-config' with { type: 'json' };
 import { JsProcessor } from '../src/processors/js-processor.js';
 import { SvgProcessor } from '../src/processors/svg-processor.js';
+import { CssProcessor } from '../src/processors/css-processor.js';
 
 async function loadProcessors(prettierConfig) {
-    return [new JsProcessor(prettierConfig), new SvgProcessor(prettierConfig)];
+    return [new JsProcessor(prettierConfig), new SvgProcessor(prettierConfig), new CssProcessor(prettierConfig)];
 }
 
 async function runFormat() {
@@ -48,7 +49,7 @@ async function runFormat() {
                         error: null,
                     };
                 } catch (error) {
-                    console.error(chalk.red(`\nError processing ${path.relative(projectRoot, filePath)}:`));
+                    console.error(chalk.red(`\nError processing ${path.relative(scanner.projectRoot, filePath)}:`));
                     console.error(error.message);
 
                     if (error.stdout) {
