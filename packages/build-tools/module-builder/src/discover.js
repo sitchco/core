@@ -1,5 +1,5 @@
 import path from 'node:path';
-import ProjectScanner from '@sitchco/project-scanner';
+import { default as ProjectScanner } from '@sitchco/project-scanner';
 import { DIST_FOLDER } from './config.js';
 
 export async function findAssetTargets() {
@@ -16,7 +16,7 @@ export async function findAssetTargets() {
     const outDirAbsolute = path.join(projectRoot, DIST_FOLDER);
     const buildDirRelative = path.relative(webRoot, outDirAbsolute).replace(/\\/g, '/');
     const inputPaths = entryPoints.map((fullPath) => path.relative(projectRoot, fullPath));
-    const hotFileAbsolute = path.join(outDirAbsolute, 'hot');
+    const hotFileAbsolute = path.join(projectRoot, '.vite.hot');
     const hotFileRelative = path.relative(projectRoot, hotFileAbsolute).replace(/\\/g, '/');
     const refreshPaths = [`${projectRoot}/**/*.php`];
     return {
