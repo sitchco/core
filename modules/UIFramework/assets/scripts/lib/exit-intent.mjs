@@ -4,19 +4,24 @@ import { debounce } from './util.mjs';
 let disabled = false;
 
 function detectExitIntent() {
-    const triggerCustomEvent = debounce(() => {
-        if (!applyFilters('enableExitIntent', true) || disabled) {
-            return;
+    const triggerCustomEvent = debounce(
+        () => {
+            if (!applyFilters('enableExitIntent', true) || disabled) {
+                return;
+            }
+
+            doAction('exitIntent');
+            disabled = true;
+        },
+        500,
+        {
+            leading: false,
+            trailing: true,
         }
-
-        doAction('exitIntent');
-        disabled = true;
-    }, 500, { leading: false, trailing: true });
-
+    );
     document.addEventListener('mouseout', (e) => {
         const nearTopEdge = e.clientY < 5;
         const nearLeftEdge = e.clientX < 5;
-
         if (!e.relatedTarget && !e.toElement && (nearTopEdge || nearLeftEdge)) {
             triggerCustomEvent();
         }

@@ -9,11 +9,12 @@ export const BASE_VITE_CONFIG = {
         sourcemap: true,
         emptyOutDir: false,
     },
-    plugins: []
+    plugins: [],
 };
 
 export async function generateViteConfig(target, isWatchMode) {
-    process.env.APP_URL = process.env.DDEV_PRIMARY_URL;
+    process.env.APP_URL = process.env.APP_URL || process.env.DDEV_PRIMARY_URL || '';
+    const hostnames = process.env.APP_HOSTNAMES || process.env.DDEV_HOSTNAME || '';
     return {
         root: target.root,
         base: isWatchMode ? '/' : './',
@@ -34,18 +35,10 @@ export async function generateViteConfig(target, isWatchMode) {
             watch: isWatchMode ? {} : null,
         },
         clearScreen: false,
-    //     server: {
-    //         host: '0.0.0.0',
-    //         port: 5173,
-    //         strictPort: true,
-    //         origin: `${process.env.DDEV_PRIMARY_URL.replace(/:\d+$/, "")}:5173`,
-    //         cors: {
-    //             origin: new RegExp(
-    //     `https?:\/\/(${process.env.DDEV_HOSTNAME.split(",")
-    //         .map((h) => h.replace("*", "[^.]+"))
-    //         .join("|")})(?::\\d+)?$`
-    // ),
-    //         },
-    //     }
+        server: {
+            host: '0.0.0.0',
+            port: 5173,
+            allowedHosts: hostnames.split(','),
+        },
     };
 }

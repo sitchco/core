@@ -32,9 +32,21 @@ class FilePath
         return new static(dirname($this->filename));
     }
 
-    public function exists(): string
+    public function findAncestor(string $filename): ?static
     {
-        return $this->isFile || $this->isDirectory;
+        $dir = $this;
+        do {
+            $dir = $dir->parent();
+            if ($dir->append($filename)->exists()) {
+                return $dir;
+            }
+        } while (!$dir->isRoot());
+        return null;
+    }
+
+    public function exists(): bool
+    {
+        return ($this->isFile || $this->isDirectory);
     }
 
     public function isFile(): bool
@@ -45,6 +57,14 @@ class FilePath
     public function isDir(): bool
     {
         return $this->isDirectory;
+    }
+
+    public function isRoot(): bool
+    {
+        if (!$this->isDirectory) {
+            return false;
+        }
+        return $this->filename === dirname($this->filename);
     }
 
     public function dir(): string

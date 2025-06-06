@@ -10,6 +10,7 @@ const pkg = _require('../package.json');
 function createCommand(name, description, callback) {
     return new Command(name).description(description).action(async () => {
         console.log(chalk.cyan(`Running ${pkg.name} v${pkg.version}`));
+
         try {
             await callback();
         } catch (error) {

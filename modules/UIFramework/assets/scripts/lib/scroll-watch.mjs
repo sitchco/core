@@ -1,6 +1,6 @@
-import { addAction } from './hooks.mjs'
-import { isInViewport, isVisible } from './viewport.mjs'
-import { READY, SCROLL, LAYOUT } from './constants.mjs'
+import { addAction } from './hooks.mjs';
+import { isInViewport, isVisible } from './viewport.mjs';
+import { READY, SCROLL, LAYOUT } from './constants.mjs';
 
 const registered = [];
 let windowLoaded = false;
@@ -10,7 +10,7 @@ function initCallback(group) {
         return;
     }
 
-    group.els = group.els.filter(el => {
+    group.els = group.els.filter((el) => {
         const shouldCheck = isInViewport(el) && (group.force || isVisible(el));
         if (shouldCheck) {
             const prune = group.callback.call(el, el);
@@ -46,18 +46,20 @@ export function scrollWatch(els, callback, options = {}) {
         force: false,
         defer: false,
         prune: true,
-        ...options
+        ...options,
     };
-
     const arrayEls = Array.from(els).filter(Boolean);
     if (arrayEls.length) {
-        registered.push({ els: arrayEls, callback, options: merged });
+        registered.push({
+            els: arrayEls,
+            callback,
+            options: merged,
+        });
     }
 }
 
 // Call checkElements on scroll
 window.addEventListener('scroll', () => requestAnimationFrame(checkElements));
-
 window.addEventListener('load', () => {
     windowLoaded = true;
     checkElements();

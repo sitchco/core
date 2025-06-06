@@ -5,7 +5,7 @@ export function registerScript(name, url) {
         scripts.set(name, {
             url,
             promise: null,
-            requested: false
+            requested: false,
         });
     }
 }
@@ -20,10 +20,8 @@ export function loadScript(name, url) {
     }
 
     const scriptInfo = scripts.get(name);
-
     if (!scriptInfo.requested) {
         scriptInfo.requested = true;
-
         scriptInfo.promise = new Promise((resolve, reject) => {
             const script = document.createElement('script');
             script.src = scriptInfo.url;
@@ -33,6 +31,5 @@ export function loadScript(name, url) {
             document.head.appendChild(script);
         });
     }
-
     return scriptInfo.promise;
 }

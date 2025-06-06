@@ -1,10 +1,11 @@
-import { applyFilters, doAction } from './hooks.mjs'
-import * as viewport from './viewport.mjs'
-import { LAYOUT, LAYOUTEND, SCROLL, SCROLLSTART, SCROLLEND, USER_FIRST_INTERACTION, isiOS } from './constants.mjs'
-import { debounce, throttle } from './util.mjs'
+import { applyFilters, doAction } from './hooks.mjs';
+import * as viewport from './viewport.mjs';
+import { LAYOUT, LAYOUTEND, SCROLL, SCROLLSTART, SCROLLEND, USER_FIRST_INTERACTION, isiOS } from './constants.mjs';
+import { debounce, throttle } from './util.mjs';
 
-let broadcastLayoutUpdate = () => {}
-let broadcastLayoutEnd = () => {}
+let broadcastLayoutUpdate = () => {};
+
+let broadcastLayoutEnd = () => {};
 
 export function updateLayout() {
     broadcastLayoutUpdate();
@@ -24,15 +25,23 @@ export function registerLayoutActions() {
         if (currentWidth === newWidth) {
             return false;
         }
+
         currentWidth = newWidth;
         return true;
     };
 
-    broadcastLayoutUpdate = throttle(() => {
-        requestAnimationFrame(() => {
-            doAction(LAYOUT, widthHasChanged());
-        });
-    }, throttleLayout, { leading: true, trailing: false });
+    broadcastLayoutUpdate = throttle(
+        () => {
+            requestAnimationFrame(() => {
+                doAction(LAYOUT, widthHasChanged());
+            });
+        },
+        throttleLayout,
+        {
+            leading: true,
+            trailing: false,
+        }
+    );
 
     broadcastLayoutEnd = debounce(() => {
         requestAnimationFrame(() => {
@@ -46,23 +55,25 @@ export function registerLayoutActions() {
             doAction(SCROLLEND, event, position);
         });
     }, debounceDelay);
+    const onScroll = throttle(
+        (event) => {
+            const position = viewport.scrollPosition();
+            if (!isScrolling) {
+                isScrolling = true;
+                requestAnimationFrame(() => {
+                    doAction(SCROLLSTART, event, position);
+                });
+            }
 
-    const onScroll = throttle((event) => {
-        const position = viewport.scrollPosition();
-
-        if (!isScrolling) {
-            isScrolling = true;
             requestAnimationFrame(() => {
-                doAction(SCROLLSTART, event, position);
+                doAction(SCROLL, event, position);
             });
-        }
 
-        requestAnimationFrame(() => {
-            doAction(SCROLL, event, position);
-        });
-
-        broadcastScrollEnd(event, position);
-    }, throttleScroll, { leading: true });
+            broadcastScrollEnd(event, position);
+        },
+        throttleScroll,
+        { leading: true }
+    );
 
     const onUserFirstInteraction = () => {
         window.removeEventListener('keydown', onUserFirstInteraction);
@@ -71,7 +82,6 @@ export function registerLayoutActions() {
         window.removeEventListener('touchstart', onUserFirstInteraction);
         window.removeEventListener('touchend', onUserFirstInteraction);
         window.removeEventListener('wheel', onUserFirstInteraction);
-
         requestAnimationFrame(() => {
             doAction(USER_FIRST_INTERACTION);
         });
@@ -90,6 +100,7 @@ export function registerLayoutActions() {
             if (width !== docWidth) {
                 updateLayout();
             }
+
             docWidth = width;
         });
     } else {
@@ -101,7 +112,7 @@ export function registerLayoutActions() {
         const codes = {
             9: 'tab',
             13: 'return',
-            27: 'esc'
+            27: 'esc',
         };
         if (codes.hasOwnProperty(code)) {
             doAction('key.' + codes[code], e);
@@ -109,9 +120,8 @@ export function registerLayoutActions() {
     });
 
     window.addEventListener('scroll', onScroll);
-
     // First interaction trigger
-    ['keydown', 'mousemove', 'touchmove', 'touchstart', 'touchend', 'wheel'].forEach(event =>
+    ['keydown', 'mousemove', 'touchmove', 'touchstart', 'touchend', 'wheel'].forEach((event) =>
         window.addEventListener(event, onUserFirstInteraction, { once: true })
     );
 

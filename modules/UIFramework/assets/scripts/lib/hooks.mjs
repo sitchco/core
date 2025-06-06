@@ -1,4 +1,4 @@
-import {NAMESPACE} from "./constants.mjs";
+import { NAMESPACE } from './constants.mjs';
 
 const {
     addAction: _addAction,
@@ -19,7 +19,7 @@ const {
     didFilter,
     actions,
     filters,
-    defaultHooks
+    defaultHooks,
 } = window.wp.hooks.createHooks();
 
 /**
@@ -87,5 +87,5 @@ export {
     didFilter,
     actions,
     filters,
-    defaultHooks
+    defaultHooks,
 };

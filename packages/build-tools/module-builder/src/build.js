@@ -1,6 +1,6 @@
 import { build as viteBuild } from 'vite';
 import chalk from 'chalk';
-import {generateViteConfig} from "./config.js";
+import { generateViteConfig } from './config.js';
 
 export async function runBuild(target, isWatchMode) {
     if (!target?.viteInput?.length) {
@@ -16,5 +16,4 @@ export async function runBuild(target, isWatchMode) {
 
     const viteConfig = await generateViteConfig(target, isWatchMode);
     await viteBuild(viteConfig);
-
 }

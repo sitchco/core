@@ -17,24 +17,20 @@ export function updateUrlParameter(uri, key, value) {
     try {
         const url = new URL(uri, window.location.origin); // Handles relative URLs
         const params = url.searchParams;
-
         if (!value && key.includes('=')) {
             [key, value] = key.split('=');
         }
-
         if (!value) {
             params.delete(key);
         } else {
             params.set(key, value);
         }
-
         return url.origin + url.pathname + (params.toString() ? `?${params.toString()}` : '') + url.hash;
     } catch (err) {
         console.warn(`updateUrlParameter: Invalid URL - "${uri}"`, err);
         return uri;
     }
 }
-
 
 export function splitStr(str, delim = ',') {
     if (Array.isArray(str)) {
@@ -43,20 +39,16 @@ export function splitStr(str, delim = ',') {
     if (typeof str !== 'string') {
         return [];
     }
-
     return str
         .split(delim)
-        .map(item => item.trim())
+        .map((item) => item.trim())
         .filter(Boolean); // Removes empty strings
 }
 
 export function groupByParent(selector) {
     const elements = Array.from(document.querySelectorAll(selector));
-    const parents = new Set(elements.map(el => el.parentElement));
-
-    return Array.from(parents).map(parent =>
-        Array.from(parent.querySelectorAll(`:scope > ${selector}`))
-    );
+    const parents = new Set(elements.map((el) => el.parentElement));
+    return Array.from(parents).map((parent) => Array.from(parent.querySelectorAll(`:scope > ${selector}`)));
 }
 
 export function uniqueID() {
@@ -69,7 +61,7 @@ export function whitelistAssign(defaults, override) {
     }
 
     const result = { ...defaults };
-    Object.keys(override).forEach(key => {
+    Object.keys(override).forEach((key) => {
         if (Object.prototype.hasOwnProperty.call(defaults, key)) {
             result[key] = override[key];
         }
@@ -87,9 +79,8 @@ export function groupByRow(els) {
         }
 
         const rect = el.getBoundingClientRect();
-        const top = rect.top + window.scrollY;    // top relative to document
+        const top = rect.top + window.scrollY; // top relative to document
         const bottom = top + rect.height;
-
         let found = false;
 
         for (const group of groups) {
@@ -111,18 +102,16 @@ export function groupByRow(els) {
             groups.push({
                 top,
                 bottom,
-                elements: [el]
+                elements: [el],
             });
         }
     }
 
     // Sort groups by their top position ascending
     groups.sort((a, b) => a.top - b.top);
-
     // Return only arrays of grouped elements
-    return groups.map(group => group.elements);
+    return groups.map((group) => group.elements);
 }
-
 
 export function imageBrightness(imageSrc) {
     return new Promise((resolve) => {
@@ -134,11 +123,11 @@ export function imageBrightness(imageSrc) {
 
         const img = new Image();
         img.crossOrigin = 'anonymous';
+
         img.onload = function () {
             const canvas = document.createElement('canvas');
             canvas.width = this.width;
             canvas.height = this.height;
-
             const ctx = canvas.getContext('2d');
             ctx.drawImage(this, 0, 0);
 
@@ -152,7 +141,7 @@ export function imageBrightness(imageSrc) {
                     colorSum += lum;
                 }
 
-                const brightness = Math.round(colorSum / (this.width * this.height) / 255 * 100);
+                const brightness = Math.round((colorSum / (this.width * this.height) / 255) * 100);
                 resolve(brightness);
             } catch (err) {
                 resolve(false); // Usually canvas is tainted by CORS issues
@@ -171,20 +160,18 @@ export function debounce(func, wait, { leading = false, trailing = true } = {}) 
         result = func.apply(lastThis, lastArgs);
         lastArgs = lastThis = null;
     };
-
     return function (...args) {
         const context = this;
         const callNow = leading && !timeout;
-
         if (timeout) {
             clearTimeout(timeout);
         }
 
         lastArgs = args;
         lastThis = context;
-
         timeout = setTimeout(() => {
             timeout = null;
+
             if (trailing && !callNow) {
                 invoke();
             }
@@ -193,7 +180,6 @@ export function debounce(func, wait, { leading = false, trailing = true } = {}) 
         if (callNow) {
             invoke();
         }
-
         return result;
     };
 }
@@ -202,7 +188,6 @@ export function throttle(fn, limit, { leading = true, trailing = true } = {}) {
     let lastCall = 0;
     let timeout = null;
     let lastArgs;
-
     return function (...args) {
         const now = Date.now();
         if (!lastCall && !leading) {
@@ -217,6 +202,7 @@ export function throttle(fn, limit, { leading = true, trailing = true } = {}) {
                 clearTimeout(timeout);
                 timeout = null;
             }
+
             lastCall = now;
             fn(...args);
         } else if (!timeout && trailing) {

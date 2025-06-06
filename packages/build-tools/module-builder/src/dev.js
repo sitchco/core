@@ -8,11 +8,7 @@ export async function runDev(target) {
         return;
     }
 
-    console.log(
-        chalk.cyan(
-            `\n🚀 Running dev build with ${Object.keys(target.viteInput).length} entry points...`
-        )
-    );
+    console.log(chalk.cyan(`\n🚀 Running dev build with ${Object.keys(target.viteInput).length} entry points...`));
     const viteConfig = await generateViteConfig(target, true);
     const server = await viteCreateServer(viteConfig);
     await server.listen();

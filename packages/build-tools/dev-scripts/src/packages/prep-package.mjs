@@ -5,7 +5,6 @@ import { execSync } from 'child_process';
 const pkg = process.argv[2];
 const pkgPath = join(process.cwd(), 'packages/build-tools', pkg);
 const pkgJsonPath = join(pkgPath, 'package.json');
-
 if (!existsSync(pkgJsonPath)) {
     console.error(`No package.json found for ${pkg}`);
     process.exit(1);
@@ -18,10 +17,12 @@ readFile(pkgJsonPath, 'utf8', (err, data) => {
     }
 
     const pkgJson = JSON.parse(data);
-
     if (pkgJson.scripts?.build) {
         console.log(`Building ${pkgJson.name}...`);
-        execSync('pnpm run build', { cwd: pkgPath, stdio: 'inherit' });
+        execSync('pnpm run build', {
+            cwd: pkgPath,
+            stdio: 'inherit',
+        });
     } else {
         console.log(`No build script for ${pkgJson.name}, skipping build`);
     }
