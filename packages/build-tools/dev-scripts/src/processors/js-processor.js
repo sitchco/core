@@ -20,7 +20,7 @@ export class JsProcessor extends BaseProcessor {
             format: {
                 comments: 'all',
                 keep_numbers: true,
-                ecma: 2018,
+                ecma: 2022,
                 quote_style: 3,
             },
             parse: {
