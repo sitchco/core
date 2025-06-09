@@ -2,7 +2,6 @@ import { writeFile } from 'fs/promises';
 import { execSync } from 'child_process';
 
 const [pkgName] = process.argv.slice(2);
-
 if (!pkgName) {
     console.error('No package name provided.');
     process.exit(1);
@@ -13,9 +12,10 @@ const dir = `packages/build-tools/${pkgName}`;
 
 // Get commit messages that touched this directory between origin/master and HEAD
 let commits;
+
 try {
     const raw = execSync(`git log origin/master..HEAD --pretty=format:"- %s" -- "${dir}"`, {
-        encoding: 'utf-8'
+        encoding: 'utf-8',
     }).trim();
     commits = raw.length ? raw : '- No commits found for this package';
 } catch (err) {

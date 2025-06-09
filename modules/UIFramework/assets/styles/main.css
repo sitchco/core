@@ -8,7 +8,7 @@ body.lock-scroll {
 }
 
 :target:not(.anchor):before {
-    content: "";
+    content: '';
     display: block;
     position: relative;
     width: 0;

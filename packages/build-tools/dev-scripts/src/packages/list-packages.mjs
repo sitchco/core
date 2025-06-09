@@ -1,7 +1,7 @@
 import { readdir, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import {execSync} from "child_process";
+import { execSync } from 'child_process';
 
 const packagesDir = join(process.cwd(), 'packages/build-tools');
 const allPackages = await readdir(packagesDir);
@@ -12,14 +12,14 @@ const changedFiles = execSync('git diff --name-only origin/master...HEAD', { enc
     .filter(Boolean);
 
 // Get package names where at least one file was modified
-const changedPackages = allPackages.filter(pkg => {
+const changedPackages = allPackages.filter((pkg) => {
     const packagePath = `packages/build-tools/${pkg}`;
-    return changedFiles.some(file => file.startsWith(packagePath));
+    return changedFiles.some((file) => file.startsWith(packagePath));
 });
 
 const validPackages = changedPackages
-    .filter(pkg => existsSync(join(packagesDir, pkg, 'package.json')))
-    .map(pkg => ({ name: pkg }));
+    .filter((pkg) => existsSync(join(packagesDir, pkg, 'package.json')))
+    .map((pkg) => ({ name: pkg }));
 
 await writeFile('packages-matrix.json', JSON.stringify(validPackages, null, 2));
 
