@@ -1,4 +1,6 @@
 packages:
-    - 'packages'
-    - 'packages/build-tools/*'
-    - 'packages/shared/*'
+  - packages
+  - packages/build-tools/*
+  - packages/shared/*
+onlyBuiltDependencies:
+  - esbuild

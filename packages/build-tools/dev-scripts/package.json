@@ -15,8 +15,7 @@
         "@sitchco/project-scanner": "workspace:*",
         "chalk": "^5.4.1",
         "execa": "^9.5.2",
-        "svgo": "^3.3.2",
-        "terser": "^5.39.0"
+        "svgo": "^3.3.2"
     },
     "peerDependencies": {
         "eslint": ">=9.0.0",

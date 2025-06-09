@@ -1,4 +1,3 @@
-import { minify } from 'terser';
 import { ESLint } from 'eslint';
 import prettier from 'prettier';
 import eslintConfig from '@sitchco/eslint-config';
@@ -15,21 +14,6 @@ export class JsProcessor extends BaseProcessor {
             baseConfig: eslintConfig,
             fix: true,
         });
-
-        this.terserOptions = {
-            format: {
-                comments: 'all',
-                keep_numbers: true,
-                ecma: 2022,
-                quote_style: 3,
-            },
-            parse: {
-                ecma: 2022,
-                module: true,
-            },
-            mangle: false,
-            compress: false,
-        };
     }
 
     async processFile(filePath) {
@@ -38,13 +22,6 @@ export class JsProcessor extends BaseProcessor {
         let changed = false;
 
         try {
-            const terserResult = await minify(content, this.terserOptions);
-            if (terserResult.error) {
-                throw terserResult.error;
-            }
-
-            content = terserResult.code || content;
-            content = content.replace(/(\n\/\*[\s\S]*?\*\/)/g, '$1\n').replace(/(\n\n)/g, '\n');
             content = await prettier.format(content, {
                 ...this.prettierConfig,
                 filepath: filePath,
