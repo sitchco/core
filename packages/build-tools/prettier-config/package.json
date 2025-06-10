@@ -3,11 +3,22 @@
     "version": "1.0.0",
     "description": "Shared Prettier config for sitchco projects",
     "main": "index.json",
+    "scripts": {
+        "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
+        "test:ui": "vitest --ui",
+        "test:watch": "vitest"
+    },
     "license": "ISC",
     "publishConfig": {
         "access": "public"
     },
     "dependencies": {
         "prettier": "^3.5.3"
+    },
+    "devDependencies": {
+        "@vitest/coverage-v8": "^3.2.1",
+        "@vitest/ui": "^3.2.1",
+        "vitest": "^3.2.1"
     }
 }
