@@ -18,6 +18,7 @@ const SITCHCO_CORE_ASSETS_DIR = SITCHCO_CORE_DIR . '/assets';
 
 
 const SITCHCO_CONFIG_FILENAME = 'sitchco.config.php';
+const SITCHCO_DEV_HOT_FILE = '.vite.hot';
 
 
 add_action('plugins_loaded', static function () {

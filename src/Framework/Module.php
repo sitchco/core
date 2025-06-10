@@ -44,11 +44,7 @@ abstract class Module
 
     private ?FilePath $modulePath = null;
 
-    private ?FilePath $buildRoot = null;
-
-    private bool $isDevServer;
-
-    private static array $manifestCache = [];
+    private ModuleAssets $assets;
 
     /**
      * Default initialization feature that is always called when module is activated
@@ -70,85 +66,32 @@ abstract class Module
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
+    public function assets(): ModuleAssets
+    {
+        if (!isset($this->assets)) {
+            $this->assets = new ModuleAssets($this->path());
+        }
+        return $this->assets;
+    }
+
     public function registerScript(string $handle, string $src, array $deps = []): void
     {
-        if (!$this->isDevServer()) {
-            wp_register_script($handle, $src, $deps);
-            return;
-        }
-        foreach ($deps as $dep) {
-            wp_enqueue_script($dep);
-            wp_enqueue_script_module($dep);
-        }
-        wp_register_script_module($handle, $src, $deps);
+        $this->assets()->registerScript($handle, $src, $deps);
     }
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
     {
-        if (!$this->isDevServer()) {
-            wp_enqueue_script($handle, $src, $deps);
-            return;
-        }
-        foreach ($deps as $dep) {
-            wp_enqueue_script($dep);
-            wp_enqueue_script_module($dep);
-        }
-        wp_enqueue_script_module($handle, $src, $deps);
+        $this->assets()->enqueueScript($handle, $src, $deps);
     }
 
     protected function scriptUrl(string $relative): string
     {
-        return $this->assetUrl('scripts', $relative);
+        return $this->assets()->assetUrl("assets/scripts/$relative");
     }
 
     protected function styleUrl(string $relative): string
     {
-        return $this->assetUrl('styles', $relative);
-    }
-
-    protected function assetUrl(string $assetTypePath, string $relative): string
-    {
-        $assetPath = $this->path("assets/$assetTypePath")->append($relative);
-        if ($this->isDevServer()) {
-            return SITCHCO_DEV_SERVER_URL . '/' . $assetPath->relativeTo($this->buildRoot());
-        }
-        $buildAssetPath = $this->buildAssetPath($assetPath);
-        return $buildAssetPath ? $buildAssetPath->url() : '';
-    }
-
-    public function buildRoot(): ?FilePath
-    {
-        if (!isset($this->buildRoot)) {
-            $this->buildRoot = $this->path()->findAncestor(SITCHCO_CONFIG_FILENAME);
-        }
-        return $this->buildRoot;
-    }
-
-    protected function isDevServer(): bool
-    {
-        if (!isset($this->isDevServer)) {
-            $this->isDevServer = $this->buildRoot()->append('.vite.hot')->exists();
-        }
-        return $this->isDevServer;
-    }
-
-    protected function buildAssetPath(FilePath $assetPath): ?FilePath
-    {
-        $buildPath = $this->buildRoot()->append('dist');
-        $manifestPath = $buildPath->append('.vite/manifest.json');
-        if (!$manifestPath->exists()) {
-            return null;
-        }
-        $manifestKey = $manifestPath->value();
-        if (!isset($this->manifestCache[$manifestKey])) {
-            static::$manifestCache[$manifestKey] = json_decode(file_get_contents($manifestPath), true);
-        }
-        $manifest = static::$manifestCache[$manifestKey];
-        $assetKey = $assetPath->relativeTo($this->buildRoot);
-        if (!isset($manifest[$assetKey])) {
-            return null;
-        }
-        return $buildPath->append($manifest[$assetKey]['file']);
+        return $this->assets()->assetUrl("assets/styles/$relative");
     }
 
 }

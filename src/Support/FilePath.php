@@ -34,12 +34,12 @@ class FilePath
 
     public function findAncestor(string $filename): ?static
     {
-        $dir = $this;
+        $dir = $this->isDirectory ? $this : $this->parent();
         do {
-            $dir = $dir->parent();
             if ($dir->append($filename)->exists()) {
                 return $dir;
             }
+            $dir = $dir->parent();
         } while (!$dir->isRoot());
         return null;
     }

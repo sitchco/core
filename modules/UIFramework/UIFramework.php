@@ -19,17 +19,10 @@ class UIFramework extends Module
 
     public function setupAssets(): void
     {
-        wp_register_script_module(
-            'vite-client',
-            SITCHCO_DEV_SERVER_URL . '/@vite/client',
-            [],
-            null
-        );
-
         $this->registerScript(
             static::hookName(),
             $this->scriptUrl('main.mjs'),
-            ['vite-client', 'wp-hooks']
+            ['wp-hooks']
         );
         wp_register_style(
             static::hookName(),
@@ -48,9 +41,6 @@ class UIFramework extends Module
     public function loadAssets(): void
     {
         add_action('wp_enqueue_scripts', function () {
-            if ($this->isDevServer()) {
-                wp_enqueue_script_module('vite-client');
-            }
             $this->enqueueScript(static::hookName());
             wp_enqueue_style(static::hookName());
         });
