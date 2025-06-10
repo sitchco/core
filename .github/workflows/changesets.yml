@@ -15,6 +15,7 @@ jobs:
   generate-changesets:
     name: Generate Changeset Entries
     needs: list
+    if: needs.list.outputs.matrix != '[]'
     runs-on: ubuntu-latest
     strategy:
       matrix:
