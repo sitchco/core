@@ -32,6 +32,7 @@ class Cleanup extends Module
         'disableGutenbergStyles',
         'disableScriptVersion',
         'disableDefaultBlockPatterns',
+        'youtubeNoCookie'
     ];
 
     /**
@@ -496,5 +497,10 @@ class Cleanup extends Module
     public function removeSelfClosingTags(array|string $html): array|string
     {
         return is_array($html) ? array_map([$this, 'removeSelfClosingTags'], $html) : str_replace(' />', '>', $html);
+    }
+
+    public function youtubeNoCookie(): void
+    {
+        add_filter('embed_oembed_html',fn(string $html) => str_contains($html, 'youtube.com') ? str_replace('youtube.com', 'youtube-nocookie.com', $html) : $html);
     }
 }
