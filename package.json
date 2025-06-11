@@ -8,7 +8,7 @@
         "dev": "module-builder dev",
         "lint": "sitchco-lint",
         "format": "sitchco-format",
-        "test": "pnpm --filter @sitchco/module-builder test",
+        "test": "pnpm -r test",
         "clean": "module-builder clean && find . -type d -name node_modules -prune -exec rm -rf {} \\;",
         "reset": "pnpm clean && pnpm install"
     },
