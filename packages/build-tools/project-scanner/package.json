@@ -15,7 +15,7 @@
     },
     "dependencies": {
         "chalk": "^5.4.1",
-        "glob": "^11.0.1"
+        "glob": "^11.0.3"
     },
     "engines": {
         "node": ">=18.0.0"
@@ -36,8 +36,8 @@
         "module-discovery"
     ],
     "devDependencies": {
-        "@vitest/coverage-v8": "^3.2.1",
-        "@vitest/ui": "^3.2.1",
-        "vitest": "^3.2.1"
+        "@vitest/coverage-v8": "^3.2.4",
+        "@vitest/ui": "^3.2.4",
+        "vitest": "^3.2.4"
     }
 }
