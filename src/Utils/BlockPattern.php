@@ -2,12 +2,27 @@
 
 namespace Sitchco\Utils;
 
+use Sitchco\Support\FilePath;
+
 /**
  * Class BlockPattern
  * @package Sitchco\Utils
  */
 class BlockPattern
 {
+    /**
+     * Registers a block pattern file in WordPress.
+     *
+     * @param FilePath $filePath Path to JSON file (another file with same name) containing block pattern data
+     *
+     * @return void
+     */
+    public static function registerFile(FilePath $filePath): void
+    {
+        $name = $filePath->name();
+        static::register($name, $filePath->append("/$name.json"));
+    }
+
     /**
      * Registers a block pattern in WordPress.
      *

@@ -67,6 +67,11 @@ class FilePath
         return $this->filename === dirname($this->filename);
     }
 
+    public function name(): string
+    {
+        return pathinfo($this->value(), PATHINFO_FILENAME);
+    }
+
     public function dir(): string
     {
         return $this->isDirectory ? $this->filename: dirname($this->filename);
@@ -80,6 +85,16 @@ class FilePath
     public function relativeTo(string $rootPath): string
     {
         return str_replace($rootPath, '', $this->value());
+    }
+
+    /**
+     * @param string $pattern
+     * @return FilePath[]
+     */
+    public function glob(string $pattern): array
+    {
+        $filenames = glob($this->append($pattern)->value());
+        return array_map([self::class, '__construct'], $filenames);
     }
 
     public function url(): string

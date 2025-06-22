@@ -28,6 +28,7 @@ class BackgroundProcessingTest extends TestCase
 
     function test_save_permalink_request_event()
     {
+        remove_all_actions(SavePermalinksRequestEvent::hookName());
         $event = $this->container->get(SavePermalinksRequestEvent::class);
         $event->init();
         do_action('sitchco/after_save_permalinks');
