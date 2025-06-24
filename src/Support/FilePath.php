@@ -16,6 +16,11 @@ class FilePath
         $this->isDirectory = is_dir($this->filename);
     }
 
+    public static function create(string $filename): self
+    {
+        return new static($filename);
+    }
+
     public static function createFromClassDir(object $object): static
     {
         $reflector = new \ReflectionClass($object);
@@ -94,7 +99,7 @@ class FilePath
     public function glob(string $pattern): array
     {
         $filenames = glob($this->append($pattern)->value());
-        return array_map([self::class, '__construct'], $filenames);
+        return array_map([self::class, 'create'], $filenames);
     }
 
     public function url(): string
