@@ -45,6 +45,10 @@ class BlockRegistrationModuleExtension implements ModuleExtension
             if (!$blocksPath->isDir()) {
                 continue;
             }
+            add_filter('timber/locations', function ($paths) use ($blocksPath) {
+                $paths[] = [$blocksPath->value()];
+                return $paths;
+            });
 
             $configFilePath = $blocksPath->append('blocks-config.php');
             if ($configFilePath->isFile()) {
