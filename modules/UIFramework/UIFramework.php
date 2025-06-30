@@ -24,7 +24,7 @@ class UIFramework extends Module
             $this->scriptUrl('main.mjs'),
             ['wp-hooks']
         );
-        wp_register_style(
+        $this->registerStyle(
             static::hookName(),
             $this->styleUrl('main.css'),
         );
@@ -42,7 +42,7 @@ class UIFramework extends Module
     {
         add_action('wp_enqueue_scripts', function () {
             $this->enqueueScript(static::hookName());
-            wp_enqueue_style(static::hookName());
+            $this->enqueueStyle(static::hookName());
         });
     }
 }

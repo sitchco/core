@@ -10,6 +10,7 @@ class ModuleAssets
 
     public readonly ?FilePath $productionBuildPath;
     public readonly ?FilePath $devBuildPath;
+    public readonly string $devBuildUrl;
     public readonly bool $isDevServer;
 
 
@@ -25,6 +26,11 @@ class ModuleAssets
         }
         $this->devBuildPath = $this->productionBuildPath->findAncestor(SITCHCO_DEV_HOT_FILE);
         $this->isDevServer = $this->devBuildPath && $this->devBuildPath->exists();
+        if ($this->isDevServer) {
+            $devBuildUrl = file_get_contents($this->devBuildPath);
+            $port = parse_url($devBuildUrl, PHP_URL_PORT) ?: 5173;
+            $this->devBuildUrl = "https://{$_SERVER['HTTP_HOST']}:$port";
+        }
     }
 
     public function buildAssetPath(FilePath $assetPath): ?FilePath
@@ -48,11 +54,10 @@ class ModuleAssets
 
     public function registerScript(string $handle, string $src, array $deps = []): void
     {
-        if (!$this->isDevServer) {
-            wp_register_script($handle, $src, $deps);
-            return;
+        wp_register_script($handle, $src, $deps);
+        if ($this->isDevServer) {
+            wp_register_script_module($handle, $src, $deps);
         }
-        wp_register_script_module($handle, $src, $deps);
     }
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
@@ -61,12 +66,12 @@ class ModuleAssets
             wp_enqueue_script($handle, $src, $deps);
             return;
         }
-        wp_enqueue_script_module(
-            'vite-client',
-            SITCHCO_DEV_SERVER_URL . '/@vite/client',
-            [],
-            null
-        );
+        $this->enqueueViteClient();
+        // fetch registered dependencies
+        $registered = wp_scripts()->registered[$handle] ?? null;
+        if ($registered) {
+            $deps = $registered->deps;
+        }
         foreach ($deps as $dep) {
             wp_enqueue_script($dep);
             wp_enqueue_script_module($dep);
@@ -74,13 +79,46 @@ class ModuleAssets
         wp_enqueue_script_module($handle, $src, $deps);
     }
 
+    public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
+    {
+        wp_register_style($handle, $src, $deps, null, $media);
+    }
+
+    public function enqueueStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
+    {
+        if ($this->isDevServer) {
+            $this->enqueueViteClient();
+        }
+        wp_enqueue_style($handle, $src, $deps, null, $media);
+    }
+
+    public function enqueueBlockStyle(string $handle, array $args = []): void
+    {
+        if ($this->isDevServer) {
+            $this->enqueueViteClient();
+        }
+        wp_enqueue_block_style($handle, $args);
+    }
+
     public function assetUrl(string $relativePath): string
     {
         $assetPath = $this->modulePath->append($relativePath);
         if ($this->isDevServer) {
-            return SITCHCO_DEV_SERVER_URL . '/' . $assetPath->relativeTo($this->productionBuildPath);
+            return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
         $buildAssetPath = $this->buildAssetPath($assetPath);
         return $buildAssetPath ? $buildAssetPath->url() : '';
     }
+
+    private function enqueueViteClient(): void
+    {
+        $namespace = $this->productionBuildPath->name();
+        wp_enqueue_script_module(
+            "$namespace/vite-client",
+            $this->devBuildUrl . '/@vite/client',
+            [],
+            null
+        );
+    }
+
 }

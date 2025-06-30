@@ -23,8 +23,4 @@ const SITCHCO_DEV_HOT_FILE = '.vite.hot';
 
 add_action('plugins_loaded', static function () {
     new Bootstrap();
-
-    if (!defined('SITCHCO_DEV_SERVER_URL')) {
-        define('SITCHCO_DEV_SERVER_URL', "https://{$_SERVER['HTTP_HOST']}:5173");
-    }
 });

@@ -84,6 +84,22 @@ abstract class Module
         $this->assets()->enqueueScript($handle, $src, $deps);
     }
 
+    public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
+    {
+        $this->assets()->registerStyle($handle, $src, $deps, $media);
+    }
+
+    public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
+    {
+        $this->assets()->enqueueStyle($handle, $src, $deps, $media);
+    }
+
+    public function enqueueBlockStyle(string $handle, array $args): void
+    {
+        $this->assets()->enqueueBlockStyle($handle, $args);
+    }
+
+
     protected function scriptUrl(string $relative): string
     {
         return $this->assets()->assetUrl("assets/scripts/$relative");
