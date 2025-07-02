@@ -13,4 +13,7 @@ export async function runDev(target) {
     const server = await viteCreateServer(viteConfig);
     await server.listen();
     server.printUrls();
+    await new Promise((resolve) => {
+        server.httpServer.on('close', resolve);
+    });
 }

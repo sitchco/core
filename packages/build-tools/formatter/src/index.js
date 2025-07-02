@@ -1,18 +1,17 @@
-#!/usr/bin/env node
 import path from 'node:path';
 import chalk from 'chalk';
-import prettier from 'prettier';
 import ProjectScanner from '@sitchco/project-scanner';
+import prettier from 'prettier';
 import sitchcoPrettierConfig from '@sitchco/prettier-config' with { type: 'json' };
-import { JsProcessor } from '../src/processors/js-processor.js';
-import { SvgProcessor } from '../src/processors/svg-processor.js';
-import { CssProcessor } from '../src/processors/css-processor.js';
+import { JsProcessor } from './processors/js-processor.js';
+import { SvgProcessor } from './processors/svg-processor.js';
+import { CssProcessor } from './processors/css-processor.js';
 
 async function loadProcessors(prettierConfig) {
     return [new JsProcessor(prettierConfig), new SvgProcessor(prettierConfig), new CssProcessor(prettierConfig)];
 }
 
-async function runFormat() {
+export async function runFormat(files = []) {
     let totalFilesProcessed = 0;
     let totalFilesChanged = 0;
     let totalFilesErrored = 0;
@@ -23,14 +22,15 @@ async function runFormat() {
         const prettierConfig = (await prettier.resolveConfig(scanner.projectRoot)) || sitchcoPrettierConfig;
         const processors = await loadProcessors(prettierConfig);
         const supportedExtensions = processors.flatMap((p) => p.extensions);
-        const filesToProcess = await scanner.findAllSourceFiles(supportedExtensions);
+        const filesToProcess = files.length ? files : await scanner.findAllSourceFiles(supportedExtensions);
         if (!filesToProcess.length) {
             console.log(chalk.green('No files to format'));
-            process.exit(0);
+            return 0;
         }
 
         totalFilesProcessed = filesToProcess.length;
         console.log(chalk.blue(`Processing ${totalFilesProcessed} file(s)`));
+
         const results = await Promise.all(
             filesToProcess.map(async (filePath) => {
                 try {
@@ -65,6 +65,7 @@ async function runFormat() {
                 }
             })
         );
+
         results.forEach((result) => {
             if (result.error) {
                 totalFilesErrored++;
@@ -84,12 +85,9 @@ async function runFormat() {
                 console.log(chalk.red(`❌ Errors: ${totalFilesErrored}`));
             }
         }
-
-        process.exit(totalFilesErrored > 0 ? 1 : 0);
+        return totalFilesErrored > 0 ? 1 : 0;
     } catch (error) {
-        console.error(chalk.red('\nFatal error:'), error);
-        process.exit(1);
+        console.error(chalk.red('\nFatal error during format:'), error);
+        return 1;
     }
 }
-
-runFormat();

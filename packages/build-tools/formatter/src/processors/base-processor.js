@@ -7,7 +7,7 @@ export class BaseProcessor {
         this.prettierConfig = prettierConfig;
     }
 
-    async processFile(filePath) {
+    async processFile(_filePath) {
         throw new Error('processFile() must be implemented by subclass');
     }
 
