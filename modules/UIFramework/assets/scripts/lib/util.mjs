@@ -143,7 +143,7 @@ export function imageBrightness(imageSrc) {
 
                 const brightness = Math.round((colorSum / (this.width * this.height) / 255) * 100);
                 resolve(brightness);
-            } catch (err) {
+            } catch {
                 resolve(false); // Usually canvas is tainted by CORS issues
             }
         };
