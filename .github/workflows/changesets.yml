@@ -30,7 +30,7 @@ jobs:
       - run: pnpm install
       - name: Build changeset data
         run: |
-          node packages/build-tools/dev-scripts/src/packages/build-changeset.mjs ${{ matrix.package }}
+          node packages/build-tools/publisher/src/packages/build-changeset.mjs ${{ matrix.package }}
         shell: bash
 
       - name: Generate changeset for ${{ matrix.package }}
