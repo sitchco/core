@@ -35,7 +35,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Conditionally Build Package
-        run: node packages/build-tools/publisher/src/packages/prep-package.mjs ${{ matrix.package.name }}
+        run: node packages/build-tools/publisher/src/prep-package.mjs ${{ matrix.package.name }}
 
       - name: Publish Package
         env:
