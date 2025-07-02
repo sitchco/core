@@ -27,7 +27,7 @@ class ModuleAssets
         $this->devBuildPath = $this->productionBuildPath->findAncestor(SITCHCO_DEV_HOT_FILE);
         $this->isDevServer = $this->devBuildPath && $this->devBuildPath->exists();
         if ($this->isDevServer) {
-            $devBuildUrl = file_get_contents($this->devBuildPath);
+            $devBuildUrl = file_get_contents($this->devBuildPath->append(SITCHCO_DEV_HOT_FILE));
             $port = parse_url($devBuildUrl, PHP_URL_PORT) ?: 5173;
             $this->devBuildUrl = "https://{$_SERVER['HTTP_HOST']}:$port";
         }
