@@ -11,8 +11,8 @@ use Timber\Term;
 class TermBase extends Term
 {
     /**
-     * TODO: implement this alongside a TermRepository class
-     * TODO: create shared interface between PostBase / TermBase
-     */
+ * TODO: implement this alongside a TermRepository class
+ * TODO: create shared interface between PostBase / TermBase
+ */
 //    private array $_local_meta_reference = [];
 }

@@ -40,7 +40,7 @@ class AdminNotification extends FlashMessage
         return sprintf(
             '<div class="notice notice-%s%s"><p>%s</p></div>',
             $this->status,
-            ($this->dismissible ? ' is-dismissible' : ''),
+            $this->dismissible ? ' is-dismissible' : '',
             $this->message
         );
     }

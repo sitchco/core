@@ -4,7 +4,6 @@ namespace Sitchco\Support;
 
 class FilePath
 {
-
     protected string $filename;
     protected bool $isFile;
     protected bool $isDirectory;
@@ -51,7 +50,7 @@ class FilePath
 
     public function exists(): bool
     {
-        return ($this->isFile || $this->isDirectory);
+        return $this->isFile || $this->isDirectory;
     }
 
     public function isFile(): bool
@@ -79,7 +78,7 @@ class FilePath
 
     public function dir(): string
     {
-        return $this->isDirectory ? $this->filename: dirname($this->filename);
+        return $this->isDirectory ? $this->filename : dirname($this->filename);
     }
 
     public static function join(string ...$parts): string
@@ -104,11 +103,7 @@ class FilePath
 
     public function url(): string
     {
-        $relativeToContent = str_replace(
-            wp_normalize_path(WP_CONTENT_DIR),
-            '',
-            $this->filename
-        );
+        $relativeToContent = str_replace(wp_normalize_path(WP_CONTENT_DIR), '', $this->filename);
 
         return content_url($relativeToContent);
     }

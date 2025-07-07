@@ -7,10 +7,7 @@ use Sitchco\Framework\Module;
 
 class BlockManager extends Module
 {
-    public function __construct(
-        private readonly ConfigRegistry $configRegistry
-    ) {
-    }
+    public function __construct(private readonly ConfigRegistry $configRegistry) {}
 
     public function init()
     {

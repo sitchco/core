@@ -12,6 +12,6 @@ class PostTester extends Post
 {
     public function test_custom_value(): string
     {
-        return "Custom Getter: Test Custom Value";
+        return 'Custom Getter: Test Custom Value';
     }
 }

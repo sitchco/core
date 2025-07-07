@@ -13,7 +13,6 @@ class ModuleAssets
     public readonly string $devBuildUrl;
     public readonly bool $isDevServer;
 
-
     private static array $manifestCache = [];
 
     public function __construct(FilePath $modulePath)
@@ -113,12 +112,6 @@ class ModuleAssets
     private function enqueueViteClient(): void
     {
         $namespace = $this->productionBuildPath->name();
-        wp_enqueue_script_module(
-            "$namespace/vite-client",
-            $this->devBuildUrl . '/@vite/client',
-            [],
-            null
-        );
+        wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
     }
-
 }

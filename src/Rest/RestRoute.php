@@ -41,10 +41,10 @@ class RestRoute
      */
     public function register(string $namespace): void
     {
-        Hooks::callOrAddAction('rest_api_init', function() use ($namespace) {
+        Hooks::callOrAddAction('rest_api_init', function () use ($namespace) {
             register_rest_route($namespace, $this->path, [
-                'methods'             => $this->methods,
-                'callback'            => [$this, 'handleRequest'],
+                'methods' => $this->methods,
+                'callback' => [$this, 'handleRequest'],
                 'permission_callback' => $this->permissionCallback(),
             ]);
         });
@@ -62,26 +62,20 @@ class RestRoute
             return rest_ensure_response(($this->callback)($request));
         } catch (Throwable $e) {
             $route_key = explode('/', $this->path)[0] ?? 'error';
-            return new WP_Error(
-                "rest_$route_key",
-                $e->getMessage(),
-                ['status' => $e->getCode() ?: 500]
-            );
+            return new WP_Error("rest_$route_key", $e->getMessage(), ['status' => $e->getCode() ?: 500]);
         }
     }
 
     protected function permissionCallback(): \Closure
     {
-        return function() {
+        return function () {
             if (!$this->capability) {
                 return true;
             }
             return current_user_can($this->capability) ?:
-                new WP_Error(
-                    'incorrect_permissions',
-                    'Incorrect permissions for requested route',
-                    ['status' => rest_authorization_required_code()]
-                );
+                new WP_Error('incorrect_permissions', 'Incorrect permissions for requested route', [
+                    'status' => rest_authorization_required_code(),
+                ]);
         };
     }
 }

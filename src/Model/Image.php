@@ -27,7 +27,7 @@ class Image extends \Timber\Image
 
     private array $attrs = [];
 
-    static public function buildFromAttachmentId(int $attachment_id): static
+    public static function buildFromAttachmentId(int $attachment_id): static
     {
         return static::build(get_post($attachment_id));
     }
@@ -125,7 +125,7 @@ class Image extends \Timber\Image
             return $this->src();
         }
 
-        list($width, $height) = $this->getDimensionsForResizing();
+        [$width, $height] = $this->getDimensionsForResizing();
         $crop = $this->getCropForResizing();
 
         // Hook to bypass filesystem resize: sitchco/image/resize
@@ -140,7 +140,6 @@ class Image extends \Timber\Image
         }
 
         return ImageHelper::resize($this->src(), $width, $height, $crop->value);
-
     }
 
     public function render(): string
@@ -170,18 +169,14 @@ class Image extends \Timber\Image
     {
         $larger_width = $this->resize_width > parent::width();
         $larger_height = $this->resize_height > parent::height();
-        return $in_both_dimensions ?
-            ($larger_width && $larger_height) :
-            ($larger_width || $larger_height);
+        return $in_both_dimensions ? $larger_width && $larger_height : $larger_width || $larger_height;
     }
 
     public function isSmallerSize(bool $in_both_dimensions = true): bool
     {
         $smaller_width = $this->resize_width < parent::width();
         $smaller_height = $this->resize_height < parent::height();
-        return $in_both_dimensions ?
-            ($smaller_width && $smaller_height) :
-            ($smaller_width || $smaller_height);
+        return $in_both_dimensions ? $smaller_width && $smaller_height : $smaller_width || $smaller_height;
     }
 
     private function hasBothDimensions(): bool
@@ -200,11 +195,11 @@ class Image extends \Timber\Image
         $height = $this->resize_height;
         // Larger image with one dimension, calculate missing width or height
         if ($this->isLargerSize()) {
-            list($width, $height) = wp_constrain_dimensions(
+            [$width, $height] = wp_constrain_dimensions(
                 $this->resize_width,
                 $this->resize_height,
                 parent::width(),
-                parent::height(),
+                parent::height()
             );
         }
         return [$width, $height];
@@ -224,7 +219,7 @@ class Image extends \Timber\Image
             }
             return;
         }
-        list($this->resize_width, $this->resize_height) = wp_constrain_dimensions(
+        [$this->resize_width, $this->resize_height] = wp_constrain_dimensions(
             parent::width(),
             parent::height(),
             $this->resize_width,
@@ -252,5 +247,4 @@ class Image extends \Timber\Image
         }
         return true;
     }
-
 }

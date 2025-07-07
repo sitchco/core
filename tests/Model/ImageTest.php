@@ -30,7 +30,9 @@ class ImageTest extends TestCase
         $image = Image::buildFromAttachmentId($this->attachment_id);
         $image->setAttr('class', ['card-image', 'card-image--test'])->setAttr('data-test', 'image');
         $this->assertHTMLEquals(
-            '<img src="' . $image->src() . '" width="880" height="660" class="card-image card-image--test" data-test="image" alt="Image Description" loading="lazy" />',
+            '<img src="' .
+                $image->src() .
+                '" width="880" height="660" class="card-image card-image--test" data-test="image" alt="Image Description" loading="lazy" />',
             (string) $image
         );
     }
@@ -123,11 +125,16 @@ class ImageTest extends TestCase
 
     public function test_override_image_resize()
     {
-        add_filter('sitchco/image/resize', function($result, $image_data) {
-            extract($image_data);
-            $crop = $crop->value;
-            return $src . '?' . build_query(compact('width', 'height', 'crop'));
-        }, 10, 2);
+        add_filter(
+            'sitchco/image/resize',
+            function ($result, $image_data) {
+                extract($image_data);
+                $crop = $crop->value;
+                return $src . '?' . build_query(compact('width', 'height', 'crop'));
+            },
+            10,
+            2
+        );
         $image = Image::buildFromAttachmentId($this->attachment_id);
         $image->resize(440, 330);
         $resized_src = $image->src() . '?width=440&height=330&crop=default';

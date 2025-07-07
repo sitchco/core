@@ -6,10 +6,7 @@ use Sitchco\Framework\Module;
 
 class SearchRewrite extends Module
 {
-    const FEATURES = [
-        'redirect',
-        'compatibility'
-    ];
+    const FEATURES = ['redirect', 'compatibility'];
 
     /**
      * The search query string.
@@ -30,10 +27,10 @@ class SearchRewrite extends Module
             global $wp_rewrite;
 
             if (
-                ! isset($_SERVER['REQUEST_URI']) ||
-                ! isset($wp_rewrite) ||
-                ! is_object($wp_rewrite) ||
-                ! $wp_rewrite->get_search_permastruct()
+                !isset($_SERVER['REQUEST_URI']) ||
+                !isset($wp_rewrite) ||
+                !is_object($wp_rewrite) ||
+                !$wp_rewrite->get_search_permastruct()
             ) {
                 return;
             }
@@ -46,7 +43,7 @@ class SearchRewrite extends Module
                 !str_contains($request, '&')
             ) {
                 wp_safe_redirect(get_search_link());
-                exit;
+                exit();
             }
         });
     }

@@ -28,6 +28,4 @@ trait HasHooks
         $prefix = defined('static::HOOK_PREFIX') ? static::HOOK_PREFIX : '';
         return Hooks::name($prefix, static::HOOK_SUFFIX, ...$name_parts);
     }
-
-
 }

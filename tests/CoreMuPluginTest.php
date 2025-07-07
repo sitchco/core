@@ -16,18 +16,17 @@ class CoreMuPluginTest extends TestCase
     function test_registers_and_activates_a_module()
     {
         $loaded_config = $this->container->get(ConfigRegistry::class)->load('modules');
-        $this->assertEquals([
-            'featureOne' => true,
-            'featureTwo' => true,
-            'featureThree' => false,
-        ], $loaded_config[ModuleTester::class]);
+        $this->assertEquals(
+            [
+                'featureOne' => true,
+                'featureTwo' => true,
+                'featureThree' => false,
+            ],
+            $loaded_config[ModuleTester::class]
+        );
         $this->assertArrayNotHasKey(ParentModuleTester::class, $loaded_config);
         $full_feature_list = $this->container->get(ModuleRegistry::class)->getModuleFeatures();
-        $this->assertEquals([
-            'featureOne',
-            'featureTwo',
-            'featureThree',
-        ], $full_feature_list[ModuleTester::class]);
+        $this->assertEquals(['featureOne', 'featureTwo', 'featureThree'], $full_feature_list[ModuleTester::class]);
     }
 
     /**
@@ -58,7 +57,9 @@ class CoreMuPluginTest extends TestCase
     function test_active_module_path()
     {
         $ModuleInstance = $this->container->get(ModuleTester::class);
-        $this->assertEquals(WP_CONTENT_DIR . '/mu-plugins/sitchco-core/tests/Support/', $ModuleInstance->path()->value());
+        $this->assertEquals(
+            WP_CONTENT_DIR . '/mu-plugins/sitchco-core/tests/Support/',
+            $ModuleInstance->path()->value()
+        );
     }
-
 }

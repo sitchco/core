@@ -2,7 +2,4 @@
 
 namespace Sitchco\Support\Exception;
 
-class RedirectExitException extends ExitException
-{
-
-}
+class RedirectExitException extends ExitException {}

@@ -76,11 +76,11 @@ class Str
      * @param string $append The text to append if truncated.
      * @return string The truncated text.
      */
-    public static function truncate(string $text, int $length = 48, string $append = "..."): string
+    public static function truncate(string $text, int $length = 48, string $append = '...'): string
     {
         if (strlen($text) > $length) {
             $text = substr($text, 0, $length);
-            $text = self::cutUsingLast(" ", $text, "left", false);
+            $text = self::cutUsingLast(' ', $text, 'left', false);
             return $text . $append;
         }
         return $text;
@@ -95,8 +95,12 @@ class Str
      * @param bool $keepCharacter Whether to include the character in the result.
      * @return string|false The cut string or false on failure.
      */
-    public static function cutUsingLast(string $character, string $string, string $side = 'left', bool $keepCharacter = true): string|false
-    {
+    public static function cutUsingLast(
+        string $character,
+        string $string,
+        string $side = 'left',
+        bool $keepCharacter = true
+    ): string|false {
         $offset = $keepCharacter ? 1 : 0;
         $wholeLength = strlen($string);
         $rightLength = strlen(strrchr($string, $character)) - 1;
@@ -154,10 +158,10 @@ class Str
      * @param string $paramStr Parameters for Lorem Ipsum API.
      * @return string The placeholder text.
      */
-    public static function placeholderText(string $paramStr = "5 long decorate link"): string
+    public static function placeholderText(string $paramStr = '5 long decorate link'): string
     {
         $params = explode(' ', $paramStr);
-        $baseUrl = "http://loripsum.net/api/";
+        $baseUrl = 'http://loripsum.net/api/';
         return wp_remote_retrieve_body(wp_remote_get($baseUrl . implode('/', $params)));
     }
 
@@ -188,11 +192,6 @@ class Str
     public static function wrapElement(string $content, string $tag, array $attributes = []): string
     {
         $attributes = ArrayUtil::toAttributes($attributes);
-        return sprintf(
-            '<%1$s%2$s>%3$s</%1$s>',
-            $tag,
-            $attributes ? ' ' . $attributes : '',
-            $content
-        );
+        return sprintf('<%1$s%2$s>%3$s</%1$s>', $tag, $attributes ? ' ' . $attributes : '', $content);
     }
 }

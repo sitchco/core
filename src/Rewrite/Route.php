@@ -6,7 +6,6 @@ use Sitchco\Utils\Hooks;
 
 class Route extends Rewrite
 {
-
     protected $callback;
 
     public function __construct($path, callable $callback)
@@ -19,7 +18,6 @@ class Route extends Rewrite
     {
         parent::init();
         Hooks::callOrAddAction('wp', [$this, 'processRoute']);
-
     }
 
     protected function getQuery(): string
@@ -42,7 +40,9 @@ class Route extends Rewrite
 
     public function processRoute()
     {
-        if(!$this->matchesRequest()) return false;
+        if (!$this->matchesRequest()) {
+            return false;
+        }
         $parameters = [];
         for ($index = 1; $index <= $this->arguments_count; $index++) {
             $parameters[] = $this->getArgumentValue($index);
@@ -54,5 +54,4 @@ class Route extends Rewrite
     {
         return get_query_var('route') == $this->hook;
     }
-
 }

@@ -6,19 +6,11 @@ use Sitchco\Framework\Module;
 
 class ModuleTester extends Module
 {
-    const DEPENDENCIES = [
-        ParentModuleTester::class
-    ];
+    const DEPENDENCIES = [ParentModuleTester::class];
 
-    public const POST_CLASSES = [
-        PostTester::class
-    ];
+    public const POST_CLASSES = [PostTester::class];
 
-    const FEATURES = [
-        'featureOne',
-        'featureTwo',
-        'featureThree',
-    ];
+    const FEATURES = ['featureOne', 'featureTwo', 'featureThree'];
 
     public bool $initialized = false;
 

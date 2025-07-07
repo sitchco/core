@@ -31,7 +31,7 @@ class PostBase extends Post
     public function __get($field)
     {
         $value = parent::__get($field);
-        $this->_local_meta_reference[$field] =& $this->$field;
+        $this->_local_meta_reference[$field] = &$this->$field;
         return $value;
     }
 
@@ -117,7 +117,10 @@ class PostBase extends Post
 
     public function getLocalTaxonomies(): array
     {
-        return array_merge(array_keys($this->_local_add_terms_reference), array_keys($this->_local_remove_terms_reference));
+        return array_merge(
+            array_keys($this->_local_add_terms_reference),
+            array_keys($this->_local_remove_terms_reference)
+        );
     }
 
     /**
@@ -161,7 +164,7 @@ class PostBase extends Post
     public function wp_object(): ?\WP_Post
     {
         if (empty($this->wp_object)) {
-            return $this->wp_object = new \WP_Post((object)['ID' => null, 'post_type' => static::POST_TYPE]);
+            return $this->wp_object = new \WP_Post((object) ['ID' => null, 'post_type' => static::POST_TYPE]);
         }
         return parent::wp_object();
     }

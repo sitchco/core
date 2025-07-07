@@ -24,11 +24,7 @@ class Component
             return $base;
         }
 
-        return sprintf(
-            '%s %s',
-            $base,
-            implode(' ', preg_filter('/^/', "{$base}--", array_filter($classModifiers)))
-        );
+        return sprintf('%s %s', $base, implode(' ', preg_filter('/^/', "{$base}--", array_filter($classModifiers))));
     }
 
     /**
@@ -40,11 +36,12 @@ class Component
      *
      * @return string The formatted attribute string.
      */
-    public static function componentAttributes(string $base, array $classModifiers = [], array $elementAttributes = []): string
-    {
-        return ArrayUtil::toAttributes(
-            self::componentAttributesArray($base, $classModifiers, $elementAttributes)
-        );
+    public static function componentAttributes(
+        string $base,
+        array $classModifiers = [],
+        array $elementAttributes = []
+    ): string {
+        return ArrayUtil::toAttributes(self::componentAttributesArray($base, $classModifiers, $elementAttributes));
     }
 
     /**
@@ -56,8 +53,11 @@ class Component
      *
      * @return array<string, string> The attribute array.
      */
-    public static function componentAttributesArray(string $base, array $classModifiers = [], array $elementAttributes = []): array
-    {
+    public static function componentAttributesArray(
+        string $base,
+        array $classModifiers = [],
+        array $elementAttributes = []
+    ): array {
         $core = ['data-gtm' => $base];
 
         if ($classes = self::componentClasses($base, $classModifiers)) {

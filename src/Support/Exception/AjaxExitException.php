@@ -2,7 +2,4 @@
 
 namespace Sitchco\Support\Exception;
 
-class AjaxExitException extends ExitException
-{
-
-}
+class AjaxExitException extends ExitException {}

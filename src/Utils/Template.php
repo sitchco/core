@@ -19,9 +19,12 @@ class Template
      *
      * TODO: might not need this method anymore as get_template_part() has been refactored, test in Stream module (stream-activity-report.php)
      */
-    public static function getTemplateScoped(string|array $templateNames, array $scope = [], string $basePath = ''): ?string
-    {
-        if (!$file = self::locateTemplate($templateNames, $basePath)) {
+    public static function getTemplateScoped(
+        string|array $templateNames,
+        array $scope = [],
+        string $basePath = ''
+    ): ?string {
+        if (!($file = self::locateTemplate($templateNames, $basePath))) {
             return null;
         }
 
@@ -40,7 +43,7 @@ class Template
     {
         $realFile = realpath($file);
         if (!$realFile || !is_file($realFile)) {
-            error_log("Template file not found: " . $file);
+            error_log('Template file not found: ' . $file);
             return null;
         }
 

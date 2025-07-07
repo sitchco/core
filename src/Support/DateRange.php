@@ -9,11 +9,15 @@ class DateRange
     protected DateFormat $date_format;
     protected string $separator;
 
-    public function __construct(DateTime $start_date, DateTime $end_date, DateFormat $date_format = null, string $separator = ' - ')
-    {
+    public function __construct(
+        DateTime $start_date,
+        DateTime $end_date,
+        DateFormat $date_format = null,
+        string $separator = ' - '
+    ) {
         $this->start_date = $start_date;
         $this->end_date = $end_date;
-        $this->date_format = $date_format ?: new DateFormat;
+        $this->date_format = $date_format ?: new DateFormat();
         $this->separator = $separator;
     }
 
@@ -56,6 +60,4 @@ class DateRange
     {
         return $this->getRangeWithSeparator();
     }
-
 }
-

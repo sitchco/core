@@ -27,7 +27,7 @@ class RewriteService
      * *  @type callable $callback function to execute when URL matches the rewrite path
      * *  @type string $redirect_url URL to redirect to if callback function returns true
      * }
- * @return RewriteService
+     * @return RewriteService
      */
     public function register(string $path, array $args): RewriteService
     {
@@ -38,7 +38,9 @@ class RewriteService
         ]);
         if (is_callable($args['callback'])) {
             // Determine if it's a redirect route
-            $route = $args['redirect_url'] ? new RedirectRoute($path, $args['callback'], (string) $args['redirect_url']) : new Route($path, $args['callback']);
+            $route = $args['redirect_url']
+                ? new RedirectRoute($path, $args['callback'], (string) $args['redirect_url'])
+                : new Route($path, $args['callback']);
         } else {
             // Default to QueryRewrite
             $route = new QueryRewrite($path, (array) $args['query']);

@@ -15,11 +15,7 @@ use Sitchco\Utils\Hooks;
 
 class BackgroundProcessing extends Module
 {
-    public const FEATURES = [
-        'savePermalinksRequestEvent',
-        'savePostQueueEvent',
-        'processPostsAfterSavePermalinks'
-    ];
+    public const FEATURES = ['savePermalinksRequestEvent', 'savePostQueueEvent', 'processPostsAfterSavePermalinks'];
 
     protected Container $Container;
 
@@ -46,15 +42,15 @@ class BackgroundProcessing extends Module
 
     public function init(): void
     {
-        add_action('current_screen', function($screen) {
-            if ($screen->id === 'options-permalink' && ! empty($_POST['permalink_structure'])) {
+        add_action('current_screen', function ($screen) {
+            if ($screen->id === 'options-permalink' && !empty($_POST['permalink_structure'])) {
                 do_action(Hooks::name('after_save_permalinks'), $screen);
             }
         });
-        add_action('shutdown', function() {
+        add_action('shutdown', function () {
             do_action(Hooks::name('save_background_queue'));
         });
-        add_action(Hooks::name('save_background_queue'), function() {
+        add_action(Hooks::name('save_background_queue'), function () {
             if (!$this->Queue->hasQueuedItems()) {
                 return;
             }

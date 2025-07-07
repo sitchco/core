@@ -75,11 +75,11 @@ class SvgUpload extends Module
             $contents = file_get_contents($attachment);
 
             if (preg_match('/\s*width\s*=\s*"([^"]*)"/', $contents, $matches)) {
-                $metadata['width'] = (int)$matches[1];
+                $metadata['width'] = (int) $matches[1];
             }
 
             if (preg_match('/\s*height\s*=\s*"([^"]*)"/', $contents, $matches)) {
-                $metadata['height'] = (int)$matches[1];
+                $metadata['height'] = (int) $matches[1];
             }
         }
 

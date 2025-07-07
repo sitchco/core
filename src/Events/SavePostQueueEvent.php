@@ -14,7 +14,6 @@ class SavePostQueueEvent extends BackgroundQueueEvent
 {
     const HOOK_SUFFIX = 'after_save_post';
 
-
     public function init(): void
     {
         add_action('wp_after_insert_post', [$this, 'onSavePost'], 10, 2);

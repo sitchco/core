@@ -54,8 +54,15 @@ class WordPress
         $length = ['short', 'medium', 'long', 'longer'];
         for ($i = 1; $i <= $number; $i++) {
             $my_posts[] = [
-                'post_title' => Str::getLastWords(Str::placeholderText('1 long plaintext prude'), rand($min_title, $max_title)),
-                'post_content' => trim(Str::placeholderText(rand(2, $body_paragraphs) . ' ' . $length[rand($min_body, $max_body)] . ' ' . $params)),
+                'post_title' => Str::getLastWords(
+                    Str::placeholderText('1 long plaintext prude'),
+                    rand($min_title, $max_title)
+                ),
+                'post_content' => trim(
+                    Str::placeholderText(
+                        rand(2, $body_paragraphs) . ' ' . $length[rand($min_body, $max_body)] . ' ' . $params
+                    )
+                ),
                 'post_status' => 'publish',
                 'post_type' => $post_type,
                 'post_category' => !empty($cat_list) ? [$cat_list[rand(0, count($cat_list) - 1)]] : null,
@@ -139,19 +146,13 @@ class WordPress
             fn($post_type) => !empty($post_type->rewrite)
         );
 
-        $all_types = array_values(array_unique(array_merge(
-            $built_in, array_map(fn($post_type) => $post_type->name, $custom_types)
-        )));
+        $all_types = array_values(
+            array_unique(array_merge($built_in, array_map(fn($post_type) => $post_type->name, $custom_types)))
+        );
 
         return array_filter($all_types, function ($post_type) {
             $count = array_filter((array) wp_count_posts($post_type));
-            $count = array_intersect_key($count, array_flip([
-                'publish',
-                'future',
-                'draft',
-                'pending',
-                'private'
-            ]));
+            $count = array_intersect_key($count, array_flip(['publish', 'future', 'draft', 'pending', 'private']));
 
             return !empty($count);
         });

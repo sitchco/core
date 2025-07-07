@@ -16,9 +16,7 @@ class AcfPostTypeAdminSort extends Module
 {
     protected AcfSettings $settings;
 
-    const DEPENDENCIES = [
-        AcfPostTypeAdminColumns::class,
-    ];
+    const DEPENDENCIES = [AcfPostTypeAdminColumns::class];
 
     public function __construct(AcfSettings $settings)
     {
@@ -36,7 +34,7 @@ class AcfPostTypeAdminSort extends Module
             return;
         }
 
-        $this->settings->extendSettingsField('listing_screen_columns', function($field) {
+        $this->settings->extendSettingsField('listing_screen_columns', function ($field) {
             $field['sub_fields'][] = [
                 'key' => 'sortable',
                 'label' => 'Sortable?',
@@ -59,7 +57,10 @@ class AcfPostTypeAdminSort extends Module
 
     public function postTypeConfig(string $post_type, array $post_type_config): void
     {
-        add_filter("manage_edit-{$post_type}_sortable_columns", fn(array $columns) => $this->sortableColumns($columns, $post_type_config));
+        add_filter(
+            "manage_edit-{$post_type}_sortable_columns",
+            fn(array $columns) => $this->sortableColumns($columns, $post_type_config)
+        );
     }
 
     /**
@@ -73,7 +74,7 @@ class AcfPostTypeAdminSort extends Module
     public function adminMainQuerySort(string $orderby, array $post_type_config, WP_Query $query): void
     {
         $sortable_columns = static::getSortableColumns($post_type_config);
-        if (!in_array($orderby,  array_column($sortable_columns, 'name'))) {
+        if (!in_array($orderby, array_column($sortable_columns, 'name'))) {
             return;
         }
         $query->set('meta_key', $orderby);
@@ -108,6 +109,9 @@ class AcfPostTypeAdminSort extends Module
      */
     protected static function getSortableColumns(array $post_type_config): array
     {
-        return array_filter(AcfPostTypeAdminColumns::getColumnConfig($post_type_config), fn($row) => $row['sortable'] ?? false);
+        return array_filter(
+            AcfPostTypeAdminColumns::getColumnConfig($post_type_config),
+            fn($row) => $row['sortable'] ?? false
+        );
     }
 }

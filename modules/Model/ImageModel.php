@@ -13,22 +13,24 @@ use WP_Post;
 
 class ImageModel extends Module
 {
-    public const DEPENDENCIES = [
-        Timber::class
-    ];
+    public const DEPENDENCIES = [Timber::class];
 
-    public const POST_CLASSES = [
-        Post::class,
-        Page::class,
-    ];
+    public const POST_CLASSES = [Post::class, Page::class];
 
     public function init(): void
     {
-        add_filter('timber/post/classmap', function($classmap) {
-            $classmap['attachment'] = fn (WP_Post $attachment) => $this->postIsImage($attachment) ? Image::class : Attachment::class;
+        add_filter('timber/post/classmap', function ($classmap) {
+            $classmap['attachment'] = fn(WP_Post $attachment) => $this->postIsImage($attachment)
+                ? Image::class
+                : Attachment::class;
             return $classmap;
         });
-        add_filter('sitchco/acf_post_type_admin_columns/column_content/thumbnail', [$this, 'postThumbnailColumn'], 5, 2);
+        add_filter(
+            'sitchco/acf_post_type_admin_columns/column_content/thumbnail',
+            [$this, 'postThumbnailColumn'],
+            5,
+            2
+        );
     }
 
     /**

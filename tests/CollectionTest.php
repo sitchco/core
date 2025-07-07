@@ -24,10 +24,10 @@ class CollectionTest extends TestCase
     public function testCollectionWrapsPostQueryCorrectly()
     {
         $wp_query = new WP_Query([
-            'post_type'      => 'post',
+            'post_type' => 'post',
             'posts_per_page' => -1,
-            'orderby'        => 'ID',
-            'order'          => 'ASC',
+            'orderby' => 'ID',
+            'order' => 'ASC',
         ]);
 
         $post_query = new PostQuery($wp_query);
@@ -43,9 +43,9 @@ class CollectionTest extends TestCase
     public function testCollectionPaginationMatchesPostQuery()
     {
         $wp_query = new WP_Query([
-            'post_type'      => 'post',
+            'post_type' => 'post',
             'posts_per_page' => 1, // Force pagination
-            'paged'          => 1,
+            'paged' => 1,
         ]);
 
         $post_query = new PostQuery($wp_query);
@@ -57,7 +57,7 @@ class CollectionTest extends TestCase
     public function testCollectionRealizeMatchesPostQuery()
     {
         $wp_query = new WP_Query([
-            'post_type'      => 'post',
+            'post_type' => 'post',
             'posts_per_page' => -1,
         ]);
 

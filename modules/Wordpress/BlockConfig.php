@@ -9,19 +9,12 @@ use WP_Block_Type_Registry;
 
 class BlockConfig extends Module
 {
-    const FEATURES = [
-        'enableBlockFilter',
-        'postTypeBlockVisibility',
-        'registerBlockCategory',
-    ];
+    const FEATURES = ['enableBlockFilter', 'postTypeBlockVisibility', 'registerBlockCategory'];
 
     /**
      * @param ConfigRegistry $configRegistry Used to load block configuration settings
      */
-    public function __construct(
-        private readonly ConfigRegistry $configRegistry
-    ) {
-    }
+    public function __construct(private readonly ConfigRegistry $configRegistry) {}
 
     public function enableBlockFilter(): void
     {
@@ -35,7 +28,7 @@ class BlockConfig extends Module
 
     public function registerBlockCategory(): void
     {
-        add_filter('block_categories_all', array($this, 'blockCategories'));
+        add_filter('block_categories_all', [$this, 'blockCategories']);
     }
 
     public function filterDisabledBlocks(): array
@@ -61,25 +54,26 @@ class BlockConfig extends Module
 
         $registeredBlocks = array_keys(WP_Block_Type_Registry::get_instance()->get_all_registered());
 
-        $filtered = array_filter(
-            $registeredBlocks,
-            function (string $blockName) use ($customBlocks, $postType, $context) {
-                if (! isset($customBlocks[$blockName])) {
-                    return true;
-                }
-
-                $cfg = $customBlocks[$blockName];
-
-                if ($postType && isset($cfg['allowPostType'])) {
-                    return (bool)($cfg['allowPostType'][$postType] ?? false);
-                }
-                if ($context && isset($cfg['allowContext'])) {
-                    return (bool)($cfg['allowContext'][$context] ?? false);
-                }
-
+        $filtered = array_filter($registeredBlocks, function (string $blockName) use (
+            $customBlocks,
+            $postType,
+            $context
+        ) {
+            if (!isset($customBlocks[$blockName])) {
                 return true;
             }
-        );
+
+            $cfg = $customBlocks[$blockName];
+
+            if ($postType && isset($cfg['allowPostType'])) {
+                return (bool) ($cfg['allowPostType'][$postType] ?? false);
+            }
+            if ($context && isset($cfg['allowContext'])) {
+                return (bool) ($cfg['allowContext'][$context] ?? false);
+            }
+
+            return true;
+        });
 
         // normalize indexing
         $filtered = array_values($filtered);
@@ -92,9 +86,7 @@ class BlockConfig extends Module
 
         if (is_array($allowedBlocks)) {
             // intersect: only blocks allowed by both
-            return array_values(
-                array_intersect($allowedBlocks, $filtered)
-            );
+            return array_values(array_intersect($allowedBlocks, $filtered));
         }
 
         // if $allowedBlocks is false (none allowed), keep it as-is
@@ -119,7 +111,7 @@ class BlockConfig extends Module
             }
         }
 
-        if (! $inserted) {
+        if (!$inserted) {
             array_unshift($new_categories, $sitchco_category);
         }
 

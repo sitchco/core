@@ -33,7 +33,7 @@ class RewriteServiceTest extends TestCase
         $registered = $this->service->getRegisteredRewriteRules();
         $this->assertInstanceOf(QueryRewrite::class, end($registered));
         $last_rule = array_slice($wp_rewrite->extra_rules_top, -1, 1);
-        $this->assertEquals([ '/custom-path/' => 'index.php?custom=value'], $last_rule);
+        $this->assertEquals(['/custom-path/' => 'index.php?custom=value'], $last_rule);
         $queryVars = apply_filters('query_vars', []);
         $this->assertContains('custom', $queryVars);
     }
@@ -41,14 +41,14 @@ class RewriteServiceTest extends TestCase
     public function testRouteRule(): void
     {
         global $wp_rewrite;
-        $callback = fn () => 'test response';
+        $callback = fn() => 'test response';
         $this->service->register('/custom-route/', ['callback' => $callback]);
         $registered = $this->service->getRegisteredRewriteRules();
         $route = end($registered);
         $this->assertInstanceOf(Route::class, $route);
         $last_rule = array_slice($wp_rewrite->extra_rules_top, -1, 1);
         $route_id = 'route_81d6db2488763c8d20514fd2b24a2618';
-        $this->assertEquals([ '/custom-route/' => "index.php?route=$route_id"], $last_rule);
+        $this->assertEquals(['/custom-route/' => "index.php?route=$route_id"], $last_rule);
         $result = $route->processRoute();
         $this->assertFalse($result);
         set_query_var('route', $route_id);
@@ -59,14 +59,14 @@ class RewriteServiceTest extends TestCase
     public function testRedirectRouteRule(): void
     {
         global $wp_rewrite;
-        $callback = fn () => true;
+        $callback = fn() => true;
         $this->service->register('/logout/', ['callback' => $callback, 'redirect_url' => '/login/']);
         $registered = $this->service->getRegisteredRewriteRules();
         $route = end($registered);
         $this->assertInstanceOf(RedirectRoute::class, $route);
         $last_rule = array_slice($wp_rewrite->extra_rules_top, -1, 1);
         $route_id = 'route_f5ac2f16bee931afff6fb4a5c0069970';
-        $this->assertEquals([ '/logout/' => "index.php?route=$route_id"], $last_rule);
+        $this->assertEquals(['/logout/' => "index.php?route=$route_id"], $last_rule);
         $result = $route->processRoute();
         $this->assertFalse($result);
         set_query_var('route', $route_id);

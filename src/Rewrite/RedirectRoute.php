@@ -22,5 +22,4 @@ class RedirectRoute extends Route
         }
         return $redirect;
     }
-
 }

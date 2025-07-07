@@ -66,9 +66,7 @@ class ConfigRegistry
     {
         $configName = trim($configName);
         if (empty($configName)) {
-            error_log(
-                "Sitchco Config Error: Invalid configName provided to load(). Name: {$configName}"
-            );
+            error_log("Sitchco Config Error: Invalid configName provided to load(). Name: {$configName}");
 
             return $default;
         }
@@ -76,7 +74,6 @@ class ConfigRegistry
         $mergedConfig = $this->loadAndCacheMergedConfig();
 
         if (is_array($mergedConfig) && array_key_exists($configName, $mergedConfig)) {
-
             return is_array($mergedConfig[$configName]) ? $mergedConfig[$configName] : $default;
         }
 
@@ -135,13 +132,17 @@ class ConfigRegistry
         }
         $potentialPaths = array_merge($potentialPaths, [get_template_directory(), get_stylesheet_directory()]);
 
-        $this->basePaths = array_values( // Re-index
-            array_filter( // only directories
-                array_unique( // Remove duplicates
-                    array_map( // Add trailing slashes
+        $this->basePaths = array_values(
+            // Re-index
+            array_filter(
+                // only directories
+                array_unique(
+                    // Remove duplicates
+                    array_map(
+                        // Add trailing slashes
                         'trailingslashit',
-                        array_filter($potentialPaths, fn ($path) => is_string($path) && ! empty($path)),
-                    ),
+                        array_filter($potentialPaths, fn($path) => is_string($path) && !empty($path))
+                    )
                 ),
                 'is_dir'
             )
@@ -185,15 +186,12 @@ class ConfigRegistry
                 if (is_array($configData)) {
                     $configs[] = $configData;
                 } else {
-                    error_log(sprintf(
-                        'Sitchco Config Warning: Config file did not return an array: %s',
-                        $filePath
-                    ));
+                    error_log(sprintf('Sitchco Config Warning: Config file did not return an array: %s', $filePath));
                 }
             }
         }
 
-        if (! $foundAnyFile) {
+        if (!$foundAnyFile) {
             return null;
         }
 

@@ -6,9 +6,7 @@ use Sitchco\Framework\Module;
 
 class UIFramework extends Module
 {
-    const FEATURES = [
-        'loadAssets',
-    ];
+    const FEATURES = ['loadAssets'];
 
     const HOOK_SUFFIX = 'ui-framework';
 
@@ -19,19 +17,12 @@ class UIFramework extends Module
 
     public function setupAssets(): void
     {
-        $this->registerScript(
-            static::hookName(),
-            $this->scriptUrl('main.mjs'),
-            ['wp-hooks']
-        );
-        $this->registerStyle(
-            static::hookName(),
-            $this->styleUrl('main.css'),
-        );
+        $this->registerScript(static::hookName(), $this->scriptUrl('main.mjs'), ['wp-hooks']);
+        $this->registerStyle(static::hookName(), $this->styleUrl('main.css'));
 
         add_filter('body_class', fn($classes) => array_merge($classes, ['sitchco-app-loading']));
         add_action('wp_head', function () {
-?>
+            ?>
 <script>window.onload = () => document.body.classList.remove('sitchco-app-loading');</script>
 <noscript><style>body.sitchco-app-loading { opacity: 1; } </style></noscript>
 <?php
