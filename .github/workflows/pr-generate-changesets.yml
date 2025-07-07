@@ -1,0 +1,59 @@
+name: Generate Changesets on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - master
+    paths:
+      - 'packages/**'
+
+permissions:
+  contents: write
+
+jobs:
+  generate-changesets:
+    name: Generate Changeset Entry
+    if: github.head_ref == 'develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build changeset data
+        run: |
+          node packages/build-tools/versioner/src/build-changeset.mjs
+        shell: bash
+
+      - name: Generate changeset
+        run: |
+          if [ -f temp-changeset.md ]; then
+            mkdir -p .changeset
+            mv temp-changeset.md .changeset/auto-${{ github.run_id }}.md
+          else
+            echo "No temp-changeset.md found, skipping."
+          fi
+        shell: bash
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .changeset/
+          git commit -m "Add changeset for PR #${{ github.event.pull_request.number }}" || echo "No changes to commit"
+          git push
+        shell: bash

@@ -13,6 +13,7 @@ export async function runLint(targets = []) {
             // Set the cwd to ensure ESLint looks for the config from the project root.
             cwd: scanner.projectRoot,
         });
+        console.log('Hey look, a linter!', eslint);
 
         const filesToLint = targets.length > 0 ? targets : [scanner.projectRoot];
         if (!filesToLint.length) {
