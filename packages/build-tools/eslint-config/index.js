@@ -8,6 +8,9 @@ export default [
     js.configs.recommended,
     eslintConfigPrettier,
     {
+        ignores: ['node_modules/', 'dist/', '**/dist/', '.git/', 'vendor/', 'coverage/', 'logs/', '*.log'],
+    },
+    {
         files: ['**/*.{js,mjs,cjs}'],
         languageOptions: {
             parser: babelParser,
@@ -23,7 +26,6 @@ export default [
         plugins: {
             import: importPlugin,
         },
-        ignores: ['node_modules/', 'dist/', '**/dist/', '.git/', 'vendor/', 'coverage/', 'logs/', '*.log'],
         rules: {
             'import/no-extraneous-dependencies': 'off',
             'no-prototype-builtins': 'off',
