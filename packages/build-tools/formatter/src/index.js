@@ -6,9 +6,17 @@ import sitchcoPrettierConfig from '@sitchco/prettier-config' with { type: 'json'
 import { JsProcessor } from './processors/js-processor.js';
 import { SvgProcessor } from './processors/svg-processor.js';
 import { CssProcessor } from './processors/css-processor.js';
+import { JsonProcessor } from './processors/json-processor.js';
+import { PhpProcessor } from './processors/php-processor.js';
 
 async function loadProcessors(prettierConfig) {
-    return [new JsProcessor(prettierConfig), new SvgProcessor(prettierConfig), new CssProcessor(prettierConfig)];
+    return [
+        new JsProcessor(prettierConfig),
+        new SvgProcessor(prettierConfig),
+        new CssProcessor(prettierConfig),
+        new JsonProcessor(prettierConfig),
+        new PhpProcessor(prettierConfig),
+    ];
 }
 
 export async function runFormat(files = []) {

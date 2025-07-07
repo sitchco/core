@@ -7,13 +7,14 @@
     "type": "module",
     "main": "src/index.js",
     "dependencies": {
-        "@sitchco/project-scanner": "workspace:*",
+        "@prettier/plugin-php": "*",
         "@sitchco/eslint-config": "workspace:*",
         "@sitchco/prettier-config": "workspace:*",
+        "@sitchco/project-scanner": "workspace:*",
         "@stylistic/eslint-plugin": "*",
+        "chalk": "*",
         "prettier": "*",
-        "svgo": "*",
-        "chalk": "*"
+        "svgo": "*"
     },
     "publishConfig": {
         "access": "public"

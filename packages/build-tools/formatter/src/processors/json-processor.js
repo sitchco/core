@@ -2,9 +2,9 @@ import fs from 'node:fs/promises';
 import prettier from 'prettier';
 import { BaseProcessor } from './base-processor.js';
 
-export class PhpProcessor extends BaseProcessor {
-    extensions = ['.php'];
-    name = 'php';
+export class JsonProcessor extends BaseProcessor {
+    extensions = ['.json'];
+    name = 'json';
 
     async processFile(filePath) {
         const originalContent = await fs.readFile(filePath, 'utf8');
@@ -15,7 +15,6 @@ export class PhpProcessor extends BaseProcessor {
             content = await prettier.format(content, {
                 ...this.prettierConfig,
                 filepath: filePath,
-                plugins: ['@prettier/plugin-php'],
             });
 
             if (content !== originalContent) {
@@ -24,7 +23,7 @@ export class PhpProcessor extends BaseProcessor {
             }
             return { changed };
         } catch (error) {
-            error.message = `PHP processing failed: ${error.message}`;
+            error.message = `JSON processing failed: ${error.message}`;
             throw error;
         }
     }
