@@ -16,15 +16,10 @@ The high-level process is as follows:
 
 These are the internal scripts used by the CI pipeline.
 
-#### `list-packages.mjs`
+#### `build-changeset.mjs`
 
-* **Purpose:** To generate a build matrix for the CI pipeline, identifying which packages have changed.
-* **How it Works:** It runs a `git diff` against the `master` branch to find changed files. It then determines which packages in `packages/build-tools/` were affected and outputs this list to a `packages-matrix.json` file, which the CI workflow can then use.
-
-#### `prep-package.mjs`
-
-* **Purpose:** A utility to ensure a package is built before the publishing step.
-* **How it Works:** It checks for a `build` script in the target package's `package.json` and, if found, executes it using `pnpm`.
+* **Purpose:** To automate the creation of a changeset file from commit messages.
+* **How it Works:** This script takes a package name as an argument. It scans the `git log` for commits that have touched that specific package and generates a `temp-changeset.md` file formatted for the Changesets tool.
 
 ## Public Packages
 
