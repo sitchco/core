@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import prettier from 'prettier';
+import * as phpPlugin from '@prettier/plugin-php';
 import { BaseProcessor } from './base-processor.js';
 
 export class PhpProcessor extends BaseProcessor {
@@ -15,7 +16,7 @@ export class PhpProcessor extends BaseProcessor {
             content = await prettier.format(content, {
                 ...this.prettierConfig,
                 filepath: filePath,
-                plugins: ['@prettier/plugin-php'],
+                plugins: [phpPlugin],
             });
 
             if (content !== originalContent) {
