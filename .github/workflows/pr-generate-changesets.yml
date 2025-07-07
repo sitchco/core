@@ -1,0 +1,54 @@
+name: Generate Changesets on PR
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches:
+      - master
+    paths:
+      - 'packages/**'
+
+jobs:
+  list-packages:
+    if: github.head_ref == 'develop'
+    uses: ./.github/workflows/list-changed-packages.yml
+
+  generate-changesets:
+    name: Generate Changeset Entries
+    needs: [list-packages]
+    if: github.head_ref == 'develop' && needs.list-packages.outputs.matrix != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: ${{fromJson(needs.list-packages.outputs.matrix)}}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - run: pnpm install
+
+      - name: Build changeset data
+        run: |
+          node packages/build-tools/versioner/src/build-changeset.mjs ${{ matrix.package.name }}
+        shell: bash
+
+      - name: Generate changeset for ${{ matrix.package.name }}
+        run: |
+          pnpm changeset add --empty --summary "$(cat temp-changeset.md)"
+        shell: bash
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .changeset/
+          git commit -m "Add changeset for ${{ matrix.package.name }}" || echo "No changes to commit"
+          git push
+        shell: bash

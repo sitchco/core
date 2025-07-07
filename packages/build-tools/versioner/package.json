@@ -1,0 +1,10 @@
+{
+    "name": "@sitchco/versioner",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Internal scripts for versioning the Sitchco monorepo. Not for publishing.",
+    "type": "module",
+    "sitchco_config": {
+        "publish": false
+    }
+}

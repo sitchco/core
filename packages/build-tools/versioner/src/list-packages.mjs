@@ -1,5 +1,5 @@
 import { readdir, writeFile } from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { execSync } from 'child_process';
 
@@ -17,8 +17,14 @@ const changedPackages = allPackages.filter((pkg) => {
     return changedFiles.some((file) => file.startsWith(packagePath));
 });
 
+const packagePath = (pkg) => join(packagesDir, pkg, 'package.json')
+const packageFileExists = (pkg) => existsSync(packagePath(pkg));
+const parsedPackage = (pkg) => JSON.parse(readFileSync(packagePath((pkg)), 'utf-8'))
+const packageIsNotPublishable = (pkg) => parsedPackage(pkg).sitchco_config?.publish === false;
+
 const validPackages = changedPackages
-    .filter((pkg) => existsSync(join(packagesDir, pkg, 'package.json')))
+    .filter((pkg) => packageFileExists(pkg))
+    .filter((pkg) => packageIsNotPublishable(pkg))
     .map((pkg) => ({ name: pkg }));
 
 await writeFile('packages-matrix.json', JSON.stringify(validPackages, null, 2));

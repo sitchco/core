@@ -2,6 +2,9 @@
     "name": "@sitchco/publisher",
     "version": "1.0.0",
     "private": true,
-    "description": "Internal scripts for managing and publishing the Sitchco monorepo. Not for publishing.",
-    "type": "module"
+    "description": "Internal scripts for publishing the Sitchco monorepo. Not for publishing.",
+    "type": "module",
+    "sitchco_config": {
+        "publish": false
+    }
 }

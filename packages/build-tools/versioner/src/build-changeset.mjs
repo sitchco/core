@@ -2,6 +2,7 @@ import { writeFile } from 'fs/promises';
 import { execSync } from 'child_process';
 
 const [pkgName] = process.argv.slice(2);
+console.log(`Processing ${pkgName} packages.`);
 if (!pkgName) {
     console.error('No package name provided.');
     process.exit(1);
