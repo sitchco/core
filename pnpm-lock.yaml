@@ -161,7 +161,7 @@ importers:
   packages/build-tools/formatter:
     dependencies:
       '@prettier/plugin-php':
-        specifier: ^0.22.4
+        specifier: '*'
         version: 0.22.4(prettier@3.6.2)
       '@sitchco/eslint-config':
         specifier: workspace:*
