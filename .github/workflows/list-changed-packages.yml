@@ -20,7 +20,7 @@ jobs:
 
       - name: Generate Package Matrix
         run: |
-          node packages/build-tools/dev-scripts/src/packages/list-packages.mjs
+          node packages/build-tools/publisher/src/list-packages.mjs
         shell: bash
 
       - id: set-matrix

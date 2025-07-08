@@ -32,7 +32,7 @@ class Cleanup extends Module
         'disableGutenbergStyles',
         'disableScriptVersion',
         'disableDefaultBlockPatterns',
-        'youtubeNoCookie'
+        'youtubeNoCookie',
     ];
 
     /**
@@ -52,7 +52,8 @@ class Cleanup extends Module
                 'wp_oembed_add_discovery_links',
                 'wp_oembed_add_host_js',
                 'wp_shortlink_wp_head',
-            ] as $hook
+            ]
+            as $hook
         ) {
             remove_filter('wp_head', $hook);
         }
@@ -89,13 +90,7 @@ class Cleanup extends Module
             return preg_replace('/noreferrer\s*/i', '', $values);
         });
 
-        foreach (
-            [
-                'get_avatar',
-                'comment_id_fields',
-                'post_thumbnail_html',
-            ] as $hook
-        ) {
+        foreach (['get_avatar', 'comment_id_fields', 'post_thumbnail_html'] as $hook) {
             add_filter($hook, [$this, 'removeSelfClosingTags']);
         }
 
@@ -131,7 +126,8 @@ class Cleanup extends Module
                 'the_content_feed' => 'wp_staticize_emoji',
                 'comment_text_rss' => 'wp_staticize_emoji',
                 'wp_mail' => 'wp_staticize_emoji_for_email',
-            ] as $hook => $function
+            ]
+            as $hook => $function
         ) {
             remove_filter($hook, $function);
         }
@@ -267,12 +263,16 @@ class Cleanup extends Module
      */
     public function disableGutenbergStyles(): void
     {
-        add_action('wp_enqueue_scripts', function (): void {
-            wp_deregister_style('wp-block-library');
-            wp_deregister_style('wp-block-library-theme');
-            wp_dequeue_style('global-styles');
-            wp_dequeue_style('classic-theme-styles');
-        }, 200);
+        add_action(
+            'wp_enqueue_scripts',
+            function (): void {
+                wp_deregister_style('wp-block-library');
+                wp_deregister_style('wp-block-library-theme');
+                wp_dequeue_style('global-styles');
+                wp_dequeue_style('classic-theme-styles');
+            },
+            200
+        );
         add_action('wp_footer', fn() => wp_dequeue_style('core-block-supports'), 5);
         add_filter('wp_img_tag_add_auto_sizes', '__return_false');
     }
@@ -369,7 +369,7 @@ class Cleanup extends Module
             $cat = $wp_query->get_queried_object();
             if (isset($cat->term_id)) {
                 $slug = sanitize_html_class($cat->slug, $cat->term_id);
-                if (is_numeric($slug) || ! trim($slug, '-')) {
+                if (is_numeric($slug) || !trim($slug, '-')) {
                     $slug = $cat->term_id;
                 }
                 $exclude[] = 'category-' . $slug;
@@ -383,7 +383,7 @@ class Cleanup extends Module
             $tag = $wp_query->get_queried_object();
             if (isset($tag->term_id)) {
                 $slug = sanitize_html_class($tag->slug, $tag->term_id);
-                if (is_numeric($slug) || ! trim($slug, '-')) {
+                if (is_numeric($slug) || !trim($slug, '-')) {
                     $slug = $tag->term_id;
                 }
                 $exclude[] = 'tag-' . $slug;
@@ -397,7 +397,7 @@ class Cleanup extends Module
             $term = $wp_query->get_queried_object();
             if (isset($term->term_id)) {
                 $slug = sanitize_html_class($term->slug, $term->term_id);
-                if (is_numeric($slug) || ! trim($slug, '-')) {
+                if (is_numeric($slug) || !trim($slug, '-')) {
                     $slug = $term->term_id;
                 }
                 $exclude[] = 'term-' . $slug;
@@ -408,7 +408,7 @@ class Cleanup extends Module
         // ——————————————————————————————————————————————————————————————
         // Paginated views by page number (avoid styling “page 5” etc. differently)
         $page = $wp_query->get('page') ?: $wp_query->get('paged');
-        if ($page && $page > 1 && ! is_404()) {
+        if ($page && $page > 1 && !is_404()) {
             $exclude[] = 'paged-' . $page;
 
             if (is_single()) {
@@ -431,11 +431,9 @@ class Cleanup extends Module
         }
 
         if (
-            current_theme_supports('custom-background')
-            && (
-                get_background_color() !== get_theme_support('custom-background', 'default-color')
-                || get_background_image()
-            )
+            current_theme_supports('custom-background') &&
+            (get_background_color() !== get_theme_support('custom-background', 'default-color') ||
+                get_background_image())
         ) {
             $exclude[] = 'custom-background';
         }
@@ -484,7 +482,7 @@ class Cleanup extends Module
     public function disableFeedsRedirect(): void
     {
         wp_redirect(home_url());
-        exit;
+        exit();
     }
 
     /**
@@ -501,6 +499,11 @@ class Cleanup extends Module
 
     public function youtubeNoCookie(): void
     {
-        add_filter('embed_oembed_html',fn(string $html) => str_contains($html, 'youtube.com') ? str_replace('youtube.com', 'youtube-nocookie.com', $html) : $html);
+        add_filter(
+            'embed_oembed_html',
+            fn(string $html) => str_contains($html, 'youtube.com')
+                ? str_replace('youtube.com', 'youtube-nocookie.com', $html)
+                : $html
+        );
     }
 }

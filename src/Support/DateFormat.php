@@ -30,9 +30,9 @@ class DateFormat
 
     public function getDayFormat($with_year = true)
     {
-        return $this->always_show_month ?
-            $this->getMonthdayFormat($with_year) :
-            $this->maybeAppendYear($this->day_format, $with_year);
+        return $this->always_show_month
+            ? $this->getMonthdayFormat($with_year)
+            : $this->maybeAppendYear($this->day_format, $with_year);
     }
 
     protected function maybeAppendYear($format, $with_year = true)
@@ -42,5 +42,4 @@ class DateFormat
         }
         return $format;
     }
-
 }

@@ -2,7 +2,4 @@
 
 namespace Sitchco\Support\Exception;
 
-class ExitException extends \Exception
-{
-
-}
+class ExitException extends \Exception {}

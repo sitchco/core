@@ -50,9 +50,7 @@ abstract class Module
      * Default initialization feature that is always called when module is activated
      * @return void
      */
-    public function init()
-    {
-    }
+    public function init() {}
 
     /**
      * Filesystem path to this module's directory or subpath.
@@ -99,7 +97,6 @@ abstract class Module
         $this->assets()->enqueueBlockStyle($handle, $args);
     }
 
-
     protected function scriptUrl(string $relative): string
     {
         return $this->assets()->assetUrl("assets/scripts/$relative");
@@ -109,5 +106,4 @@ abstract class Module
     {
         return $this->assets()->assetUrl("assets/styles/$relative");
     }
-
 }

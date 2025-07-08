@@ -21,13 +21,20 @@ class AdminNotificationService
      * @param bool $dismissible Whether the notification is dismissible (default: true).
      * @return int The total number of stored notifications.
      */
-    public function dispatch(string|array|AdminNotification $message, string $status = AdminNotification::SUCCESS, bool $dismissible = true): int
-    {
+    public function dispatch(
+        string|array|AdminNotification $message,
+        string $status = AdminNotification::SUCCESS,
+        bool $dismissible = true
+    ): int {
         if (is_array($message)) {
-            $message = implode('</p><p>', array_map(fn($count, $msg) => "$msg: $count", $message, array_keys($message)));
+            $message = implode(
+                '</p><p>',
+                array_map(fn($count, $msg) => "$msg: $count", $message, array_keys($message))
+            );
         }
 
-        $notification = $message instanceof AdminNotification ? $message : new AdminNotification($message, $status, $dismissible);
+        $notification =
+            $message instanceof AdminNotification ? $message : new AdminNotification($message, $status, $dismissible);
         $this->notifications[] = $notification;
         return count($this->notifications);
     }

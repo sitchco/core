@@ -8,7 +8,6 @@ use Sitchco\Utils\Template;
 
 class Stream extends Module
 {
-
     public function init(): void
     {
         add_filter('wp_stream_settings_option_fields', [$this, 'filterDefaultMax']);
@@ -17,7 +16,7 @@ class Stream extends Module
 
     public function filterDefaultMax($defaults): array
     {
-        if (! empty($defaults['general']['fields'])) {
+        if (!empty($defaults['general']['fields'])) {
             foreach ($defaults['general']['fields'] as $index => $field) {
                 if ($field['name'] === 'records_ttl') {
                     $defaults['general']['fields'][$index]['default'] = 90;
@@ -31,14 +30,10 @@ class Stream extends Module
     public function addOptionsPage(): void
     {
         if (function_exists('wp_stream_get_instance')) {
-            add_submenu_page(
-                'wp_stream',
-                'Stream Summary',
-                'Summary',
-                'manage_options',
-                'wp_stream_summary',
-                [$this, 'summaryPageContent']
-            );
+            add_submenu_page('wp_stream', 'Stream Summary', 'Summary', 'manage_options', 'wp_stream_summary', [
+                $this,
+                'summaryPageContent',
+            ]);
         }
     }
 
@@ -60,7 +55,7 @@ class Stream extends Module
             $records = $stream->db->get_records($args);
             $report = [];
             $records = array_filter($records, function ($record) {
-                $record = (array)$record;
+                $record = (array) $record;
                 if ($record['action'] === 'login') {
                     return false;
                 }
@@ -68,12 +63,12 @@ class Stream extends Module
                 return true;
             });
             foreach ($records as $record) {
-                $record = (array)$record;
+                $record = (array) $record;
                 $type = $record['connector'] . '/' . $record['context'];
                 if (empty($report[$type])) {
                     $report[$type] = [
                         'actions' => [],
-                        'summary' => []
+                        'summary' => [],
                     ];
                 }
                 $actions = array_unique(array_merge($report[$type]['actions'], [$record['action']]));
@@ -81,7 +76,10 @@ class Stream extends Module
                 $report[$type]['actions'] = $actions;
                 $report[$type]['summary'] = $summary;
             }
-            echo Template::getTemplateScoped(SITCHCO_CORE_TEMPLATES_DIR . '/stream-activity-report.php', compact('report', 'date'));
+            echo Template::getTemplateScoped(
+                SITCHCO_CORE_TEMPLATES_DIR . '/stream-activity-report.php',
+                compact('report', 'date')
+            );
         }
     }
 }

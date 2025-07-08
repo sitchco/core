@@ -60,7 +60,7 @@ class Url
      */
     public static function safeB64Decode(string $input): string
     {
-        $input = str_pad($input, strlen($input) + (4 - strlen($input) % 4) % 4, '=', STR_PAD_RIGHT);
+        $input = str_pad($input, strlen($input) + ((4 - (strlen($input) % 4)) % 4), '=', STR_PAD_RIGHT);
         return base64_decode(strtr($input, '-_', '+/')) ?: '';
     }
 

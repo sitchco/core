@@ -38,7 +38,6 @@ abstract class BackgroundRequestEvent extends \WP_Async_Request
         parent::__construct();
     }
 
-
     protected function handle(): void
     {
         $this->data($_POST);

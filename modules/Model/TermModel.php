@@ -10,9 +10,7 @@ use Sitchco\Modules\Timber;
 
 class TermModel extends Module
 {
-    public const DEPENDENCIES = [
-        Timber::class
-    ];
+    public const DEPENDENCIES = [Timber::class];
 
     public function init(): void
     {

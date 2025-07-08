@@ -40,8 +40,8 @@ class StreamTest extends TestCase
                 'fields' => [
                     ['name' => 'records_ttl', 'default' => 30],
                     ['name' => 'some_other_field', 'default' => 50],
-                ]
-            ]
+                ],
+            ],
         ];
 
         $updatedDefaults = $this->stream->filterDefaultMax($defaults);
@@ -54,10 +54,8 @@ class StreamTest extends TestCase
     {
         $defaults = [
             'general' => [
-                'fields' => [
-                    ['name' => 'other_field', 'default' => 30]
-                ]
-            ]
+                'fields' => [['name' => 'other_field', 'default' => 30]],
+            ],
         ];
 
         $updatedDefaults = $this->stream->filterDefaultMax($defaults);
@@ -66,40 +64,40 @@ class StreamTest extends TestCase
     }
 
     // TODO: fix this test!
-//    public function testAddOptionsPageAddsSubmenu(): void
-//    {
-//        global $submenu;
-//
-//        // Ensure submenu is initialized
-//        if (!is_array($submenu)) {
-//            $submenu = [];
-//        }
-//
-//        // Ensure wp_stream_get_instance exists
-//        if (! function_exists('wp_stream_get_instance')) {
-//            $this->markTestSkipped('wp_stream_get_instance is not available.');
-//        }
-//
-//        // Trigger menu registration
-//        do_action('admin_menu');
-//
-//        // Run function
-//        $this->stream->addOptionsPage();
-//
-//        // Check if the submenu item was added
-//        $this->assertArrayHasKey('wp_stream', $submenu);
-//        $this->assertTrue(
-//            in_array(
-//                ['Stream Summary', 'Summary', 'manage_options', 'wp_stream_summary'],
-//                array_map(fn($item) => array_slice($item, 0, 4), $submenu['wp_stream'])
-//            )
-//        );
-//    }
+    //    public function testAddOptionsPageAddsSubmenu(): void
+    //    {
+    //        global $submenu;
+    //
+    //        // Ensure submenu is initialized
+    //        if (!is_array($submenu)) {
+    //            $submenu = [];
+    //        }
+    //
+    //        // Ensure wp_stream_get_instance exists
+    //        if (! function_exists('wp_stream_get_instance')) {
+    //            $this->markTestSkipped('wp_stream_get_instance is not available.');
+    //        }
+    //
+    //        // Trigger menu registration
+    //        do_action('admin_menu');
+    //
+    //        // Run function
+    //        $this->stream->addOptionsPage();
+    //
+    //        // Check if the submenu item was added
+    //        $this->assertArrayHasKey('wp_stream', $submenu);
+    //        $this->assertTrue(
+    //            in_array(
+    //                ['Stream Summary', 'Summary', 'manage_options', 'wp_stream_summary'],
+    //                array_map(fn($item) => array_slice($item, 0, 4), $submenu['wp_stream'])
+    //            )
+    //        );
+    //    }
 
     public function testSummaryPageContentOutputsCorrectly(): void
     {
         // Ensure wp_stream_get_instance exists
-        if (! function_exists('wp_stream_get_instance')) {
+        if (!function_exists('wp_stream_get_instance')) {
             $this->markTestSkipped('wp_stream_get_instance is not available.');
         }
 

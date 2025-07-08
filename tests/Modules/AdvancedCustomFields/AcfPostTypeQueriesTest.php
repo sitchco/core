@@ -4,7 +4,6 @@ namespace Sitchco\Tests\Modules\AdvancedCustomFields;
 
 class AcfPostTypeQueriesTest extends AcfPostTypeTest
 {
-
     function test_default_query_parameters()
     {
         $this->createAcfPostTypeConfig();

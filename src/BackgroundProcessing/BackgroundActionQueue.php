@@ -45,7 +45,7 @@ class BackgroundActionQueue extends \WP_Background_Process
         }
         $data = wp_parse_args($data, [
             'action' => 'default',
-            'args' => []
+            'args' => [],
         ]);
         return $this->queueAction($data['action'], $data['args']);
     }
@@ -82,16 +82,14 @@ class BackgroundActionQueue extends \WP_Background_Process
         add_action(Hooks::name(static::HOOK_SUFFIX, $action), $task_callback, $priority);
     }
 
-
     public function addBulkPostsTask(
         string $trigger_action,
         string $task_action,
         callable $task_callback,
         int $priority = 10,
         array $query_args = []
-    ): void
-    {
-        add_action($trigger_action, function() use ($query_args, $task_action, $task_callback, $priority) {
+    ): void {
+        add_action($trigger_action, function () use ($query_args, $task_action, $task_callback, $priority) {
             $query = wp_parse_args($query_args, [
                 'post_type' => 'post',
                 'posts_per_page' => -1,
@@ -108,8 +106,7 @@ class BackgroundActionQueue extends \WP_Background_Process
         callable $task_callback,
         int $priority = 10,
         array $query_args = []
-    ): void
-    {
+    ): void {
         $this->addBulkPostsTask(
             SavePermalinksRequestEvent::hookName(),
             SavePostQueueEvent::HOOK_SUFFIX,

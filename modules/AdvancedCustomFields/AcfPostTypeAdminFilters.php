@@ -22,9 +22,7 @@ class AcfPostTypeAdminFilters extends Module
 
     const HOOK_SUFFIX = 'acf_post_type_admin_filters';
 
-    const DEPENDENCIES = [
-        AcfPostTypeAdminColumns::class,
-    ];
+    const DEPENDENCIES = [AcfPostTypeAdminColumns::class];
 
     public function __construct(AcfSettings $settings)
     {
@@ -43,7 +41,7 @@ class AcfPostTypeAdminFilters extends Module
         }
         add_action('restrict_manage_posts', [$this, 'renderColumnFilters'], 20, 2);
         add_action('parse_query', [$this, 'filterColumnsByMeta']);
-        $this->settings->extendSettingsField('listing_screen_columns', function($field) {
+        $this->settings->extendSettingsField('listing_screen_columns', function ($field) {
             $field['sub_fields'][] = [
                 'key' => 'filterable',
                 'label' => 'Filterable?',
@@ -60,7 +58,8 @@ class AcfPostTypeAdminFilters extends Module
      * @param string $post_type
      * @return array
      */
-    protected function getColumnFilters(string $post_type): array {
+    protected function getColumnFilters(string $post_type): array
+    {
         $post_type_config = Acf::findPostTypeConfig($post_type);
         if (!$post_type_config) {
             return [];
@@ -91,7 +90,10 @@ class AcfPostTypeAdminFilters extends Module
         // to allow direct testing of filter options without echoed HTML
         if ($render_location) {
             foreach ($filters as $filter) {
-                echo Template::getTemplateScoped(SITCHCO_CORE_TEMPLATES_DIR . '/admin-filter-select.php', compact('filter'));
+                echo Template::getTemplateScoped(
+                    SITCHCO_CORE_TEMPLATES_DIR . '/admin-filter-select.php',
+                    compact('filter')
+                );
             }
         }
         return $filters;
@@ -116,30 +118,30 @@ class AcfPostTypeAdminFilters extends Module
                 continue;
             }
             // Get list of existing values in the db for this columns
-            $field_values = $wpdb->get_results($wpdb->prepare(
-                "SELECT DISTINCT meta_value FROM $wpdb->postmeta WHERE meta_key=%s ORDER BY 1", $id
-            ));
+            $field_values = $wpdb->get_results(
+                $wpdb->prepare("SELECT DISTINCT meta_value FROM $wpdb->postmeta WHERE meta_key=%s ORDER BY 1", $id)
+            );
             if (empty($field_values)) {
                 continue;
             }
             $filter = compact('id');
             // Default option
             $filter['options'][] = [
-                'value'    => '',
-                'label'    => "Filter by {$row['label']}",
-                'selected' => false
+                'value' => '',
+                'label' => "Filter by {$row['label']}",
+                'selected' => false,
             ];
             // Add label for each value
-            array_walk($field_values, fn ($el) => $el->label = (string) $el->meta_value);
+            array_walk($field_values, fn($el) => ($el->label = (string) $el->meta_value));
             // Hook: sitchco/acf_post_type_admin_filters/filter_values
             $field_values = apply_filters(static::hookName('filter_values', $id), $field_values, $post_type_config);
 
             // Build options and determine whether value is currently selected
             foreach ($field_values as $field) {
                 $filter['options'][] = [
-                    'value'    => urlencode($field->meta_value),
-                    'label'    => $field->label,
-                    'selected' => isset($_GET[$id]) && $_GET[$id] == urlencode($field->meta_value)
+                    'value' => urlencode($field->meta_value),
+                    'label' => $field->label,
+                    'selected' => isset($_GET[$id]) && $_GET[$id] == urlencode($field->meta_value),
                 ];
             }
             $filters[] = $filter;
@@ -170,16 +172,16 @@ class AcfPostTypeAdminFilters extends Module
             $filter = ['id' => $tax_slug];
             // Default options
             $filter['options'][] = [
-                'value'    => '',
-                'label'    => "All {$tax_obj->labels->name}",
-                'selected' => false
+                'value' => '',
+                'label' => "All {$tax_obj->labels->name}",
+                'selected' => false,
             ];
             // Build options and determine whether value is currently selected
             foreach ($terms as $term) {
                 $filter['options'][] = [
-                    'value'    => $term->slug,
-                    'label'    => $term->name,
-                    'selected' => isset($_GET[$tax_slug]) && $_GET[$tax_slug] == $term->slug
+                    'value' => $term->slug,
+                    'label' => $term->name,
+                    'selected' => isset($_GET[$tax_slug]) && $_GET[$tax_slug] == $term->slug,
                 ];
             }
             $filters[] = $filter;
@@ -194,7 +196,8 @@ class AcfPostTypeAdminFilters extends Module
      * @param WP_Query $query
      * @return void
      */
-    public function filterColumnsByMeta(WP_Query $query): void {
+    public function filterColumnsByMeta(WP_Query $query): void
+    {
         global $pagenow;
 
         // Main query on admin edit listng screen
@@ -225,7 +228,8 @@ class AcfPostTypeAdminFilters extends Module
     {
         return array_filter(
             AcfPostTypeAdminColumns::getColumnConfig($post_type_config),
-            fn($row) => ($row['filterable'] ?? false) && !(in_array($row['name'], (array) $post_type_config['taxonomies']))
+            fn($row) => ($row['filterable'] ?? false) &&
+                !in_array($row['name'], (array) $post_type_config['taxonomies'])
         );
     }
 }

@@ -56,7 +56,7 @@ class ModuleRegistry
      */
     protected function registerActiveModule(string $module): void
     {
-        if (! class_exists($module)) {
+        if (!class_exists($module)) {
             return;
         }
 
@@ -79,7 +79,7 @@ class ModuleRegistry
             $instance = $this->Container->get($module);
             /* @var Module $instance */
             $this->activeModuleInstances[$module] = $instance;
-        } catch (DependencyException|NotFoundException $e) {
+        } catch (DependencyException | NotFoundException $e) {
             // Optionally log the error, e.g.:
             // error_log("Failed to instantiate module {$module}: " . $e->getMessage());
         } finally {
@@ -195,7 +195,7 @@ class ModuleRegistry
      */
     public function addModules(array|string $classnames): static
     {
-        $valid_classnames = array_filter((array)$classnames, fn($c) => is_subclass_of($c, Module::class));
+        $valid_classnames = array_filter((array) $classnames, fn($c) => is_subclass_of($c, Module::class));
         $dependency_classnames = ArrayUtil::arrayMapFlat(fn($c) => $c::DEPENDENCIES, $valid_classnames);
 
         if (count($dependency_classnames)) {

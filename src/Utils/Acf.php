@@ -89,11 +89,10 @@ class Acf
      */
     public static function linkToAttr(array $field, array $atts = []): array
     {
-        return array_filter([
-            ...$field,
-            ...$atts,
-            'href' => $field['url'] ?? '',
-        ], fn($value) => !is_null($value) && $value !== '');
+        return array_filter(
+            [...$field, ...$atts, 'href' => $field['url'] ?? ''],
+            fn($value) => !is_null($value) && $value !== ''
+        );
     }
 
     /**

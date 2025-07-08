@@ -6,13 +6,12 @@ use Sitchco\Utils\Hooks;
 
 class AcfSettings
 {
-
     public function addSettingsTab(string $name, string $label, callable $callback): void
     {
-        add_filter( 'acf/post_type/additional_settings_tabs', function ($tabs) use ($name, $label) {
+        add_filter('acf/post_type/additional_settings_tabs', function ($tabs) use ($name, $label) {
             $tabs[$name] = $label;
             return $tabs;
-        } );
+        });
         add_action("acf/post_type/render_settings_tab/$name", $callback);
     }
 

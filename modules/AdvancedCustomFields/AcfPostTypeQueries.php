@@ -36,7 +36,7 @@ class AcfPostTypeQueries extends Module
             return;
         }
         $this->settings->addSettingsTab('queries', 'Queries', [$this, 'queriesTab']);
-        add_action('init', function() {
+        add_action('init', function () {
             add_action('pre_get_posts', [$this, 'setDefaultQueryParameters']);
         });
         add_action('save_post', [$this, 'savePost'], 13, 2);
@@ -51,44 +51,49 @@ class AcfPostTypeQueries extends Module
 
     public function queriesTab(array $values): void
     {
-        $this->settings->addSettingsField('default_query_parameters', [
-            'label'        => 'Default Query Parameters',
-            'instructions' => 'Enter <code>WP_Query</code> parameters to use whenever this post type is queried, as well as the site locations where it should be applied. See the <a href="https://developer.wordpress.org/reference/classes/wp_query/#parameters" target="_blank">WP_Query docs</a> for available parameters and their usage. The "value" field accepts valid JSON for simple non-string values. For more advanced or dynamic querying, use the <code>pre_get_posts</code> filter instead.',
-            'type'         => 'repeater',
-            'ui'           => 1,
-            'sub_fields' => [
-                [
-                    'key' => 'key',
-                    'label' => 'Key',
-                    'name' => 'key',
-                    'type' => 'text',
-                    'instructions' => '',
-                ],
-                [
-                    'key' => 'value',
-                    'label' => 'Value',
-                    'name' => 'value',
-                    'type' => 'text',
-                    'instructions' => '',
-                ],
-                [
-                    'key' => 'location',
-                    'label' => 'Location',
-                    'name' => 'location',
-                    'type' => 'radio',
-                    'choices' => [
-                        '' => 'Everywhere',
-                        'public' => 'Public',
-                        'admin' => 'Admin',
+        $this->settings->addSettingsField(
+            'default_query_parameters',
+            [
+                'label' => 'Default Query Parameters',
+                'instructions' =>
+                    'Enter <code>WP_Query</code> parameters to use whenever this post type is queried, as well as the site locations where it should be applied. See the <a href="https://developer.wordpress.org/reference/classes/wp_query/#parameters" target="_blank">WP_Query docs</a> for available parameters and their usage. The "value" field accepts valid JSON for simple non-string values. For more advanced or dynamic querying, use the <code>pre_get_posts</code> filter instead.',
+                'type' => 'repeater',
+                'ui' => 1,
+                'sub_fields' => [
+                    [
+                        'key' => 'key',
+                        'label' => 'Key',
+                        'name' => 'key',
+                        'type' => 'text',
+                        'instructions' => '',
                     ],
-                    'instructions' => '',
+                    [
+                        'key' => 'value',
+                        'label' => 'Value',
+                        'name' => 'value',
+                        'type' => 'text',
+                        'instructions' => '',
+                    ],
+                    [
+                        'key' => 'location',
+                        'label' => 'Location',
+                        'name' => 'location',
+                        'type' => 'radio',
+                        'choices' => [
+                            '' => 'Everywhere',
+                            'public' => 'Public',
+                            'admin' => 'Admin',
+                        ],
+                        'instructions' => '',
+                    ],
                 ],
+                'min' => 1,
+                'max' => 10,
+                'layout' => 'table',
+                'button_label' => 'Add Parameter',
             ],
-            'min' => 1,
-            'max' => 10,
-            'layout' => 'table',
-            'button_label' => 'Add Parameter',
-        ], $values);
+            $values
+        );
     }
 
     /**
@@ -122,10 +127,7 @@ class AcfPostTypeQueries extends Module
          */
         extract($parameter);
         // Location doesn't match configured location
-        if (
-            (is_admin() && $location == 'public') ||
-            (!is_admin() && $location == 'admin')
-        ) {
+        if ((is_admin() && $location == 'public') || (!is_admin() && $location == 'admin')) {
             return;
         }
         $value = json_decode($value, true) ?? $value;
@@ -178,7 +180,7 @@ class AcfPostTypeQueries extends Module
             // Don't sort by taxonomy
             ($post_type_config['taxonomies'] && in_array($orderby, (array) $post_type_config['taxonomies'])) ||
             // Default field types offer sorting automatically
-            (in_array($orderby, [
+            in_array($orderby, [
                 'none',
                 'ID',
                 'author',
@@ -193,8 +195,8 @@ class AcfPostTypeQueries extends Module
                 'meta_value',
                 'meta_value_num',
                 'title menu_order',
-                'post__in'
-            ]))
+                'post__in',
+            ])
         ) {
             return;
         }
@@ -210,7 +212,12 @@ class AcfPostTypeQueries extends Module
     protected function isMenuOrder(array $post_type_config): bool
     {
         $default_query_parameters = static::getDefaultQueryParameters($post_type_config);
-        return !!count(array_filter($default_query_parameters, fn($row) => $row['key'] === 'orderby' && $row['value'] === 'menu_order'));
+        return !!count(
+            array_filter(
+                $default_query_parameters,
+                fn($row) => $row['key'] === 'orderby' && $row['value'] === 'menu_order'
+            )
+        );
     }
 
     /**
@@ -230,9 +237,13 @@ class AcfPostTypeQueries extends Module
             return;
         }
         global $wpdb;
-        $result = $wpdb->get_results($wpdb->prepare(
-            "SELECT MAX(menu_order) AS menu_order FROM $wpdb->posts WHERE post_type=%s", $post_obj->post_type
-        ), ARRAY_A);
+        $result = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT MAX(menu_order) AS menu_order FROM $wpdb->posts WHERE post_type=%s",
+                $post_obj->post_type
+            ),
+            ARRAY_A
+        );
         $order = intval($result[0]['menu_order']) + 1;
         $post_obj->menu_order = $order;
         wp_update_post($post_obj);
@@ -262,6 +273,4 @@ class AcfPostTypeQueries extends Module
         }
         add_action('save_post', [$this, 'savePost'], 13, 2);
     }
-
-
 }

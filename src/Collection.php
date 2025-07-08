@@ -53,5 +53,4 @@ class Collection extends IlluminateCollection implements PostCollectionInterface
     {
         return $this->postQuery->__debugInfo();
     }
-
 }

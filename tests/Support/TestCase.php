@@ -4,8 +4,8 @@ namespace Sitchco\Tests\Support;
 
 use DI\Container;
 
-abstract class TestCase extends \WPTest\Test\TestCase {
-
+abstract class TestCase extends \WPTest\Test\TestCase
+{
     protected Container $container;
 
     protected function setUp(): void
@@ -16,14 +16,19 @@ abstract class TestCase extends \WPTest\Test\TestCase {
 
     protected function fakeHttp(): void
     {
-        add_filter('pre_http_request', function( $preempt, $args, $url ) {
-            return [
-                'url'     => $url,
-                'method'  => $args['method'],
-                'headers' => $args['headers'],
-                'body'    => $args['body'],
-            ];
-        }, 1, 3);
+        add_filter(
+            'pre_http_request',
+            function ($preempt, $args, $url) {
+                return [
+                    'url' => $url,
+                    'method' => $args['method'],
+                    'headers' => $args['headers'],
+                    'body' => $args['body'],
+                ];
+            },
+            1,
+            3
+        );
     }
 
     protected function restoreHttp(): void

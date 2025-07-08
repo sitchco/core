@@ -24,33 +24,36 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         $this->assertEquals([], $filters);
         $this->createPosts();
         $filters = $this->module->renderColumnFilters($this->post_type, '');
-        $this->assertEquals([
-            'active' => [
-                'id' => 'active',
-                'options' => [
-                    ['value' => '', 'label' => 'Filter by Active', 'selected' => false],
-                    ['value' => '0', 'label' => '0', 'selected' => false],
-                    ['value' => '1', 'label' => '1', 'selected' => false]
+        $this->assertEquals(
+            [
+                'active' => [
+                    'id' => 'active',
+                    'options' => [
+                        ['value' => '', 'label' => 'Filter by Active', 'selected' => false],
+                        ['value' => '0', 'label' => '0', 'selected' => false],
+                        ['value' => '1', 'label' => '1', 'selected' => false],
+                    ],
+                ],
+                'price_code' => [
+                    'id' => 'price_code',
+                    'options' => [
+                        ['value' => '', 'label' => 'Filter by Price Code', 'selected' => false],
+                        ['value' => 'A', 'label' => 'A', 'selected' => false],
+                        ['value' => 'B', 'label' => 'B', 'selected' => false],
+                        ['value' => 'C', 'label' => 'C', 'selected' => false],
+                    ],
+                ],
+                'performance-category' => [
+                    'id' => 'performance-category',
+                    'options' => [
+                        ['value' => '', 'label' => 'All Performance Categories', 'selected' => false],
+                        ['value' => 'category-1', 'label' => 'Category 1', 'selected' => false],
+                        ['value' => 'category-2', 'label' => 'Category 2', 'selected' => false],
+                    ],
                 ],
             ],
-            'price_code' => [
-                'id' => 'price_code',
-                'options' => [
-                    ['value' => '', 'label' => 'Filter by Price Code', 'selected' => false],
-                    ['value' => 'A', 'label' => 'A', 'selected' => false],
-                    ['value' => 'B', 'label' => 'B', 'selected' => false],
-                    ['value' => 'C', 'label' => 'C', 'selected' => false],
-                ],
-            ],
-            'performance-category' => [
-                'id' => 'performance-category',
-                'options' => [
-                    ['value' => '', 'label' => 'All Performance Categories', 'selected' => false],
-                    ['value' => 'category-1', 'label' => 'Category 1', 'selected' => false],
-                    ['value' => 'category-2', 'label' => 'Category 2', 'selected' => false],
-                ],
-            ]
-        ], $filters);
+            $filters
+        );
     }
 
     public function test_admin_filters_with_selected_values(): void
@@ -59,33 +62,36 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         $this->createPosts();
         $_GET = ['active' => '0', 'price_code' => 'B', 'performance-category' => 'category-2'];
         $filters = $this->module->renderColumnFilters($this->post_type, '');
-        $this->assertEquals([
-            'active' => [
-                'id' => 'active',
-                'options' => [
-                    ['value' => '', 'label' => 'Filter by Active', 'selected' => false],
-                    ['value' => '0', 'label' => '0', 'selected' => true],
-                    ['value' => '1', 'label' => '1', 'selected' => false]
+        $this->assertEquals(
+            [
+                'active' => [
+                    'id' => 'active',
+                    'options' => [
+                        ['value' => '', 'label' => 'Filter by Active', 'selected' => false],
+                        ['value' => '0', 'label' => '0', 'selected' => true],
+                        ['value' => '1', 'label' => '1', 'selected' => false],
+                    ],
+                ],
+                'price_code' => [
+                    'id' => 'price_code',
+                    'options' => [
+                        ['value' => '', 'label' => 'Filter by Price Code', 'selected' => false],
+                        ['value' => 'A', 'label' => 'A', 'selected' => false],
+                        ['value' => 'B', 'label' => 'B', 'selected' => true],
+                        ['value' => 'C', 'label' => 'C', 'selected' => false],
+                    ],
+                ],
+                'performance-category' => [
+                    'id' => 'performance-category',
+                    'options' => [
+                        ['value' => '', 'label' => 'All Performance Categories', 'selected' => false],
+                        ['value' => 'category-1', 'label' => 'Category 1', 'selected' => false],
+                        ['value' => 'category-2', 'label' => 'Category 2', 'selected' => true],
+                    ],
                 ],
             ],
-            'price_code' => [
-                'id' => 'price_code',
-                'options' => [
-                    ['value' => '', 'label' => 'Filter by Price Code', 'selected' => false],
-                    ['value' => 'A', 'label' => 'A', 'selected' => false],
-                    ['value' => 'B', 'label' => 'B', 'selected' => true],
-                    ['value' => 'C', 'label' => 'C', 'selected' => false],
-                ],
-            ],
-            'performance-category' => [
-                'id' => 'performance-category',
-                'options' => [
-                    ['value' => '', 'label' => 'All Performance Categories', 'selected' => false],
-                    ['value' => 'category-1', 'label' => 'Category 1', 'selected' => false],
-                    ['value' => 'category-2', 'label' => 'Category 2', 'selected' => true],
-                ],
-            ]
-        ], $filters);
+            $filters
+        );
     }
 
     public function test_appends_parsed_query_with_selected_meta_filters(): void
@@ -100,9 +106,9 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         $this->assertEmpty($wp_query->query_vars['meta_query'] ?? null);
         $_GET = ['active' => '0', 'price_code' => 'B'];
         $wp_query->query(['post_type' => $this->post_type]);
-        $this->assertEquals([
-            ['key' => 'active', 'value' => '0'],
-            ['key' => 'price_code', 'value' => 'B'],
-        ], $wp_query->query_vars['meta_query']);
+        $this->assertEquals(
+            [['key' => 'active', 'value' => '0'], ['key' => 'price_code', 'value' => 'B']],
+            $wp_query->query_vars['meta_query']
+        );
     }
 }

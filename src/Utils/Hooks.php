@@ -22,7 +22,7 @@ class Hooks
      */
     public static function name(string ...$parts): string
     {
-        return (new HookName( ...$parts))->value();
+        return (new HookName(...$parts))->value();
     }
 
     public static function callOrAddAction(string $hook_name, callable $callback, int $priority = 10, ...$args): void

@@ -41,7 +41,7 @@ return [
         AmazonCloudfront::class,
         SvgUpload::class,
         BlockConfig::class,
-        UIFramework::class
+        UIFramework::class,
     ],
     'disallowedBlocks' => [],
 ];

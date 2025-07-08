@@ -30,8 +30,8 @@ class FlashTest extends TestCase
      */
     public function testRender(): void
     {
-        $this->service->dispatch("Test notification");
-        $this->service->dispatchError("Error notification");
+        $this->service->dispatch('Test notification');
+        $this->service->dispatchError('Error notification');
         $this->flash->shutdown();
 
         ob_start();
@@ -39,8 +39,8 @@ class FlashTest extends TestCase
         $output = ob_get_clean();
 
         // Ensure the notifications are displayed
-        $this->assertStringContainsString("Test notification", $output);
-        $this->assertStringContainsString("Error notification", $output);
+        $this->assertStringContainsString('Test notification', $output);
+        $this->assertStringContainsString('Error notification', $output);
         $this->assertCount(2, $notifications);
     }
 }

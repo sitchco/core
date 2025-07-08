@@ -34,7 +34,7 @@ class BackgroundProcessingTest extends TestCase
         do_action('sitchco/after_save_permalinks');
         $this->assertEmpty($event->getDispatchResponse());
         $processed = false;
-        add_action(SavePermalinksRequestEvent::hookName(), function() use (&$processed) {
+        add_action(SavePermalinksRequestEvent::hookName(), function () use (&$processed) {
             $processed = true;
         });
         do_action('sitchco/after_save_permalinks');
@@ -54,13 +54,14 @@ class BackgroundProcessingTest extends TestCase
         $Queue = $this->container->get(BackgroundActionQueue::class);
         $this->assertFalse($Queue->hasQueuedItems());
         $processed = 0;
-        $Queue->addTask(SavePostQueueEvent::HOOK_SUFFIX, function(array $args) use (&$processed) {
+        $Queue->addTask(SavePostQueueEvent::HOOK_SUFFIX, function (array $args) use (&$processed) {
             $processed = $args['post_id'];
         });
         $post = $this->factory()->post->create_and_get();
-        $this->assertEquals([
-            ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post->ID]],
-        ], $Queue->getQueuedItems());
+        $this->assertEquals(
+            [['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post->ID]]],
+            $Queue->getQueuedItems()
+        );
         $url = $this->saveQueue();
         $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_SUFFIX);
         $Queue->maybe_handle();
@@ -75,7 +76,7 @@ class BackgroundProcessingTest extends TestCase
         $post_ids = $this->factory()->post->create_many(3);
         $Queue = $this->container->get(BackgroundActionQueue::class);
         $processed = [];
-        $Queue->addSavePermalinksBulkSavePostsTask(function(array $args) use (&$processed) {
+        $Queue->addSavePermalinksBulkSavePostsTask(function (array $args) use (&$processed) {
             $processed[] = $args['post_id'];
         });
         // Process save permalinks
@@ -84,11 +85,14 @@ class BackgroundProcessingTest extends TestCase
         $this->assertStringContainsString('admin-ajax.php?action=sitchco_after_save_permalinks', $url);
         $this->setupAjaxHandle($url, SavePermalinksRequestEvent::HOOK_SUFFIX);
         $event->maybe_handle();
-        $this->assertEquals([
-            ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[0]]],
-            ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[1]]],
-            ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[2]]],
-        ], $Queue->getQueuedItems());
+        $this->assertEquals(
+            [
+                ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[0]]],
+                ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[1]]],
+                ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[2]]],
+            ],
+            $Queue->getQueuedItems()
+        );
         $url = $this->saveQueue();
         $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_SUFFIX);
         $Queue->maybe_handle();
@@ -111,5 +115,4 @@ class BackgroundProcessingTest extends TestCase
         $_REQUEST['nonce'] = $query['nonce'];
         add_filter("sitchco_{$identifier}_wp_die", '__return_false');
     }
-
 }

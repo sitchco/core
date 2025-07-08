@@ -1,101 +1,84 @@
 # @sitchco/module-builder
 
-Dynamic Vite build tool for Sitchco modules.
-
-## Installation
-
-```bash
-npm install @sitchco/module-builder
-# or
-yarn add @sitchco/module-builder
-# or
-pnpm add @sitchco/module-builder
-```
+A programmatic build tool that dynamically configures and runs Vite to compile assets for the Sitchco WordPress platform.
 
 ## Overview
 
-The `@sitchco/module-builder` is a specialized build tool for Sitchco WordPress projects. It uses Vite to compile assets for modules marked with `.sitchco-module` files. It's designed to work with the Sitchco WordPress Platform architecture, which separates functionality into modular components.
+The `@sitchco/module-builder` is the core engine for asset compilation in the `sitchco-core` project. It provides a programmatic API to discover modules and their assets, generate a tailored Vite configuration on the fly, and run development or production builds.
 
-## Features
+Its workflow is designed around simplicity and convention:
 
-- Automatic discovery of modules via `.sitchco-module` marker files
-- Dynamic Vite configuration generation based on discovered modules
-- Development mode with Hot Module Replacement (HMR)
-- Production builds with optimized assets
-- Support for JavaScript, TypeScript, SCSS, CSS, and other assets
-- Integration with WordPress via manifest generation
-
-## Usage
-
-### Command Line Interface
-
-```bash
-# Build all module/block assets for production
-npx module-builder build
-
-# Watch module/block assets and rebuild on changes (with HMR)
-npx module-builder dev
-
-# Clean all build artifacts
-npx module-builder clean
-
-# Add verbose output to any command
-npx module-builder build -v
-```
-
-### Package.json Integration
-
-Add these scripts to your package.json:
-
-```json
-{
-  "scripts": {
-    "build": "module-builder build",
-    "dev": "module-builder dev",
-    "clean": "module-builder clean"
-  }
-}
-```
-
-Then run:
-
-```bash
-npm run build
-npm run dev
-npm run clean
-```
+1.  **Discover:** It scans the project to find all feature modules and their asset entry points.
+2.  **Configure:** It generates a Vite configuration in memory tailored to the discovered assets.
+3.  **Build:** It uses the Vite API to either compile assets for production or start a development server with Hot Module Replacement (HMR).
 
 ## How It Works
 
-1. The module-builder uses `@sitchco/project-scanner` to find all modules marked with `.sitchco-module` files
-2. It identifies entry points in standard locations:
-   - Module root (*.js, *.mjs, *.scss)
-   - `assets/scripts/` and `assets/styles/` directories
-   - Block roots within the `blocks/` directory
-   - Block asset directories
-3. It generates a Vite configuration based on the discovered entry points
-4. In development mode, it starts a Vite dev server with HMR
-5. In production mode, it builds optimized assets and generates a manifest.json
+### Module & Entry Point Discovery
 
-## WordPress Integration
+This package uses `@sitchco/project-scanner` to find assets based on a simple directory convention:
 
-The module-builder creates:
+* **Module Definition:** Any direct subdirectory inside `sitchco-core/modules/` is automatically treated as a module.
+* **Entry Point Scanning:** Within each module directory, it searches for entry point files (`.js`, `.mjs`, `.scss`, `.css`) in the following standard locations:
+    * The module's root directory
+    * `assets/scripts/`
+    * `assets/styles/`
+    * The root of each block in the `blocks/` directory
+    * The `assets/` directory of each block
 
-- A `dist/` directory with compiled assets
-- A `manifest.json` file mapping source files to compiled assets
-- A `hot` file in development mode to indicate HMR is active
+### WordPress Integration
 
-These files are used by the Sitchco WordPress platform to properly enqueue assets in both development and production environments.
+Seamless integration with the WordPress backend is achieved using `laravel-vite-plugin`. This powerful plugin handles the complexities of asset mapping:
 
-## Dependencies
+* In **production** (`runBuild`), it generates a `dist/manifest.json` file. The PHP backend uses this manifest to look up the final, hashed filenames for enqueuing.
+* In **development** (`runDev`), it creates a `.vite.hot` file. The existence of this file tells the PHP backend to load assets directly from the Vite development server, enabling HMR.
 
-This package depends on:
+## Programmatic Usage
 
-- `@sitchco/project-scanner`: For discovering modules and entry points
-- `vite`: For building and serving assets
-- `laravel-vite-plugin`: For manifest generation and HMR integration
-- `sass-embedded`: For compiling Sass/SCSS stylesheets
+This package provides an API that is primarily consumed by the `@sitchco/cli` tool. The intended workflow is to first discover targets and then pass them to a build function.
 
-## License
+```javascript
+import {
+    findAssetTargets,
+    runBuild,
+    runDev,
+    cleanBuildArtifacts,
+} from '@sitchco/module-builder';
 
-ISC
+async function buildMyProject() {
+    // First, clean any previous artifacts
+    await cleanBuildArtifacts();
+
+    // 1. Discover all modules and their asset entry points
+    const targets = await findAssetTargets();
+
+    // 2. Run a production build using the discovered targets
+    await runBuild(targets);
+}
+
+async function developMyProject() {
+    await cleanBuildArtifacts();
+    const targets = await findAssetTargets();
+
+    // Or, start the development server with HMR
+    await runDev(targets);
+}
+```
+
+## API Reference
+
+#### `findAssetTargets(): Promise<object>`
+
+Scans the project using directory conventions and returns a "target object." This object contains all the paths and the array of entry points (`viteInput`) required to configure Vite.
+
+#### `runBuild(targets: object): Promise<void>`
+
+Executes a production Vite build using the provided `targets` object.
+
+#### `runDev(targets: object): Promise<void>`
+
+Starts the Vite development server with HMR enabled, using the provided `targets` object.
+
+#### `cleanBuildArtifacts(): Promise<void>`
+
+Removes all previously generated build artifacts (e.g., `dist/` and `.vite/` directories) from the project.

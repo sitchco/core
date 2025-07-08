@@ -58,6 +58,6 @@ class Debug
 
         // Fallback to print_r if Kint is not available
         $output = '<pre>' . print_r($d, true) . '</pre>';
-        return $return ? $output : print($output);
+        return $return ? $output : print $output;
     }
 }

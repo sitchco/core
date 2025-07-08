@@ -97,12 +97,16 @@ class RepositoryBase implements Repository
         return $this->find([
             'posts_per_page' => $count,
             'post__in' => $post_ids,
-            'orderby' => 'post__in'
+            'orderby' => 'post__in',
         ]);
     }
 
-    public function findWithTermIds(array $term_ids, string $taxonomy = 'category', $count = 10, array $excluded_post_ids = []): Collection
-    {
+    public function findWithTermIds(
+        array $term_ids,
+        string $taxonomy = 'category',
+        $count = 10,
+        array $excluded_post_ids = []
+    ): Collection {
         if (empty($term_ids)) {
             return new Collection(new PostQuery(new WP_Query([])));
         }
@@ -114,9 +118,9 @@ class RepositoryBase implements Repository
                     'taxonomy' => $taxonomy,
                     'terms' => $term_ids,
                     'field' => 'term_id',
-                    'compare' => 'IN'
-                ]
-            ]
+                    'compare' => 'IN',
+                ],
+            ],
         ]);
     }
 
@@ -131,7 +135,7 @@ class RepositoryBase implements Repository
             return $post_id;
         }
 
-        if (!empty($fields = $object->getLocalMetaReference())) {
+        if (!empty(($fields = $object->getLocalMetaReference()))) {
             foreach ($fields as $key => $value) {
                 if ($key === 'thumbnail_id') {
                     set_post_thumbnail($post_id, $value);
@@ -142,7 +146,7 @@ class RepositoryBase implements Repository
         }
 
         $object->ID = $object->id = $post_id;
-        if (!empty($local_taxonomies = $object->getLocalTaxonomies())) {
+        if (!empty(($local_taxonomies = $object->getLocalTaxonomies()))) {
             foreach ($local_taxonomies as $taxonomy) {
                 $terms = $object->getMergedExistingAndLocalTerms($taxonomy);
                 wp_set_object_terms($object->ID, array_column($terms, 'term_id'), $taxonomy);
@@ -171,7 +175,8 @@ class RepositoryBase implements Repository
         if (
             $this->exclude_current_singular_post &&
             $wp_query->is_singular &&
-            $post_obj && $post_obj->post_type == $model_class::POST_TYPE
+            $post_obj &&
+            $post_obj->post_type == $model_class::POST_TYPE
         ) {
             if (empty($query['post__not_in'])) {
                 $query['post__not_in'] = [];

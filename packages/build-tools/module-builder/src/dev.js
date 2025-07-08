@@ -3,7 +3,7 @@ import chalk from 'chalk';
 import { generateViteConfig } from './config.js';
 
 export async function runDev(target) {
-    if (!target) {
+    if (!target || !target.viteInput || Object.keys(target.viteInput).length === 0) {
         console.log(chalk.yellow(`No targets found. Nothing to build.`));
         return;
     }
@@ -13,4 +13,7 @@ export async function runDev(target) {
     const server = await viteCreateServer(viteConfig);
     await server.listen();
     server.printUrls();
+    await new Promise((resolve) => {
+        server.httpServer.on('close', resolve);
+    });
 }

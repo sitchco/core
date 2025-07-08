@@ -15,7 +15,7 @@ class HookName
         $this->parts = $parts;
     }
 
-    public static function fromArray(array $parts) : static
+    public static function fromArray(array $parts): static
     {
         return new static(...$parts);
     }
@@ -39,7 +39,6 @@ class HookName
     {
         return $this->parts;
     }
-
 
     public function value(): string
     {

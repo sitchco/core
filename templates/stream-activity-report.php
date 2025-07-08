@@ -66,7 +66,7 @@
 <div class="wrap activity-report">
     <h1>Stream Summary</h1>
     <?php if ($date): ?>
-        <h2>From: <?= $date->format('m/d/Y g:i a'); ?></h2>
+        <h2>From: <?= $date->format('m/d/Y g:i a') ?></h2>
     <?php endif; ?>
     <div style="margin-bottom: 20px;">
         <label for="filter-include">Include Only</label>
@@ -85,13 +85,16 @@
         </tr>
         </thead>
         <tbody>
-        <?php foreach ($report as $type => $item) : ?>
+        <?php foreach ($report as $type => $item): ?>
             <tr class="activity-row">
                 <td class="min-width"><?= $type ?></td>
-                <td class="min-width"><?= implode(',', $item['actions']); ?></td>
-                <td class="activity-summary-col"><?= implode('', array_map(function ($summary) {
+                <td class="min-width"><?= implode(',', $item['actions']) ?></td>
+                <td class="activity-summary-col"><?= implode(
+                    '',
+                    array_map(function ($summary) {
                         return '<span>' . $summary . '</span>';
-                    }, $item['summary'])); ?></td>
+                    }, $item['summary'])
+                ) ?></td>
                 <td class="min-width">
                     <button class="toggle">
                         <span class="minus">-</span>

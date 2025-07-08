@@ -8,6 +8,6 @@ return [
             'featureOne' => true,
             'featureTwo' => true,
             'featureThree' => false,
-        ]
-    ]
+        ],
+    ],
 ];

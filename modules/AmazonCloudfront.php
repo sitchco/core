@@ -19,10 +19,11 @@ class AmazonCloudfront extends Module
 
     public function enableAmazonCloudfrontUserAgent($wp_rich_edit): bool
     {
-        if (! $wp_rich_edit
-            && (get_user_option('rich_editing') == 'true' || ! is_user_logged_in())
-            && isset($_SERVER['HTTP_USER_AGENT'])
-            && stripos($_SERVER['HTTP_USER_AGENT'], 'amazon cloudfront') !== false
+        if (
+            !$wp_rich_edit &&
+            (get_user_option('rich_editing') == 'true' || !is_user_logged_in()) &&
+            isset($_SERVER['HTTP_USER_AGENT']) &&
+            stripos($_SERVER['HTTP_USER_AGENT'], 'amazon cloudfront') !== false
         ) {
             return true;
         }

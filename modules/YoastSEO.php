@@ -10,9 +10,7 @@ use Sitchco\Framework\Module;
  */
 class YoastSEO extends Module
 {
-    const FEATURES = [
-        'proDashboardInactive'
-    ];
+    const FEATURES = ['proDashboardInactive'];
 
     public function init(): void
     {

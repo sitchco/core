@@ -56,5 +56,4 @@ abstract class Rewrite
     }
 
     abstract protected function getQuery(): string;
-
 }

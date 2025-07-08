@@ -55,11 +55,14 @@ wp-content/
 │   └── sitchco-core/
 │       ├── packages/
 │       │   ├── build-tools/
-│       │   │   ├── module-builder/      # Orchestrates Vite builds (`build`, `dev`, `clean`)
-│       │   │   ├── dev-scripts/         # Provides CLI (`sitchco-lint`, `sitchco-format`)
-│       │   │   ├── project-scanner/     # Discovers modules via `.sitchco-module`
-│       │   │   ├── eslint-config/       # Shared ESLint rules (@sitchco/eslint-config)
-│       │   │   └── prettier-config/     # Shared Prettier configuration (@sitchco/prettier-config)
+│       │   │   ├── cli/                 # Provides the unified `sitchco` command
+│       │   │   ├── linter/              # Programmatic ESLint runner
+│       │   │   ├── formatter/           # Programmatic code formatter
+│       │   │   ├── module-builder/      # Core Vite build engine
+│       │   │   ├── project-scanner/     # Discovers modules via directory convention
+│       │   │   ├── publisher/           # Internal tools for NPM publishing
+│       │   │   ├── eslint-config/       # Shared ESLint rules
+│       │   │   └── prettier-config/     # Shared Prettier configuration
 │       │   └── shared/                  # (Optional) Shared UI libraries, tokens, etc.
 │       └── ... (other sitchco-core files)
 ├── themes/
@@ -78,30 +81,25 @@ e.g., the child theme) uses the tooling via its marker file for local asset proc
 
 The key tooling packages under `sitchco-core/packages/build-tools/` provide:
 
-- **`@sitchco/project-scanner`**
-  Responsible for discovering “Sitchco modules” by locating `.sitchco-module` marker files. It identifies module roots,
-  entry points (JS/MJS/SCSS in standard locations like `assets/scripts`, `assets/styles`, `blocks/...`), finds the
-  WordPress web root, locates source files by extension, and can clean build artifacts (`dist/`, `.vite/`). Its findings
-  are used by other tooling packages.
+* **`@sitchco/project-scanner`**: Responsible for discovering modules by scanning for subdirectories within the
+  `modules/` folder. It identifies entry points (JS/SCSS), finds the WordPress web root, and provides file-finding
+  utilities to other tools.
 
-- **`@sitchco/module-builder`**
-  Provides CLI commands (`module-builder build`, `module-builder dev`, `module-builder clean`). It uses
-  `@sitchco/project-scanner` to find asset targets and then orchestrates `vite` (using `laravel-vite-plugin` and
-  `sass-embedded`) to compile assets into the project's root `dist/` folder.
-    - `build`: Creates optimized production assets and a `manifest.json`.
-    - `dev`: Starts Vite's development server with HMR, creating a `hot` file for PHP integration.
-    - `clean`: Removes build artifacts found by the scanner.
+* **`@sitchco/module-builder`**: The core build engine. It uses `@sitchco/project-scanner` to find assets and then
+  orchestrates `vite` (using `laravel-vite-plugin`) to compile them into a root `dist/` folder for development or
+  production.
 
-- **`@sitchco/dev-scripts`**
-  Offers a unified CLI for code quality (`sitchco-lint`) and formatting (`sitchco-format`). It wraps ESLint and custom
-  formatting logic, delegating file discovery (based on extensions within the project) to `@sitchco/project-scanner`.
-    - `sitchco-lint`: Runs ESLint based on the shared config.
-    - `sitchco-format`: Formats/optimizes files using appropriate tools: Prettier, Terser, ESLint (`--fix`) for
-      JavaScript; SVGO for SVG. *(Note: PHP formatting is not currently implemented)*.
+* **`@sitchco/cli`**: Provides the single `sitchco` command as a unified developer entry point. It acts as a wrapper,
+  delegating tasks to the other tooling packages (e.g., `sitchco build` runs the `module-builder`).
 
-- **`@sitchco/eslint-config` & `@sitchco/prettier-config`**
-  These shared configurations standardize code style and formatting rules across all modules and packages, ensuring
-  consistency. They are consumed by `@sitchco/dev-scripts` and can be referenced in project root configurations.
+* **`@sitchco/linter`**: A programmatic wrapper for ESLint that ensures the project's root configuration is always used
+  for consistent results.
+
+* **`@sitchco/formatter`**: A programmatic formatter that uses a processor-based system to format different file types (
+  Prettier for JS/CSS, SVGO for SVG, etc.).
+
+* **`@sitchco/eslint-config` & `@sitchco/prettier-config`**: These shared configurations standardize code style and
+  formatting rules across all projects, ensuring consistency.
 
 Together, these packages provide a consistent developer experience, supporting flexible builds across different project
 setups and distribution modes.
@@ -157,43 +155,31 @@ setups and distribution modes.
 
 ---
 
-## 6. Planned Improvements
+### **6. Future Goals & Roadmap**
 
-While the current tooling provides a solid foundation, we have identified key areas for future enhancement:
+While the current tooling provides a robust and stable foundation for development, we are committed to continuous
+improvement. The following are key areas targeted for future enhancement:
 
-- **TypeScript Conversion:**
-  Migrate the core JavaScript-based tooling packages (`@sitchco/project-scanner`, `@sitchco/module-builder`,
-  `@sitchco/dev-scripts`, etc.) to TypeScript. This will improve code maintainability, developer experience through
-  better autocompletion and type checking, and overall robustness.
+* **TypeScript Migration**
+  Gradually migrate the core JavaScript-based tooling packages (`@sitchco/project-scanner`, `@sitchco/module-builder`,
+  etc.) to TypeScript. This will improve long-term maintainability, enhance the developer experience with type safety,
+  and increase overall code quality.
 
-- **Comprehensive Testing:**
-  Implement a thorough test suite using **Vitest** for all core tooling packages. This includes adding unit tests for
-  individual functions and modules, and integration tests to verify the end-to-end workflows (e.g., scanning, building,
-  linting). This will help ensure reliability, catch regressions early, and provide confidence when making future
-  changes.
-
-- **CI-Driven NPM Publishing**
-  Automate publishing the build-tools packages to an NPM registry. This involves setting up a CI workflow (GitHub
-  Actions) that, after passing tests, automatically bumps versions (via Changesets), tags releases, and publishes them
-  under our org’s NPM scope.
-
-- **Refined Versioning & Release Process**
-  Exploring **Changesets** or a similar approach to unify monorepo versioning, automate changelogs, and maintain
-  consistent package versions across all build-tools packages.
+* **Comprehensive Test Coverage**
+  Expand the test suite using Vitest for all core tooling packages. This includes adding more unit tests for individual
+  functions and integration tests to verify the end-to-end workflows (e.g., scanning, building, linting). A strong test
+  suite will ensure reliability and prevent regressions.
 
 ---
 
-## 7. Conclusion
+### **7. Conclusion**
 
-**Sitchco WordPress Platform Tooling** offers a modern development workflow leveraging Node.js (>=18), Vite,
-`laravel-vite-plugin`, Sass, ESLint, Prettier, Vitest, and specialized internal packages. The system supports both
-monorepo development and Composer-based distribution (`prefer-dist`/`prefer-src`). Key features include:
+The **Sitchco WordPress Platform Tooling** provides a modern, performant, and consistent development workflow built on
+Node.js, Vite, and pnpm workspaces. Its architecture is composed of specialized, internal NPM packages that handle
+specific tasks like scanning, building, linting, and formatting.
 
-- **Dynamic Asset Discovery** based on `.sitchco-module` markers via `@sitchco/project-scanner`.
-- **Unified Build Process** (`build`, `dev`, `clean`) orchestrated by `@sitchco/module-builder` using Vite.
-- **Integrated Code Quality** tools (`lint`, `format`) provided by `@sitchco/dev-scripts`.
-- **Seamless PHP Integration** facilitated by `laravel-vite-plugin` for manifest handling and HMR.
-- **Future-proofing** with planned migration to TypeScript and expanded test coverage.
-
-This approach balances performance, developer experience, maintainability, and the practical needs of distributing and
-developing WordPress projects.
+At its core, the system uses a **convention-based approach** to automatically discover modules (any subdirectory of
+`/modules`) and their assets, which are then processed by `@sitchco/module-builder`. This design, combined with seamless
+PHP integration via `laravel-vite-plugin`, results in a powerful and unified developer experience with a simple
+command-line interface (`sitchco`). It balances flexibility and maintainability, supporting everything from local
+development with HMR to optimized production builds.

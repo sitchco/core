@@ -12,9 +12,8 @@ class DateTime extends CarbonImmutable
 {
     public function __construct(
         DateTimeInterface|WeekDay|Month|string|int|float|null $time = 'now',
-        DateTimeZone|string|int|null $timezone = null,
-    )
-    {
+        DateTimeZone|string|int|null $timezone = null
+    ) {
         parent::__construct($time, $this->getDefaultTimezone($timezone));
     }
 
@@ -48,5 +47,4 @@ class DateTime extends CarbonImmutable
 
         return timezone_name_from_abbr('', $gmtOffset, $localtime_assoc['tm_isdst']);
     }
-
 }

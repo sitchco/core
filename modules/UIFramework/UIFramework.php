@@ -6,11 +6,16 @@ use Sitchco\Framework\Module;
 
 class UIFramework extends Module
 {
-    const FEATURES = [
-        'loadAssets',
-    ];
+    const FEATURES = ['loadAssets'];
 
     const HOOK_SUFFIX = 'ui-framework';
+    protected string $noJsScript = "
+            document.documentElement.classList.remove('no-js');
+            document.documentElement.classList.add('js');
+            document.fonts.ready.then(function () {
+                document.documentElement.classList.add('fonts-loaded');
+            });
+        ";
 
     public function init(): void
     {
@@ -19,23 +24,15 @@ class UIFramework extends Module
 
     public function setupAssets(): void
     {
-        $this->registerScript(
-            static::hookName(),
-            $this->scriptUrl('main.mjs'),
-            ['wp-hooks']
+        $handle = static::hookName();
+        $this->registerScript($handle, $this->scriptUrl('main.mjs'), ['wp-hooks']);
+        $this->registerStyle($handle, $this->styleUrl('main.css'));
+        add_filter(
+            'language_attributes',
+            fn($attributes) => !str_contains($attributes, 'class=')
+                ? $attributes . ' class="no-js"'
+                : str_replace('class="', 'class="no-js ', $attributes)
         );
-        $this->registerStyle(
-            static::hookName(),
-            $this->styleUrl('main.css'),
-        );
-
-        add_filter('body_class', fn($classes) => array_merge($classes, ['sitchco-app-loading']));
-        add_action('wp_head', function () {
-?>
-<script>window.onload = () => document.body.classList.remove('sitchco-app-loading');</script>
-<noscript><style>body.sitchco-app-loading { opacity: 1; } </style></noscript>
-<?php
-        });
     }
 
     public function loadAssets(): void
@@ -43,6 +40,7 @@ class UIFramework extends Module
         add_action('wp_enqueue_scripts', function () {
             $this->enqueueScript(static::hookName());
             $this->enqueueStyle(static::hookName());
+            wp_add_inline_script(static::hookName(), $this->noJsScript, 'before');
         });
     }
 }

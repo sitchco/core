@@ -45,7 +45,6 @@ This configuration includes:
 - Modern JavaScript best practices
 - Compatibility with Prettier
 - Import sorting and organization
-- Stylistic rules for consistent code
 
 ## Dependencies
 
@@ -54,7 +53,6 @@ This package includes:
 - `@babel/eslint-parser`: For parsing modern JavaScript
 - `@babel/preset-env`: For transpiling modern JavaScript
 - `@eslint/js`: Core ESLint rules
-- `@stylistic/eslint-plugin`: Stylistic rules
 - `eslint-config-prettier`: Disables ESLint rules that conflict with Prettier
 - `eslint-plugin-import`: Rules for import statements
 

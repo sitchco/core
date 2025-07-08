@@ -36,16 +36,16 @@ class WPRocket extends Module
         $protocol = is_ssl() ? 'https' : 'http';
 
         return <<<HTACCESS
-        # Force trailing slash
-        RewriteEngine On
-        RewriteCond %{REQUEST_FILENAME} !-f
-        RewriteCond %{REQUEST_METHOD} GET
-        RewriteCond %{REQUEST_URI} !(.*)/$
-        RewriteCond %{REQUEST_URI} !^/wp-(content|admin|includes)
-        RewriteCond %{REQUEST_FILENAME} !\.(gif|jpg|png|jpeg|css|xml|txt|js|php|scss|webp|mp3|avi|wav|mp4|mov)$ [NC]
-        RewriteRule ^(.*)$ {$protocol}://%{HTTP_HOST}/$1/ [L,R=301]
+# Force trailing slash
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_METHOD} GET
+RewriteCond %{REQUEST_URI} !(.*)/$
+RewriteCond %{REQUEST_URI} !^/wp-(content|admin|includes)
+RewriteCond %{REQUEST_FILENAME} !\.(gif|jpg|png|jpeg|css|xml|txt|js|php|scss|webp|mp3|avi|wav|mp4|mov)$ [NC]
+RewriteRule ^(.*)$ {$protocol}://%{HTTP_HOST}/$1/ [L,R=301]
 
-        {$marker}
-        HTACCESS;
+{$marker}
+HTACCESS;
     }
 }

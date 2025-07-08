@@ -19,9 +19,10 @@ class ArrayUtil
         $merged = [];
         foreach ($arrays as $array) {
             foreach ($array as $key => $value) {
-                $merged[$key] = is_array($value) && isset($merged[$key]) && is_array($merged[$key])
-                    ? self::mergeRecursiveDistinct($merged[$key], $value)
-                    : $value;
+                $merged[$key] =
+                    is_array($value) && isset($merged[$key]) && is_array($merged[$key])
+                        ? self::mergeRecursiveDistinct($merged[$key], $value)
+                        : $value;
             }
         }
         return $merged;
@@ -72,12 +73,15 @@ class ArrayUtil
      */
     public static function convertToList(array $contentArr, array $args = []): string
     {
-        $args = array_merge([
-            'list_type' => 'ul',
-            'list_class' => '',
-            'item_class' => '',
-            'attr' => []
-        ], $args);
+        $args = array_merge(
+            [
+                'list_type' => 'ul',
+                'list_class' => '',
+                'item_class' => '',
+                'attr' => [],
+            ],
+            $args
+        );
 
         $attrs = self::toAttributes($args['attr']);
         $listClass = !empty($args['list_class']) ? " class=\"{$args['list_class']}\"" : '';
@@ -96,11 +100,14 @@ class ArrayUtil
      */
     public static function toAttributes(array $arr, string $glue = ' '): string
     {
-        return implode(' ', array_map(
-            fn($key, $value) => is_array($value) ? "$key=\"" . implode($glue, $value) . "\"" : "$key=\"$value\"",
-            array_keys($arr),
-            $arr
-        ));
+        return implode(
+            ' ',
+            array_map(
+                fn($key, $value) => is_array($value) ? "$key=\"" . implode($glue, $value) . "\"" : "$key=\"$value\"",
+                array_keys($arr),
+                $arr
+            )
+        );
     }
 
     /**
@@ -126,10 +133,7 @@ class ArrayUtil
      */
     public static function stringify(array $array): array
     {
-        return array_map(
-            fn($value) => is_array($value) ? self::stringify($value) : (string) $value,
-            $array
-        );
+        return array_map(fn($value) => is_array($value) ? self::stringify($value) : (string) $value, $array);
     }
 
     /**

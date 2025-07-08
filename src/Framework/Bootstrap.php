@@ -46,5 +46,4 @@ class Bootstrap
         $registry = $container->get(ModuleRegistry::class);
         $registry->activateModules($moduleConfigs);
     }
-
 }

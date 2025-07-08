@@ -36,15 +36,18 @@ class RestRouteServiceTest extends TestCase
         $route = end($registered);
         $this->assertInstanceOf(RestRoute::class, $route);
         $routes = rest_get_server()->get_routes('sitchco');
-        $this->assertEquals([
-            'methods' => ['GET' => true ],
-            'accept_json' => false,
-            'accept_raw' => false,
-            'show_in_index' => true,
-            'args' => [],
-            'callback' => [$route, 'handleRequest'],
-            'permission_callback' => fn() => true,
-        ], $routes['/sitchco/example-read'][0]);
+        $this->assertEquals(
+            [
+                'methods' => ['GET' => true],
+                'accept_json' => false,
+                'accept_raw' => false,
+                'show_in_index' => true,
+                'args' => [],
+                'callback' => [$route, 'handleRequest'],
+                'permission_callback' => fn() => true,
+            ],
+            $routes['/sitchco/example-read'][0]
+        );
         // Simulate a GET request to the registered route
         $request = new WP_REST_Request('GET', '/sitchco/example-read');
         $response = rest_do_request($request);
@@ -67,15 +70,18 @@ class RestRouteServiceTest extends TestCase
         $this->assertInstanceOf(RestRoute::class, $route);
 
         $routes = rest_get_server()->get_routes('sitchco');
-        $this->assertEquals([
-            'methods' => ['POST' => true ],
-            'accept_json' => false,
-            'accept_raw' => false,
-            'show_in_index' => true,
-            'args' => [],
-            'callback' => [$route, 'handleRequest'],
-            'permission_callback' => fn() => true,
-        ], $routes['/sitchco/example-create'][0]);
+        $this->assertEquals(
+            [
+                'methods' => ['POST' => true],
+                'accept_json' => false,
+                'accept_raw' => false,
+                'show_in_index' => true,
+                'args' => [],
+                'callback' => [$route, 'handleRequest'],
+                'permission_callback' => fn() => true,
+            ],
+            $routes['/sitchco/example-create'][0]
+        );
 
         // Simulate a POST request to the registered route
         $request = new WP_REST_Request('POST', '/sitchco/example-create');

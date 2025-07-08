@@ -21,5 +21,4 @@ class QueryRewrite extends Rewrite
     {
         return preg_replace('/=\$(\d)/', '=$matches[$1]', build_query($this->query));
     }
-
 }

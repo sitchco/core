@@ -50,24 +50,27 @@ abstract class AcfPostTypeTest extends TestCase
             'slug' => 'category-2',
         ]);
         $post1 = $this->factory()->post->create_and_get([
-            'post_type' => $this->post_type, 'post_title' => '2',
+            'post_type' => $this->post_type,
+            'post_title' => '2',
             'post_date' => '2024-11-20 00:00:00',
             'meta_input' => ['active' => '0', 'price_code' => 'A'],
         ]);
         wp_set_object_terms($post1->ID, 'category-1', $this->taxonomy);
         $this->posts[] = $post1;
         $post2 = $this->factory()->post->create_and_get([
-            'post_type' => $this->post_type, 'post_title' => '3',
+            'post_type' => $this->post_type,
+            'post_title' => '3',
             'post_date' => '2024-11-21 00:00:00',
             'meta_input' => ['active' => '1', 'price_code' => 'B'],
         ]);
         wp_set_object_terms($post2->ID, 'category-1', $this->taxonomy);
         $this->posts[] = $post2;
         $post3 = $this->factory()->post->create_and_get([
-            'post_type' => $this->post_type, 'post_title' => '1',
+            'post_type' => $this->post_type,
+            'post_title' => '1',
             'post_date' => '2024-11-22 00:00:00',
             'meta_input' => ['active' => '1', 'price_code' => 'C'],
-            'tax_input' => [$this->taxonomy => 'category-2']
+            'tax_input' => [$this->taxonomy => 'category-2'],
         ]);
         wp_set_object_terms($post3->ID, 'category-2', $this->taxonomy);
         $this->posts[] = $post2;
@@ -78,16 +81,16 @@ abstract class AcfPostTypeTest extends TestCase
         $this->factory()->post->create([
             'post_type' => $this->acf_post_type->post_type,
             'post_title' => 'Performances',
-            'post_content' => serialize($this->acf_post_type_config)
+            'post_content' => serialize($this->acf_post_type_config),
         ]);
-        wp_cache_delete( acf_cache_key( $this->acf_post_type->cache_key_plural ), 'acf' );
+        wp_cache_delete(acf_cache_key($this->acf_post_type->cache_key_plural), 'acf');
         $this->acf_post_type->register_post_types();
         $this->factory()->post->create([
             'post_type' => $this->acf_taxonomy->post_type,
             'post_title' => 'Performance Categories',
-            'post_content' => serialize($this->acf_taxonomy_config)
+            'post_content' => serialize($this->acf_taxonomy_config),
         ]);
-        wp_cache_delete( acf_cache_key( $this->acf_taxonomy->cache_key_plural ), 'acf' );
+        wp_cache_delete(acf_cache_key($this->acf_taxonomy->cache_key_plural), 'acf');
         $this->acf_taxonomy->register_taxonomies();
     }
 

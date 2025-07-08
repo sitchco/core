@@ -22,7 +22,7 @@ class RepositoryBaseTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        add_filter('timber/post/classmap', function($classmap) {
+        add_filter('timber/post/classmap', function ($classmap) {
             $classmap['post'] = PostTester::class;
             $classmap['event'] = EventPostTester::class;
             return $classmap;
@@ -39,7 +39,6 @@ class RepositoryBaseTest extends TestCase
             'name' => 'Test Category',
             'taxonomy' => 'category',
         ]);
-
 
         $second_test_term_id = $this->factory()->term->create([
             'name' => 'Second Test Category',
@@ -152,7 +151,6 @@ class RepositoryBaseTest extends TestCase
         $repository->remove($event_post);
     }
 
-
     public function test_find_method()
     {
         global $wp_query, $post;
@@ -189,7 +187,10 @@ class RepositoryBaseTest extends TestCase
         $found_posts = $this->container->get(PostRepository::class)->findAll();
         $this->assertInstanceOf(PostCollectionInterface::class, $found_posts);
         $this->assertCount(3, $found_posts);
-        $this->assertEquals([$first_post_id, $second_post_id, $third_post_id], array_column($found_posts->to_array(), 'ID'));
+        $this->assertEquals(
+            [$first_post_id, $second_post_id, $third_post_id],
+            array_column($found_posts->to_array(), 'ID')
+        );
     }
 
     public function test_find_by_id_method()
@@ -386,7 +387,7 @@ class RepositoryBaseTest extends TestCase
         $this->assertInstanceOf(PostCollectionInterface::class, $result);
 
         // Ensure the result contains the exact posts from the post_ids
-        $result_ids = array_map(function($post) {
+        $result_ids = array_map(function ($post) {
             return $post->ID;
         }, $result->to_array());
 
@@ -428,13 +429,13 @@ class RepositoryBaseTest extends TestCase
                     'taxonomy' => 'category',
                     'terms' => $term_ids,
                     'field' => 'term_id',
-                    'compare' => 'IN'
-                ]
-            ]
+                    'compare' => 'IN',
+                ],
+            ],
         ]);
 
         // Ensure posts exist before the test
-        $this->assertCount(3, $posts);  // Ensure there are 3 posts for testing
+        $this->assertCount(3, $posts); // Ensure there are 3 posts for testing
 
         // Scenario 2: Testing findWithTermIds method with term_ids
         $result = $repository->findWithTermIds($term_ids);
@@ -443,7 +444,7 @@ class RepositoryBaseTest extends TestCase
         $this->assertInstanceOf(PostCollectionInterface::class, $result);
 
         // Ensure the result contains posts that belong to the specified term IDs
-        $result_ids = array_map(function($post) {
+        $result_ids = array_map(function ($post) {
             return $post->ID;
         }, $result->to_array());
 
@@ -457,7 +458,7 @@ class RepositoryBaseTest extends TestCase
         $result_with_exclusions = $repository->findWithTermIds($term_ids, 'category', 10, $excluded_post_ids);
 
         // Ensure post 2 is excluded from the result
-        $result_with_exclusions_ids = array_map(function($post) {
+        $result_with_exclusions_ids = array_map(function ($post) {
             return $post->ID;
         }, $result_with_exclusions->to_array());
 
@@ -467,5 +468,4 @@ class RepositoryBaseTest extends TestCase
         $result_empty = $repository->findWithTermIds([]);
         $this->assertTrue($result_empty->isEmpty());
     }
-
 }

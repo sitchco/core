@@ -49,7 +49,9 @@ class ImagifyTest extends TestCase
         $modifiedUploadBaseDir = imagify_get_filesystem()->get_upload_basedir(true);
 
         $rootPath = '/var/www/html/';
-        $expected = str_contains($modifiedUploadBaseDir, '/wp-content/') ? trailingslashit(explode('/wp-content/', $modifiedUploadBaseDir)[0]) : $rootPath;
+        $expected = str_contains($modifiedUploadBaseDir, '/wp-content/')
+            ? trailingslashit(explode('/wp-content/', $modifiedUploadBaseDir)[0])
+            : $rootPath;
         $this->assertSame($expected, $this->imagify->setSiteRoot($rootPath));
 
         remove_filter('upload_dir', fn($dirs) => $dirs);

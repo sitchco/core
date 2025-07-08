@@ -12,16 +12,15 @@ class Env
         return defined('PHPUNIT_COMPOSER_INSTALL');
     }
 
-
     public static function exit(string|ExitException $exception = null): void
     {
         if (static::isTesting()) {
-            if (! $exception instanceof ExitException) {
-                $exception = new ExitException($exception );
+            if (!$exception instanceof ExitException) {
+                $exception = new ExitException($exception);
             }
             throw $exception;
         }
-        exit;
+        exit();
     }
 
     public static function redirectExit(string $location, int $status = 302): void

@@ -12,10 +12,10 @@ use Closure;
  */
 class Cache
 {
-//    public static function clearCache(): void
-//    {
-//        CacheController::flagCacheClear();
-//    }
+    //    public static function clearCache(): void
+    //    {
+    //        CacheController::flagCacheClear();
+    //    }
 
     /**
      * Retrieves a cached value or stores it if not found.
