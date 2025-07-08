@@ -56,10 +56,11 @@ window.addEventListener('DOMContentLoaded', () => {
     hooks.doAction(constants.REGISTER);
     // Component post-registration actions can happen here
     hooks.doAction(constants.READY);
-    // Reveal page after everything is initialized
-    requestAnimationFrame(function () {
-        document.body.classList.remove('sitchco-app-loading');
-    });
+});
+
+window.addEventListener('load', () => {
+    // Fallback for any cases where fonts.ready fails
+    document.documentElement.classList.add('fonts-loaded');
 });
 
 if (window.jQuery) {

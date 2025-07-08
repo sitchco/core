@@ -1,5 +1,11 @@
-.sitchco-app-loading {
-    opacity: 0;
+html {
+    &.js {
+        opacity: 0;
+    }
+    &.no-js,
+    &.fonts-loaded {
+        opacity: 1;
+    }
 }
 
 body.lock-scroll {
@@ -8,11 +14,11 @@ body.lock-scroll {
 }
 
 :target:not(.anchor):before {
-    content: '';
-    display: block;
-    position: relative;
-    width: 0;
-    pointer-events: none;
-    height: var(--dynamic__header-height);
-    margin-top: calc(-1 * var(--dynamic__header-height));
+    /*content: '';*/
+    /*display: block;*/
+    /*position: relative;*/
+    /*width: 0;*/
+    /*pointer-events: none;*/
+    /*height: var(--dynamic__header-height);*/
+    /*margin-top: calc(-1 * var(--dynamic__header-height));*/
 }
