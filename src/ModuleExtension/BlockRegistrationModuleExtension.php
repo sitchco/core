@@ -24,6 +24,11 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     protected array $modules;
 
     /**
+     * @var FilePath[]
+     */
+    protected array $moduleBlocksPaths = [];
+
+    /**
      * Extend the modules by registering their Gutenberg blocks.
      *
      * @param Module[] $modules
@@ -34,11 +39,11 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     {
         $this->modules = $modules;
         add_action('init', [$this, 'init']);
+        add_filter('timber/locations', [$this, 'addModuleBlocksPaths']);
     }
 
     public function init(): void
     {
-        $moduleBlocksPaths = [];
         foreach ($this->modules as $module) {
             $blocksPath = $module->path('blocks');
 
@@ -46,7 +51,7 @@ class BlockRegistrationModuleExtension implements ModuleExtension
             if (!$blocksPath->isDir()) {
                 continue;
             }
-            $moduleBlocksPaths[] = $blocksPath;
+            $this->moduleBlocksPaths[] = $blocksPath;
 
             $configFilePath = $blocksPath->append('blocks-config.php');
             if ($configFilePath->isFile()) {
@@ -81,17 +86,18 @@ class BlockRegistrationModuleExtension implements ModuleExtension
                 register_block_type($fullPath);
             }
         }
+    }
 
-        add_filter('timber/locations', function ($paths) use ($moduleBlocksPaths) {
-            foreach ($moduleBlocksPaths as $blocksPath) {
-                // add child theme override for block template path
-                $pathParts = explode('/modules/', $blocksPath->value());
-                $paths[] = get_stylesheet_directory() . '/modules/' . $pathParts[1];
+    public function addModuleBlocksPaths(array $paths): array
+    {
+        foreach ($this->moduleBlocksPaths as $blocksPath) {
+            // add child theme override for block template path
+            $pathParts = explode('/modules/', $blocksPath->value());
+            $paths[] = get_stylesheet_directory() . '/modules/' . $pathParts[1];
 
-                // default block template path
-                $paths[] = [$blocksPath->value()];
-            }
-            return $paths;
-        });
+            // default block template path
+            $paths[] = [$blocksPath->value()];
+        }
+        return $paths;
     }
 }
