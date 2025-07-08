@@ -20,11 +20,11 @@ const changedPackages = allPackages.filter((pkg) => {
 const packagePath = (pkg) => join(packagesDir, pkg, 'package.json')
 const packageFileExists = (pkg) => existsSync(packagePath(pkg));
 const parsedPackage = (pkg) => JSON.parse(readFileSync(packagePath((pkg)), 'utf-8'))
-const packageIsNotPublishable = (pkg) => parsedPackage(pkg).sitchco_config?.publish === false;
+const packageIsPrivate = (pkg) => parsedPackage(pkg).private === true;
 
 const validPackages = changedPackages
     .filter((pkg) => packageFileExists(pkg))
-    .filter((pkg) => packageIsNotPublishable(pkg))
+    .filter((pkg) => !packageIsPrivate(pkg))
     .map((pkg) => ({ name: pkg }));
 
 await writeFile('packages-matrix.json', JSON.stringify(validPackages, null, 2));

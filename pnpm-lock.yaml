@@ -36,6 +36,9 @@ importers:
       '@sitchco/module-builder':
         specifier: workspace:*
         version: link:packages/build-tools/module-builder
+      '@sitchco/prettier-config':
+        specifier: workspace:*
+        version: link:packages/build-tools/prettier-config
       '@sitchco/publisher':
         specifier: workspace:*
         version: link:packages/build-tools/publisher
