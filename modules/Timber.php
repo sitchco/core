@@ -53,13 +53,7 @@ class Timber extends Module
             $context = static::loadBlockContext($context, $child_path);
         }
 
-        $template_path = trailingslashit($block['path']) . 'block.twig';
-
-        if (!file_exists($template_path)) {
-            trigger_error("Twig template $template_path does not exist", E_USER_WARNING);
-            return;
-        }
-
+        $template_path = trailingslashit(basename($block['path'])) . 'block.twig';
         $blockNameParts = explode('/', $block['name']);
         $blockName = array_pop($blockNameParts);
         echo TimberUtils::compileWithContext($template_path, $context, "block/$blockName");
