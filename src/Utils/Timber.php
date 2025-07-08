@@ -10,7 +10,7 @@ class Timber
     {
         $context = TimberLib::context();
         $context = array_merge($context, $additional_context);
-        return static::compileWithContext($template, $context, "block");
+        return static::compileWithContext($template, $context);
     }
 
     static function compileWithContext(string $template, array $context, $filter_key = null): bool|string
@@ -21,5 +21,13 @@ class Timber
         $hookName = Hooks::name('template-context', $filter_key);
         $context = apply_filters($hookName, $context, $filter_key);
         return TimberLib::compile($template, $context);
+    }
+
+    static function addContext(string $template, array $additionalContext): void
+    {
+        add_filter(
+            Hooks::name('template-context', $template),
+            fn ($context) => array_merge($context, $additionalContext),
+        );
     }
 }
