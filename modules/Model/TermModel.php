@@ -6,11 +6,11 @@ use Sitchco\Framework\Module;
 use Sitchco\Model\Category;
 use Sitchco\Model\PostFormat;
 use Sitchco\Model\PostTag;
-use Sitchco\Modules\Timber;
+use Sitchco\Modules\TimberModule;
 
 class TermModel extends Module
 {
-    public const DEPENDENCIES = [Timber::class];
+    public const DEPENDENCIES = [TimberModule::class];
 
     public function init(): void
     {
