@@ -46,7 +46,8 @@ jobs:
 
       - name: Generate changeset
         run: |
-          pnpm changeset add --empty --summary "$(cat temp-changeset.md)"
+            mkdir -p .changeset
+            mv temp-changeset.md .changeset/auto-${{ github.run_id }}.md
         shell: bash
 
       - name: Commit and push changes
