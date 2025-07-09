@@ -26,14 +26,14 @@ jobs:
           fetch-depth: 0
       - uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: 10
       - run: pnpm install
       - name: Build changeset data
         run: |
-          node packages/build-tools/publisher/src/build-changeset.mjs ${{ matrix.package }}
+          node packages/build-tools/versioner/src/build-changeset.mjs ${{ matrix.package.name }}
         shell: bash
 
-      - name: Generate changeset for ${{ matrix.package }}
+      - name: Generate changeset for ${{ matrix.package.name }}
         run: |
           pnpm changeset add --empty --summary "$(cat temp-changeset.md)"
         shell: bash

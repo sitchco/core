@@ -36,6 +36,9 @@ importers:
       '@sitchco/module-builder':
         specifier: workspace:*
         version: link:packages/build-tools/module-builder
+      '@sitchco/prettier-config':
+        specifier: workspace:*
+        version: link:packages/build-tools/prettier-config
       '@sitchco/publisher':
         specifier: workspace:*
         version: link:packages/build-tools/publisher
@@ -276,6 +279,30 @@ importers:
         version: 3.2.4(@types/node@24.0.8)(@vitest/ui@3.2.4)(sass-embedded@1.89.2)(terser@5.39.0)
 
   packages/build-tools/publisher: {}
+
+  packages/build-tools/ts-example:
+    dependencies:
+      chalk:
+        specifier: ^5.4.1
+        version: 5.4.1
+      glob:
+        specifier: ^11.0.1
+        version: 11.0.3
+    devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^3.2.1
+        version: 3.2.4(vitest@3.2.4)
+      '@vitest/ui':
+        specifier: ^3.2.1
+        version: 3.2.4(vitest@3.2.4)
+      typescript:
+        specifier: ^5.0
+        version: 5.8.3
+      vitest:
+        specifier: ^3.2.1
+        version: 3.2.4(@types/node@24.0.8)(@vitest/ui@3.2.4)(sass-embedded@1.89.2)(terser@5.39.0)
+
+  packages/build-tools/versioner: {}
 
 packages:
 

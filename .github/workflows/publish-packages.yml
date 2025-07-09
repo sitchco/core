@@ -5,39 +5,45 @@ on:
     branches: [master]
   workflow_dispatch:
 
-jobs:
-  changesets:
-    uses: ./.github/workflows/changesets.yml
+permissions:
+    contents: write
 
-  publish:
-    needs: changesets
-    if: needs.changesets.outputs.matrix != '[]'
+jobs:
+  version:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: ${{ fromJson(needs.changesets.outputs.matrix) }}
-      fail-fast: false
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org/
+          registry-url: 'https://registry.npmjs.org/'
 
       - uses: pnpm/action-setup@v2
         with:
-            version: 8
-      - run: pnpm install
+            version: 10
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Conditionally Build Package
-        run: node packages/build-tools/publisher/src/prep-package.mjs ${{ matrix.package.name }}
+        run: node packages/build-tools/publisher/src/prep-packages.mjs
 
-      - name: Publish Package
+      - name: Bump versions
+        run: pnpm changeset version
+
+      - name: Commit version changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git commit -m "Bump package versions [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Publish version changes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish -r --filter @sitchco/${{ matrix.package.name }} --access public --no-git-checks
+        run: pnpm changeset publish
