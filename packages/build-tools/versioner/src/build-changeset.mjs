@@ -8,6 +8,7 @@ try {
         encoding: 'utf-8',
     }).trim();
     commits = raw.length ? raw : '- No commits found';
+    console.log('Commits:', commits);
 } catch (err) {
     console.error(`Failed to get commit log:`, err);
     process.exit(1);
