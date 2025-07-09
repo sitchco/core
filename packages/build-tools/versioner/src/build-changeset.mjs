@@ -16,7 +16,7 @@ try {
 
 // Write changeset content to temp-changeset.md
 const content = `---
-release: patch
+release: minor
 ---
 
 ${commits}

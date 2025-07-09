@@ -12,14 +12,9 @@ permissions:
   contents: write
 
 jobs:
-  list-packages:
-    if: github.head_ref == 'develop'
-    uses: ./.github/workflows/list-changed-packages.yml
-
   generate-changesets:
     name: Generate Changeset Entry
-    needs: [list-packages]
-    if: github.head_ref == 'develop' && needs.list-packages.outputs.matrix != '[]'
+    if: github.head_ref == 'develop'
     runs-on: ubuntu-latest
 
     steps:
@@ -46,8 +41,12 @@ jobs:
 
       - name: Generate changeset
         run: |
+          if [ -f temp-changeset.md ]; then
             mkdir -p .changeset
             mv temp-changeset.md .changeset/auto-${{ github.run_id }}.md
+          else
+            echo "No temp-changeset.md found, skipping."
+          fi
         shell: bash
 
       - name: Commit and push changes

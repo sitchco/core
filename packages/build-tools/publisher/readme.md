@@ -16,11 +16,6 @@ The high-level process is as follows:
 
 These are the internal scripts used by the CI pipeline.
 
-#### `list-packages.mjs`
-
-* **Purpose:** To generate a build matrix for the CI pipeline, identifying which packages have changed.
-* **How it Works:** It runs a `git diff` against the `master` branch to find changed files. It then determines which packages in `packages/build-tools/` were affected and outputs this list to a `packages-matrix.json` file, which the CI workflow can then use.
-
 #### `prep-package.mjs`
 
 * **Purpose:** A utility to ensure a package is built before the publishing step.
