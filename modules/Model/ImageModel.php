@@ -6,14 +6,14 @@ use Sitchco\Framework\Module;
 use Sitchco\Model\Image;
 use Sitchco\Model\Page;
 use Sitchco\Model\Post;
-use Sitchco\Modules\Timber;
+use Sitchco\Modules\TimberModule;
 use Timber\Attachment;
 use Timber\PathHelper;
 use WP_Post;
 
 class ImageModel extends Module
 {
-    public const DEPENDENCIES = [Timber::class];
+    public const DEPENDENCIES = [TimberModule::class];
 
     public const POST_CLASSES = [Post::class, Page::class];
 

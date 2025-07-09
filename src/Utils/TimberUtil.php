@@ -2,13 +2,13 @@
 
 namespace Sitchco\Utils;
 
-use Timber\Timber as TimberLib;
+use Timber\Timber;
 
-class Timber
+class TimberUtil
 {
     static function includeWithContext(string $template, array $additional_context = []): string
     {
-        $context = TimberLib::context();
+        $context = Timber::context();
         $context = array_merge($context, $additional_context);
         return static::compileWithContext($template, $context);
     }
@@ -20,7 +20,7 @@ class Timber
         }
         $hookName = Hooks::name('template-context', $filter_key);
         $context = apply_filters($hookName, $context, $filter_key);
-        return TimberLib::compile($template, $context);
+        return Timber::compile($template, $context);
     }
 
     static function addContext(string $template, array $additionalContext): void

@@ -4,19 +4,19 @@ namespace Sitchco\Modules;
 
 use Sitchco\Framework\Module;
 
-use Timber\Timber as TimberLib;
-use Sitchco\Utils\Timber as TimberUtils;
+use Timber\Timber;
+use Sitchco\Utils\TimberUtil;
 
 /**
  * class Timber
  * @package Sitchco\Integration
  */
-class Timber extends Module
+class TimberModule extends Module
 {
     public function init(): void
     {
         if (class_exists('Timber\Timber')) {
-            TimberLib::init();
+            Timber::init();
         }
         add_filter('timber/locations', function ($paths) {
             $paths[] = [SITCHCO_CORE_TEMPLATES_DIR];
@@ -25,7 +25,7 @@ class Timber extends Module
         });
         add_filter('timber/twig/functions', function ($functions) {
             $functions['include_with_context'] = [
-                'callable' => [TimberUtils::class, 'includeWithContext'],
+                'callable' => [TimberUtil::class, 'includeWithContext'],
             ];
             return $functions;
         });
@@ -40,8 +40,8 @@ class Timber extends Module
      */
     static public function blockRenderCallback(array $block): void
     {
-        $context = TimberLib::context();
-        $context['post'] = TimberLib::get_post();
+        $context = Timber::context();
+        $context['post'] = Timber::get_post();
         $context['block']  = $block;
         $context['fields'] = get_fields();
         // Parent theme context inclusion
@@ -56,7 +56,7 @@ class Timber extends Module
         $template_path = trailingslashit(basename($block['path'])) . 'block.twig';
         $blockNameParts = explode('/', $block['name']);
         $blockName = array_pop($blockNameParts);
-        echo TimberUtils::compileWithContext($template_path, $context, "block/$blockName");
+        echo TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
     }
 
     protected static function loadBlockContext(array $context, $path): array
