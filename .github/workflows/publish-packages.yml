@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Conditionally Build Package
+        run: node packages/build-tools/publisher/src/prep-packages.mjs
+
       - name: Bump versions
         run: pnpm changeset version
 
