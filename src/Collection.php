@@ -20,7 +20,7 @@ class Collection extends IlluminateCollection implements PostCollectionInterface
 
     public function __construct(iterable $postQuery)
     {
-        if (! $postQuery instanceof PostQuery) {
+        if (!$postQuery instanceof PostQuery) {
             throw new \InvalidArgumentException('Collection iterable must be in instance of PostQuery');
         }
         $this->postQuery = $postQuery;

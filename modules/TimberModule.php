@@ -38,11 +38,11 @@ class TimberModule extends Module
      * @param array $block Full block attributes and settings
      * @return void
      */
-    static public function blockRenderCallback(array $block): void
+    public static function blockRenderCallback(array $block): void
     {
         $context = Timber::context();
         $context['post'] = Timber::get_post();
-        $context['block']  = $block;
+        $context['block'] = $block;
         $context['fields'] = get_fields();
         // Parent theme context inclusion
         $context = static::loadBlockContext($context, $block['path']);
