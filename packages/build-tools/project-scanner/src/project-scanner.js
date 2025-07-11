@@ -235,38 +235,39 @@ export default class ProjectScanner {
      * @returns {Promise<string[]>} A promise resolving to a flat array of absolute artifact directory paths.
      */
     async getBuildArtifacts() {
-        const artifactPatterns = ['**/dist', '**/.vite'];
+        const artifactPatterns = ['**/dist', '**/.vite', '**/.vite.hot'];
+
         const filteredIgnorePatterns = this.ignorePatterns.filter(
-            (pattern) => !pattern.includes('dist') && !pattern.includes('.vite')
+            (pattern) => !pattern.includes('dist') && !pattern.includes('.vite') && !pattern.includes('.vite.hot')
         );
-        const artifactDirs = await glob(artifactPatterns, {
+
+        const artifactPaths = await glob(artifactPatterns, {
             cwd: this.projectRoot,
             absolute: true,
-            onlyDirectories: true,
             dot: true,
             ignore: filteredIgnorePatterns,
         });
-        return [...new Set(artifactDirs)];
+        return [...new Set(artifactPaths)];
     }
 
     /**
-     * Removes all found build artifact directories (dist, .vite).
+     * Removes all found build artifacts (dist, .vite, .vite.hot).
      * @returns {Promise<void>} A promise that resolves when deletion is complete.
      */
     async cleanBuildArtifacts() {
-        const artifactDirs = await this.getBuildArtifacts();
-        if (!artifactDirs.length) {
+        const artifactPaths = await this.getBuildArtifacts();
+        if (!artifactPaths.length) {
             return;
         }
 
-        const promises = artifactDirs.map(async (dirPath) => {
+        const promises = artifactPaths.map(async (path) => {
             try {
-                await fs.rm(dirPath, {
+                await fs.rm(path, {
                     recursive: true,
                     force: true,
                 });
             } catch (error) {
-                console.error(`[ProjectScanner] Error removing directory ${dirPath}:`, error);
+                console.error(`[ProjectScanner] Error removing artifact at ${path}:`, error);
             }
         });
         await Promise.all(promises);
