@@ -92,9 +92,9 @@ abstract class Module
         $this->assets()->enqueueStyle($handle, $src, $deps, $media);
     }
 
-    public function enqueueBlockStyle(string $handle, array $args): void
+    public function enqueueBlockStyle(string $blockName, array $args): void
     {
-        $this->assets()->enqueueBlockStyle($handle, $args);
+        $this->assets()->enqueueBlockStyle($blockName, $args);
     }
 
     protected function scriptUrl(string $relative): string

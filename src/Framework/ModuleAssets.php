@@ -91,12 +91,12 @@ class ModuleAssets
         wp_enqueue_style($handle, $src, $deps, null, $media);
     }
 
-    public function enqueueBlockStyle(string $handle, array $args = []): void
+    public function enqueueBlockStyle(string $blockName, array $args = []): void
     {
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
-        wp_enqueue_block_style($handle, $args);
+        wp_enqueue_block_style($blockName, $args);
     }
 
     public function assetUrl(string $relativePath): string
