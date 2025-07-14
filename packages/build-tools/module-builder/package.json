@@ -14,12 +14,15 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@kucrut/vite-for-wp": "*",
         "@sitchco/project-scanner": "workspace:*",
         "chalk": "*",
         "glob": "*",
         "laravel-vite-plugin": "*",
+        "rollup-plugin-external-globals": "*",
         "sass-embedded": "*",
-        "vite": "*"
+        "vite": "*",
+        "vite-plugin-external": "*"
     },
     "devDependencies": {
         "@types/glob": "*",
