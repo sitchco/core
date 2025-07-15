@@ -40,7 +40,7 @@ class UIFramework extends Module
         add_action('wp_enqueue_scripts', function () {
             $this->enqueueScript(static::hookName());
             $this->enqueueStyle(static::hookName());
-            wp_add_inline_script(static::hookName(), $this->noJsScript, 'before');
+            $this->inlineScript(static::hookName(), $this->noJsScript, 'before');
         });
     }
 }

@@ -99,6 +99,24 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, $args);
     }
 
+    public function inlineScript(string $handle, $data, $position = null): void
+    {
+        if (!$this->isDevServer) {
+            wp_add_inline_script($handle, $data, $position);
+            return;
+        }
+        $isHeader = $position !== 'after';
+        $hook = $isHeader ? (is_admin() ? 'admin_head' : 'wp_head') : (is_admin() ? 'admin_footer' : 'wp_footer');
+        $callback = function () use ($data) {
+            echo "<script>{$data}</script>";
+        };
+        if (did_action($hook)) {
+            $callback();
+        } else {
+            add_action($hook, $callback);
+        }
+    }
+
     public function assetUrl(string $relativePath): string
     {
         $assetPath = $this->modulePath->append($relativePath);

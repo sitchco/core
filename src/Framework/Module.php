@@ -97,6 +97,11 @@ abstract class Module
         $this->assets()->enqueueBlockStyle($blockName, $args);
     }
 
+    public function inlineScript(string $handle, $data, $position = null)
+    {
+        $this->assets()->inlineScript($handle, $data, $position);
+    }
+
     protected function scriptUrl(string $relative): string
     {
         return $this->assets()->assetUrl("assets/scripts/$relative");

@@ -4,8 +4,6 @@ namespace Sitchco\Modules\Wordpress;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
-use WP_Block_Editor_Context;
-use WP_Block_Type_Registry;
 
 class BlockConfig extends Module
 {
@@ -23,7 +21,7 @@ class BlockConfig extends Module
 
     public function postTypeBlockVisibility(): void
     {
-        add_filter('allowed_block_types_all', [$this, 'configureCustomVisibility'], 10, 2);
+        add_action('enqueue_block_editor_assets', [$this, 'configureCustomVisibility']);
     }
 
     public function registerBlockCategory(): void
@@ -38,59 +36,22 @@ class BlockConfig extends Module
         return array_keys(array_filter($disallowedBlockList, fn($block) => $block === true));
     }
 
-    public function configureCustomVisibility(
-        array|bool $allowedBlocks,
-        WP_Block_Editor_Context $blockEditorContext
-    ): array|bool {
-        $postType = $blockEditorContext->post->post_type ?? false;
-        $context = $blockEditorContext->name;
-
+    public function configureCustomVisibility(): void
+    {
         $blockSettings = $this->configRegistry->load('disallowedBlocks');
         $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
 
-        if (empty($customBlocks)) {
-            return $allowedBlocks;
+        if (!empty($customBlocks)) {
+            $this->enqueueScript(static::hookName('custom-block-visibility'), $this->scriptUrl('block-visibility.js'), [
+                'wp-blocks',
+                'wp-dom-ready',
+                'wp-edit-post',
+            ]);
+            $this->inlineScript(
+                static::hookName('custom-block-visibility'),
+                sprintf('window.sitchcoBlockVisibility = %s;', wp_json_encode($customBlocks))
+            );
         }
-
-        $registeredBlocks = array_keys(WP_Block_Type_Registry::get_instance()->get_all_registered());
-
-        $filtered = array_filter($registeredBlocks, function (string $blockName) use (
-            $customBlocks,
-            $postType,
-            $context
-        ) {
-            if (!isset($customBlocks[$blockName])) {
-                return true;
-            }
-
-            $cfg = $customBlocks[$blockName];
-
-            if ($postType && isset($cfg['allowPostType'])) {
-                return (bool) ($cfg['allowPostType'][$postType] ?? false);
-            }
-            if ($context && isset($cfg['allowContext'])) {
-                return (bool) ($cfg['allowContext'][$context] ?? false);
-            }
-
-            return true;
-        });
-
-        // normalize indexing
-        $filtered = array_values($filtered);
-
-        // 2. Merge with whatever was already allowed/denied
-        if ($allowedBlocks === true) {
-            // “everything allowed” becomes just our filtered set
-            return $filtered;
-        }
-
-        if (is_array($allowedBlocks)) {
-            // intersect: only blocks allowed by both
-            return array_values(array_intersect($allowedBlocks, $filtered));
-        }
-
-        // if $allowedBlocks is false (none allowed), keep it as-is
-        return $allowedBlocks;
     }
 
     public function blockCategories($categories)
