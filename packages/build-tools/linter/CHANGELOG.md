@@ -1,5 +1,11 @@
 # @sitchco/linter
 
+## 2.1.0
+
+### Minor Changes
+
+- Test summary
+
 ## 2.0.0
 
 ### Major Changes
