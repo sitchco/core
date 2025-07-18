@@ -1,43 +1,35 @@
 name: Publish Packages
 
 on:
-  push:
-    branches: [master]
+  release:
+    types: [released]
   workflow_dispatch:
 
 jobs:
-  changesets:
-    uses: ./.github/workflows/changesets.yml
-
   publish:
-    needs: changesets
-    if: needs.changesets.outputs.matrix != '[]'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: ${{ fromJson(needs.changesets.outputs.matrix) }}
-      fail-fast: false
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          registry-url: https://registry.npmjs.org/
+          registry-url: 'https://registry.npmjs.org/'
 
       - uses: pnpm/action-setup@v2
         with:
-            version: 8
-      - run: pnpm install
+            version: 10
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Conditionally Build Package
-        run: node packages/build-tools/publisher/src/prep-package.mjs ${{ matrix.package.name }}
+        run: pnpm -r build
 
-      - name: Publish Package
+      - name: Publish version changes
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish -r --filter @sitchco/${{ matrix.package.name }} --access public --no-git-checks
+        run: pnpm changeset publish

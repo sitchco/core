@@ -35,9 +35,9 @@ importers:
       '@sitchco/module-builder':
         specifier: workspace:*
         version: link:packages/build-tools/module-builder
-      '@sitchco/publisher':
+      '@sitchco/prettier-config':
         specifier: workspace:*
-        version: link:packages/build-tools/publisher
+        version: link:packages/build-tools/prettier-config
       '@stylistic/eslint-plugin':
         specifier: ^5.1.0
         version: 5.1.0(eslint@9.30.0)
@@ -288,8 +288,6 @@ importers:
       vitest:
         specifier: '*'
         version: 3.2.4(@types/debug@4.1.12)(@types/node@24.0.8)(@vitest/ui@3.2.4)(sass-embedded@1.89.2)(terser@5.39.0)
-
-  packages/build-tools/publisher: {}
 
 packages:
 

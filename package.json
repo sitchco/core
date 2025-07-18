@@ -26,7 +26,7 @@
         "@sitchco/cli": "workspace:*",
         "@sitchco/eslint-config": "workspace:*",
         "@sitchco/module-builder": "workspace:*",
-        "@sitchco/publisher": "workspace:*",
+        "@sitchco/prettier-config": "workspace:*",
         "@stylistic/eslint-plugin": "^5.1.0",
         "@types/glob": "^8.1.0",
         "@types/node": "^24.0.8",
