@@ -60,7 +60,6 @@ wp-content/
 │       │   │   ├── formatter/           # Programmatic code formatter
 │       │   │   ├── module-builder/      # Core Vite build engine
 │       │   │   ├── project-scanner/     # Discovers modules via directory convention
-│       │   │   ├── publisher/           # Internal tools for NPM publishing
 │       │   │   ├── eslint-config/       # Shared ESLint rules
 │       │   │   └── prettier-config/     # Shared Prettier configuration
 │       │   └── shared/                  # (Optional) Shared UI libraries, tokens, etc.
