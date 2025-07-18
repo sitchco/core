@@ -1,10 +1,10 @@
-name: Generate Changesets on PR
+name: Generate Changesets on Release Created
 
 on:
-  pull_request:
-    types: [opened, synchronize]
+  release:
+    types: [created]
     branches:
-      - master
+      - develop
     paths:
       - 'packages/**'
 
@@ -14,7 +14,6 @@ permissions:
 jobs:
   generate-changesets:
     name: Generate Changeset Entry
-    if: github.head_ref == 'develop'
     runs-on: ubuntu-latest
 
     steps:

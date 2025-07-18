@@ -22,7 +22,7 @@ try {
 }
 
 const frontMatter = changedPackages
-    .map(pkg => `"${pkg.name}": minor`)
+    .map(pkg => `"${pkg.name}": patch`)
     .join('\n');
 
 const content = `---

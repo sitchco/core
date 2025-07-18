@@ -1,8 +1,10 @@
 name: Publish Packages
 
 on:
-  push:
-    branches: [master]
+  release:
+    types: [published]
+    branches:
+      - develop
   workflow_dispatch:
 
 permissions:
