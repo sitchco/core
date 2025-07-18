@@ -1,15 +1,12 @@
 name: Publish Packages
 
 on:
-  push:
-    branches: [master]
+  release:
+    types: [released]
   workflow_dispatch:
 
-permissions:
-    contents: write
-
 jobs:
-  version:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -30,18 +27,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Conditionally Build Package
-        run: node packages/build-tools/publisher/src/prep-packages.mjs
-
-      - name: Bump versions
-        run: pnpm changeset version
-
-      - name: Commit version changes
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add .
-          git commit -m "Bump package versions [skip ci]" || echo "No changes to commit"
-          git push
+        run: pnpm -r build
 
       - name: Publish version changes
         env:

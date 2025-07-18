@@ -1,7 +1,0 @@
-{
-    "name": "@sitchco/publisher",
-    "version": "2.0.0",
-    "private": true,
-    "description": "Internal scripts for publishing the Sitchco monorepo. Not for publishing.",
-    "type": "module"
-}
