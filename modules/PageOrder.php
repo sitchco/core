@@ -12,18 +12,28 @@ class PageOrder extends Module
 
     public const CHECK_SORT_TRANSIENT = 'sit_page_sort';
 
+    public const MENU_LOCATION_PRIMARY = 'primary_navigation';
+    public const MENU_LOCATION_FOOTER = 'footer_navigation';
+
+
     public function init(): void
     {
-        add_action('admin_init', [$this, 'checkSortOrder']);
-        add_action('save_post_page', [$this, 'flagSortOrder']);
-        add_action('save_post_nav_menu_item', [$this, 'flagSortOrder']);
+        add_action('admin_init', [$this, 'sortPagesWhenTriggered']);
+        add_action('save_post_page', [$this, 'setSortOrderTrigger']);
+        add_action('save_post_nav_menu_item', [$this, 'setSortOrderTrigger']);
         add_action('current_screen', [$this, 'checkCurrentScreen']);
+        add_action('after_setup_theme', function() {
+            register_nav_menus([
+                static::MENU_LOCATION_PRIMARY => 'Primary Navigation',
+                static::MENU_LOCATION_FOOTER => 'Footer Navigation',
+            ]);
+        });
     }
 
     /**
      * Flags the need to sort pages when a page or nav menu item is saved.
      */
-    public function flagSortOrder(): void
+    public function setSortOrderTrigger(): void
     {
         set_transient(static::CHECK_SORT_TRANSIENT, 1);
     }
@@ -36,7 +46,7 @@ class PageOrder extends Module
     public function checkCurrentScreen(WP_Screen $screen): void
     {
         if ($screen->id === 'pages_page_order-page') {
-            $this->flagSortOrder();
+            $this->setSortOrderTrigger();
         }
     }
 
@@ -45,7 +55,7 @@ class PageOrder extends Module
      *
      * @return void
      */
-    public function checkSortOrder(): void
+    public function sortPagesWhenTriggered(): void
     {
         if (defined('DOING_AJAX') && DOING_AJAX) {
             return;
@@ -59,10 +69,11 @@ class PageOrder extends Module
     /**
      * Sorts pages based on their order in specified menus.
      */
-    protected function sortPagesByMenuOrder(): void
+    public function sortPagesByMenuOrder(): array
     {
         $menu_order = $this->getPageOrderFromMenus();
         $this->updatePageOrder($menu_order);
+        return $menu_order;
     }
 
     /**
