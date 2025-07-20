@@ -91,12 +91,14 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     public function addModuleBlocksPaths(array $paths): array
     {
         foreach ($this->moduleBlocksPaths as $blocksPath) {
-            // add child theme override for block template path
             $pathParts = explode('/modules/', $blocksPath->value());
-            $paths[] = get_stylesheet_directory() . '/modules/' . $pathParts[1];
-
-            // default block template path
-            $paths[] = [$blocksPath->value()];
+            $paths[] = [
+                // child theme override for block template path
+                get_stylesheet_directory() . '/modules/' . $pathParts[1],
+                // default block template path
+                $blocksPath->value()
+            ];
+            $paths[] = [];
         }
         return $paths;
     }
