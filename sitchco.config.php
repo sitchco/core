@@ -1,5 +1,6 @@
 <?php
 
+use Sitchco\Modules\AdminTools;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminColumns;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminFilters;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
@@ -11,6 +12,7 @@ use Sitchco\Modules\Imagify;
 use Sitchco\Modules\Model\ImageModel;
 use Sitchco\Modules\Model\PostModel;
 use Sitchco\Modules\Model\TermModel;
+use Sitchco\Modules\PageOrder;
 use Sitchco\Modules\Stream;
 use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Modules\Wordpress\BlockConfig;
@@ -42,6 +44,8 @@ return [
         SvgUpload::class,
         BlockConfig::class,
         UIFramework::class,
+        PageOrder::class,
+        AdminTools::class
     ],
     'disallowedBlocks' => [],
 ];
