@@ -4,6 +4,7 @@ namespace Sitchco\ModuleExtension;
 
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
+use Sitchco\Utils\Acf;
 
 class AcfPathsModuleExtension implements ModuleExtension
 {
@@ -57,18 +58,11 @@ class AcfPathsModuleExtension implements ModuleExtension
             return $paths;
         }
 
-        // Use the field group key as provided (it should already include the "group_" prefix).
-        $fieldGroupKey = sanitize_text_field($post['key']);
         $modulePaths = $this->getModuleJsonPaths();
+        // Use the field group key as provided (it should already include the "group_" prefix).
+        $foundJsonPath = Acf::findJsonFile($modulePaths, $post['key']);
 
-        foreach ($modulePaths as $jsonPath) {
-            $possibleFile = $jsonPath->append($fieldGroupKey . '.json');
-            if ($possibleFile->exists()) {
-                return [$jsonPath];
-            }
-        }
-
-        return $paths;
+        return $foundJsonPath ? [$foundJsonPath] : $paths;
     }
 
     /**
@@ -80,14 +74,7 @@ class AcfPathsModuleExtension implements ModuleExtension
      */
     protected function getModuleJsonPaths(): array
     {
-        $paths = [];
-        foreach ($this->modules as $moduleInstance) {
-            $path = $moduleInstance->path('acf-json');
-            if ($path->isDir()) {
-                $paths[$path->value()] = $path;
-            }
-        }
-
-        return array_values($paths);
+        $filteredModules = Acf::findModulesWithJsonPath($this->modules);
+        return array_map(fn($m) => $m->path('acf-json'), $filteredModules);
     }
 }
