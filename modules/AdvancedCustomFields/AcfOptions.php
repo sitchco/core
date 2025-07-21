@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Modules\AdvancedCustomFields\Options;
+namespace Sitchco\Modules\AdvancedCustomFields;
 
 use ReflectionClass;
 use Sitchco\Framework\Module;
@@ -19,7 +19,8 @@ class AcfOptions extends Module
             if (!$is_options_page) {
                 return $field_group;
             }
-            $this->generateClassFromFieldGroup($field_group);
+            $target = $this->generateClassFromFieldGroup($field_group);
+            $field_group['options_class'] = $target;
             return $field_group;
         });
     }
@@ -49,7 +50,7 @@ class AcfOptions extends Module
         return $matchedModule;
     }
 
-    protected function generateClassFromFieldGroup(array $field_group): void
+    protected function generateClassFromFieldGroup(array $field_group): string
     {
         $targetModule = $this->getTargetModule($field_group['key']);
         if ($targetModule) {
@@ -67,10 +68,10 @@ class AcfOptions extends Module
         }
 
         $class_name = preg_replace('/\W/', '', $field_group['title']);
-        $target = $targetPath->append("$class_name.php");
+        $target = $targetPath->append("$class_name.php")->value();
         $template = file_exists($target) ?
-            file_get_contents($target->value()) :
-            file_get_contents(__DIR__ . '/Options.php.tpl');
+            file_get_contents($target) :
+            file_get_contents(SITCHCO_CORE_TEMPLATES_DIR . '/options-class.php.tpl');
         $property_lines = array_map(function ($field) {
             $type = $this->acfFieldTypeToPhpType($field['type']);
             return " * @property $type \${$field['name']} {$field['label']}";
@@ -85,7 +86,8 @@ class AcfOptions extends Module
             implode("\n", array_merge(['$1'], $property_lines, ['$2'])),
             $template
         );
-        file_put_contents($target->value(), $template);
+        file_put_contents($target, $template);
+        return $target;
     }
 
     /**
