@@ -2,41 +2,44 @@ import domReady from '@wordpress/dom-ready';
 import { unregisterBlockType } from '@wordpress/blocks';
 import { select, subscribe } from '@wordpress/data';
 
-domReady(() => {
-    const unsubscribe = subscribe(() => {
-        const editor = select('core/editor');
-        if (!editor || typeof editor.getCurrentPostType !== 'function') {
-            return;
+((wp, config) => {
+    const checkBlockVisibility = (blockName, postType, context) => {
+        const rule = config[blockName];
+        if (!rule) {
+            return false;
         }
 
-        const postType = editor.getCurrentPostType();
-        if (!postType) {
-            return;
-        }
+        const { allowPostType, allowContext } = rule;
+        const postTypeMatch = allowPostType ? Boolean(allowPostType[postType]) : false;
+        const contextMatch = allowContext ? Boolean(allowContext[context]) : false;
+        return (allowPostType || allowContext) && !(postTypeMatch || contextMatch);
+    };
 
+    const initializeBlockVisibility = (editor, postType) => {
         const isSiteEditor = !!select('core/edit-site');
-        const context = isSiteEditor ? 'core/edit-site' : 'core/edit-post';
-        console.log(context);
+        const editorContext = isSiteEditor ? 'core/edit-site' : 'core/edit-post';
 
-        const config = window.sitchcoBlockVisibility || {};
-        unsubscribe();
-        wp.blocks.getBlockTypes().forEach(onEachBlock);
+        wp.blocks.getBlockTypes().forEach(({ name }) => {
+            if (checkBlockVisibility(name, postType, editorContext)) {
+                unregisterBlockType(name);
+            }
+        });
+    };
 
-        function onEachBlock({ name }) {
-            const rule = config[name];
-            if (!rule) {
+    domReady(() => {
+        const unsubscribe = subscribe(() => {
+            const editor = select('core/editor');
+            if (!editor?.getCurrentPostType) {
                 return;
             }
 
-            const allowPT = rule.allowPostType;
-            const allowCTX = rule.allowContext;
-
-            const postMatch = allowPT ? Boolean(allowPT[postType]) : false;
-            const contextMatch = allowCTX ? Boolean(allowCTX[context]) : false;
-            if ((allowPT || allowCTX) && !(postMatch || contextMatch)) {
-                console.log('unregistering', name);
-                unregisterBlockType(name);
+            const postType = editor.getCurrentPostType();
+            if (!postType) {
+                return;
             }
-        }
+
+            unsubscribe();
+            initializeBlockVisibility(editor, postType);
+        });
     });
-});
+})(window.wp, window.sitchcoBlockVisibility || {});
