@@ -13,7 +13,9 @@
         "lint": "sitchco lint",
         "clean": "sitchco clean; find . -type d -name node_modules -prune -exec rm -rf {} \\;",
         "reset": "pnpm clean && pnpm install",
-        "test": "pnpm -r test"
+        "test": "pnpm -r test",
+        "dev:setup": "rm -rf ./packages && git clone https://github.com/sitchco/sitchco-packages.git ./packages && pnpm link ./packages/packages/*",
+        "dev:teardown": "pnpm unlink && rm -rf ./packages && pnpm install --frozen-lockfile"
     },
     "devDependencies": {
         "@sitchco/cli": "^2.0.3",
