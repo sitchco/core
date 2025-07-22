@@ -83,6 +83,11 @@ class OptionsBase
         return empty($arguments) ? $key : sprintf('%s-%s', $key, md5(serialize($arguments)));
     }
 
+    public function __get($name)
+    {
+        return $this->get($name);
+    }
+
     /**
      * @param $name
      * @param $arguments

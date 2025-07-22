@@ -1,11 +1,11 @@
 <?php
 
 use Sitchco\Modules\AdminTools;
+use Sitchco\Modules\AdvancedCustomFields\AcfOptions;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminColumns;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminFilters;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeQueries;
-use Sitchco\Modules\AdvancedCustomFields\Options\AcfOptions;
 use Sitchco\Modules\AmazonCloudfront;
 use Sitchco\Modules\BackgroundProcessing;
 use Sitchco\Modules\Flash;
