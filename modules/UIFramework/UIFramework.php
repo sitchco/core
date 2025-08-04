@@ -3,12 +3,16 @@
 namespace Sitchco\Modules\UIFramework;
 
 use Sitchco\Framework\Module;
+use Sitchco\Framework\ModuleAssets;
 
 class UIFramework extends Module
 {
     const FEATURES = ['loadAssets'];
 
     const HOOK_SUFFIX = 'ui-framework';
+
+    protected bool $loadAssets = false;
+
     protected string $noJsScript = "
             document.documentElement.classList.remove('no-js');
             document.documentElement.classList.add('js');
@@ -19,14 +23,14 @@ class UIFramework extends Module
 
     public function init(): void
     {
-        add_action('init', [$this, 'setupAssets'], 5);
+        //add_action('init', [$this, 'setupAssets'], 5);
     }
 
-    public function setupAssets(): void
+    public function registerAssets(ModuleAssets $assets): void
     {
         $handle = static::hookName();
-        $this->registerScript($handle, $this->scriptUrl('main.mjs'), ['wp-hooks']);
-        $this->registerStyle($handle, $this->styleUrl('main.css'));
+        $assets->registerScript($handle, $assets->scriptUrl('main.mjs'), ['wp-hooks']);
+        $assets->registerStyle($handle, $assets->styleUrl('main.css'));
         add_filter(
             'language_attributes',
             fn($attributes) => !str_contains($attributes, 'class=')
@@ -35,12 +39,20 @@ class UIFramework extends Module
         );
     }
 
+    public function enqueueFrontendAssets(ModuleAssets $assets): void
+    {
+        if ($this->loadAssets) {
+            $handle = static::hookName();
+            $assets->enqueueScript($handle);
+            $assets->enqueueStyle($handle);
+            $assets->inlineScript($handle, $this->noJsScript, 'before');
+        }
+    }
+
     public function loadAssets(): void
     {
-        add_action('wp_enqueue_scripts', function () {
-            $this->enqueueScript(static::hookName());
-            $this->enqueueStyle(static::hookName());
-            $this->inlineScript(static::hookName(), $this->noJsScript, 'before');
-        });
+        $this->loadAssets = true;
     }
+
+
 }

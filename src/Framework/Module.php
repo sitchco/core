@@ -18,6 +18,7 @@ use Sitchco\Support\HasHooks;
  *
  * @method void enqueueFrontendAssets(ModuleAssets $assets)
  * @method void enqueueGlobalAssets(ModuleAssets $assets)
+ * @method void enqueueEditorPreviewAssets(ModuleAssets $assets)
  * @method void enqueueEditorAssets(ModuleAssets $assets)
  * @method void registerAssets(ModuleAssets $assets)
  * @method void enqueueBlockStyles(ModuleAssets $assets)
@@ -79,51 +80,4 @@ abstract class Module
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
-    public function assets(): ModuleAssets
-    {
-        if (!isset($this->assets)) {
-            $this->assets = new ModuleAssets($this->path());
-        }
-        return $this->assets;
-    }
-
-    public function registerScript(string $handle, string $src, array $deps = []): void
-    {
-        $this->assets()->registerScript($handle, $src, $deps);
-    }
-
-    public function enqueueScript(string $handle, string $src = '', array $deps = []): void
-    {
-        $this->assets()->enqueueScript($handle, $src, $deps);
-    }
-
-    public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
-    {
-        $this->assets()->registerStyle($handle, $src, $deps, $media);
-    }
-
-    public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
-    {
-        $this->assets()->enqueueStyle($handle, $src, $deps, $media);
-    }
-
-    public function enqueueBlockStyle(string $blockName, array $args): void
-    {
-        $this->assets()->enqueueBlockStyle($blockName, $args);
-    }
-
-    public function inlineScript(string $handle, $data, $position = null): void
-    {
-        $this->assets()->inlineScript($handle, $data, $position);
-    }
-
-    protected function scriptUrl(string $relative): string
-    {
-        return $this->assets()->assetUrl("assets/scripts/$relative");
-    }
-
-    protected function styleUrl(string $relative): string
-    {
-        return $this->assets()->assetUrl("assets/styles/$relative");
-    }
 }

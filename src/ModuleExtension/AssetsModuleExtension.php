@@ -29,14 +29,21 @@ class AssetsModuleExtension implements ModuleExtension
         }
         add_action('wp_enqueue_scripts', $this->buildMethodCallable('enqueueFrontendAssets'));
         add_action('enqueue_block_assets', $this->buildMethodCallable( 'enqueueGlobalAssets'));
-        add_action('enqueue_block_editor_assets', $this->buildMethodCallable( 'enqueueEditorAssets'));
+        add_action('enqueue_block_assets', $this->buildMethodCallable(
+            'enqueueEditorPreviewAssets',
+            //fn() => is_admin() && wp_should_load_block_editor_scripts_and_styles()
+        ));
+        add_action('enqueue_block_editor_assets', $this->buildMethodCallable( 'enqueueEditorUIAssets'));
         add_action('init', $this->buildMethodCallable( 'registerAssets'), 20);
         add_action('init', $this->buildMethodCallable( 'enqueueBlockStyles'), 30);
     }
 
-    public function buildMethodCallable(string $methodName): callable
+    public function buildMethodCallable(string $methodName, callable $condition = null): callable
     {
-        return function() use ($methodName) {
+        return function() use ($methodName, $condition) {
+            if (is_callable($condition) && !$condition()) {
+                return;
+            }
             foreach ($this->modules as $module) {
                 if (method_exists($module, $methodName)) {
                     $assets = $this->getModuleAssets($module);

@@ -83,7 +83,7 @@ class ModuleAssets
         wp_register_style($handle, $src, $deps, null, $media);
     }
 
-    public function enqueueStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
+    public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
     {
         if ($this->isDevServer) {
             $this->enqueueViteClient();
@@ -106,22 +106,28 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, $args);
     }
 
-    public function inlineScript(string $handle, $data, $position = null): void
+    public function inlineScript(string $handle, string $content, $position = null): void
     {
         if (!$this->isDevServer) {
-            wp_add_inline_script($handle, $data, $position);
+            wp_add_inline_script($handle, $content, $position);
             return;
         }
         $isHeader = $position !== 'after';
         $hook = $isHeader ? (is_admin() ? 'admin_head' : 'wp_head') : (is_admin() ? 'admin_footer' : 'wp_footer');
-        $callback = function () use ($data) {
-            echo "<script>{$data}</script>";
+        $callback = function () use ($content) {
+            echo "<script>{$content}</script>";
         };
         if (did_action($hook)) {
             $callback();
         } else {
             add_action($hook, $callback);
         }
+    }
+
+    public function inlineScriptData(string $handle, string $object_name, $data, $position = null): void
+    {
+        $content = sprintf("window.$object_name = %s;", wp_json_encode($data));
+        $this->inlineScript($handle, $content, $position);
     }
 
     public function assetUrl(string $relativePath): string
@@ -132,6 +138,16 @@ class ModuleAssets
         }
         $buildAssetPath = $this->buildAssetPath($assetPath);
         return $buildAssetPath ? $buildAssetPath->url() : '';
+    }
+
+    public function scriptUrl(string $relative): string
+    {
+        return $this->assetUrl("assets/scripts/$relative");
+    }
+
+    public function styleUrl(string $relative): string
+    {
+        return $this->assetUrl("assets/styles/$relative");
     }
 
     private function enqueueViteClient(): void
