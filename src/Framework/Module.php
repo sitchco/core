@@ -11,6 +11,16 @@ use Sitchco\Support\HasHooks;
  * from adding simple WordPress filters to complex configurations including
  * custom post types, ACF fields, and Gutenberg blocks.
  * Each module can be conditionally enabled or configured based on theme support.
+ *
+ * Asset Support:
+ *
+ * Implement one or more of the following methods, using ModuleAssets methods within the function body:
+ *
+ * @method void enqueueFrontendAssets(ModuleAssets $assets)
+ * @method void enqueueGlobalAssets(ModuleAssets $assets)
+ * @method void enqueueEditorAssets(ModuleAssets $assets)
+ * @method void registerAssets(ModuleAssets $assets)
+ * @method void enqueueBlockStyles(ModuleAssets $assets)
  */
 abstract class Module
 {
@@ -45,6 +55,11 @@ abstract class Module
     private ?FilePath $modulePath = null;
 
     private ModuleAssets $assets;
+
+    /**
+     *
+     *
+     */
 
     /**
      * Default initialization feature that is always called when module is activated
@@ -97,7 +112,7 @@ abstract class Module
         $this->assets()->enqueueBlockStyle($blockName, $args);
     }
 
-    public function inlineScript(string $handle, $data, $position = null)
+    public function inlineScript(string $handle, $data, $position = null): void
     {
         $this->assets()->inlineScript($handle, $data, $position);
     }

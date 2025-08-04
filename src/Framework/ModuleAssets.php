@@ -93,6 +93,13 @@ class ModuleAssets
 
     public function enqueueBlockStyle(string $blockName, array $args = []): void
     {
+        if (!did_action('init')) {
+            _doing_it_wrong(
+                __METHOD__,
+                'wp_enqueue_block_style() should be called during or after the init hook.',
+                '6.1.0'
+            );
+        }
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }

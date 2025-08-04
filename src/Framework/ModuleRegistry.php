@@ -6,6 +6,7 @@ use DI\Container;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Sitchco\ModuleExtension\AcfPathsModuleExtension;
+use Sitchco\ModuleExtension\AssetsModuleExtension;
 use Sitchco\ModuleExtension\BlockRegistrationModuleExtension;
 use Sitchco\ModuleExtension\TimberPostModuleExtension;
 use Sitchco\Utils\ArrayUtil;
@@ -38,6 +39,7 @@ class ModuleRegistry
         TimberPostModuleExtension::class,
         AcfPathsModuleExtension::class,
         BlockRegistrationModuleExtension::class,
+        AssetsModuleExtension::class,
     ];
 
     /**
