@@ -3,6 +3,7 @@
 namespace Sitchco\Framework;
 
 use Sitchco\Support\FilePath;
+use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
@@ -72,8 +73,12 @@ class ModuleAssets
             $deps = $registered->deps;
         }
         foreach ($deps as $dep) {
-            wp_enqueue_script($dep);
-            wp_enqueue_script_module($dep);
+            // only treat our dependencies as modules
+            if ($this->isDevServer && str_starts_with($dep, Hooks::ROOT)) {
+                wp_enqueue_script_module($dep);
+            } else {
+                wp_enqueue_script($dep);
+            }
         }
         wp_enqueue_script_module($handle, $src, $deps);
     }
@@ -152,7 +157,9 @@ class ModuleAssets
 
     private function enqueueViteClient(): void
     {
-        $namespace = $this->productionBuildPath->name();
-        wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
+        if (doing_action('enqueue_block_assets')) {
+            $namespace = $this->productionBuildPath->name();
+            wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
+        }
     }
 }

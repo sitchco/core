@@ -84,12 +84,7 @@ abstract class Module
 
     protected function enqueueEditorPreviewAssets(callable $callable, int $priority = 10): void
     {
-        $this->addAssetAction('enqueue_block_assets', function(ModuleAssets $assets) use ($callable) {
-            if (!is_admin()) {
-                return;
-            }
-            $callable($assets);
-        }, $priority);
+        $this->addAssetAction('enqueue_block_assets', fn($a) => is_admin() && $callable($a), $priority);
     }
 
     protected function enqueueEditorUIAssets(callable $callable, int $priority = 10): void
