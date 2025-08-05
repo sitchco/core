@@ -28,13 +28,13 @@ class BlockConfig extends Module
             if (empty($customBlocks)) {
                 return;
             }
-            $assets->enqueueScript(static::hookName('custom-block-visibility'), $assets->scriptUrl('block-visibility.js'), [
+            $assets->enqueueScript('custom-block-visibility', 'block-visibility.js', [
                 'wp-blocks',
                 'wp-dom-ready',
                 'wp-edit-post',
             ]);
             $assets->inlineScriptData(
-                static::hookName('custom-block-visibility'),
+               'custom-block-visibility',
                 'sitchcoBlockVisibility',
                 $customBlocks
             );

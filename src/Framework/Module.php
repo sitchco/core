@@ -67,7 +67,7 @@ abstract class Module
     private function assets(): ModuleAssets
     {
         if (!isset($this->assets)) {
-            $this->assets = new ModuleAssets($this->path());
+            $this->assets = new ModuleAssets($this);
         }
         return $this->assets;
     }

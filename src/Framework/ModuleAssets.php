@@ -3,11 +3,14 @@
 namespace Sitchco\Framework;
 
 use Sitchco\Support\FilePath;
+use Sitchco\Support\HookName;
 use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
     public readonly FilePath $modulePath;
+
+    public readonly string $namespace;
 
     public readonly ?FilePath $productionBuildPath;
     public readonly ?FilePath $devBuildPath;
@@ -16,9 +19,10 @@ class ModuleAssets
 
     private static array $manifestCache = [];
 
-    public function __construct(FilePath $modulePath)
+    public function __construct(Module $module)
     {
-        $this->modulePath = $modulePath;
+        $this->modulePath = $module->path();
+        $this->namespace = $module::hookName();
         $this->productionBuildPath = $this->modulePath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local') {
             $this->isDevServer = false;
@@ -54,6 +58,8 @@ class ModuleAssets
 
     public function registerScript(string $handle, string $src, array $deps = []): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->scriptUrl($src);
         wp_register_script($handle, $src, $deps);
         if ($this->isDevServer) {
             wp_register_script_module($handle, $src, $deps);
@@ -62,6 +68,8 @@ class ModuleAssets
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->scriptUrl($src);
         if (!$this->isDevServer) {
             wp_enqueue_script($handle, $src, $deps);
             return;
@@ -85,18 +93,22 @@ class ModuleAssets
 
     public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->styleUrl($src);
         wp_register_style($handle, $src, $deps, null, $media);
     }
 
     public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->styleUrl($src);
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
         wp_enqueue_style($handle, $src, $deps, null, $media);
     }
 
-    public function enqueueBlockStyle(string $blockName, array $args = []): void
+    public function enqueueBlockStyle(string $blockName, string $src): void
     {
         if (!doing_action('init') && did_action('init')) {
             _doing_it_wrong(
@@ -105,14 +117,20 @@ class ModuleAssets
                 '6.1.0'
             );
         }
+        $src = $this->styleUrl($src);
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
-        wp_enqueue_block_style($blockName, $args);
+        wp_enqueue_block_style($blockName, [
+            'handle' => $blockName,
+            'src' => $src,
+            'path' =>  $this->modulePath->append($src),
+        ]);
     }
 
     public function inlineScript(string $handle, string $content, $position = null): void
     {
+        $handle = $this->namespacedHandle($handle);
         if (!$this->isDevServer) {
             wp_add_inline_script($handle, $content, $position);
             return;
@@ -135,22 +153,25 @@ class ModuleAssets
         $this->inlineScript($handle, $content, $position);
     }
 
-    public function assetUrl(string $relativePath): string
+    private function assetUrl(string $relativePath): string
     {
+        if (empty($relativePath) || str_starts_with($relativePath, $this->modulePath->value())) {
+            return $relativePath;
+        }
         $assetPath = $this->modulePath->append($relativePath);
         if ($this->isDevServer) {
             return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
         $buildAssetPath = $this->buildAssetPath($assetPath);
-        return $buildAssetPath ? $buildAssetPath->url() : '';
+        return $buildAssetPath ? $buildAssetPath->url() : $relativePath;
     }
 
-    public function scriptUrl(string $relative): string
+    private function scriptUrl(string $relative): string
     {
         return $this->assetUrl("assets/scripts/$relative");
     }
 
-    public function styleUrl(string $relative): string
+    private function styleUrl(string $relative): string
     {
         return $this->assetUrl("assets/styles/$relative");
     }
@@ -161,5 +182,13 @@ class ModuleAssets
             $namespace = $this->productionBuildPath->name();
             wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
         }
+    }
+
+    private function namespacedHandle(string $handle): string
+    {
+        if (!str_starts_with($handle, $this->namespace)) {
+            $handle = HookName::join($this->namespace, $handle);
+        }
+        return $handle;
     }
 }
