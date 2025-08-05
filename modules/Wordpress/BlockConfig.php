@@ -10,8 +10,6 @@ class BlockConfig extends Module
 {
     const FEATURES = ['enableBlockFilter', 'postTypeBlockVisibility', 'registerBlockCategory'];
 
-    protected bool $customBlockVisibility = false;
-
     /**
      * @param ConfigRegistry $configRegistry Used to load block configuration settings
      */
@@ -24,7 +22,24 @@ class BlockConfig extends Module
 
     public function postTypeBlockVisibility(): void
     {
-        $this->customBlockVisibility = true;
+        $blockSettings = $this->configRegistry->load('disallowedBlocks');
+        $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
+        if (empty($customBlocks)) {
+            return;
+        }
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) use ($customBlocks) {
+            $assets->enqueueScript(static::hookName('custom-block-visibility'), $assets->scriptUrl('block-visibility.js'), [
+                'wp-blocks',
+                'wp-dom-ready',
+                'wp-edit-post',
+            ]);
+            $assets->inlineScriptData(
+                static::hookName('custom-block-visibility'),
+                'sitchcoBlockVisibility',
+                $customBlocks
+            );
+        });
+
     }
 
     public function registerBlockCategory(): void
@@ -37,28 +52,6 @@ class BlockConfig extends Module
         $disallowedBlockList = $this->configRegistry->load('disallowedBlocks');
 
         return array_keys(array_filter($disallowedBlockList, fn($block) => $block === true));
-    }
-
-    public function enqueueEditorAssets(ModuleAssets $assets): void
-    {
-        if (!$this->customBlockVisibility) {
-            return;
-        }
-        $blockSettings = $this->configRegistry->load('disallowedBlocks');
-        $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
-        if (empty($customBlocks)) {
-            return;
-        }
-        $assets->enqueueScript(static::hookName('custom-block-visibility'), $assets->scriptUrl('block-visibility.js'), [
-            'wp-blocks',
-            'wp-dom-ready',
-            'wp-edit-post',
-        ]);
-        $assets->inlineScriptData(
-            static::hookName('custom-block-visibility'),
-            'sitchcoBlockVisibility',
-            $customBlocks
-        );
     }
 
     public function blockCategories($categories)

@@ -11,17 +11,6 @@ use Sitchco\Support\HasHooks;
  * from adding simple WordPress filters to complex configurations including
  * custom post types, ACF fields, and Gutenberg blocks.
  * Each module can be conditionally enabled or configured based on theme support.
- *
- * Asset Support:
- *
- * Implement one or more of the following methods, using ModuleAssets methods within the function body:
- *
- * @method void enqueueFrontendAssets(ModuleAssets $assets)
- * @method void enqueueGlobalAssets(ModuleAssets $assets)
- * @method void enqueueEditorPreviewAssets(ModuleAssets $assets)
- * @method void enqueueEditorAssets(ModuleAssets $assets)
- * @method void registerAssets(ModuleAssets $assets)
- * @method void enqueueBlockStyles(ModuleAssets $assets)
  */
 abstract class Module
 {
@@ -58,11 +47,6 @@ abstract class Module
     private ModuleAssets $assets;
 
     /**
-     *
-     *
-     */
-
-    /**
      * Default initialization feature that is always called when module is activated
      * @return void
      */
@@ -78,6 +62,54 @@ abstract class Module
         }
 
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
+    }
+
+    private function assets(): ModuleAssets
+    {
+        if (!isset($this->assets)) {
+            $this->assets = new ModuleAssets($this->path());
+        }
+        return $this->assets;
+    }
+
+    protected function enqueueGlobalAssets(callable $callable, int $priority = 10): void
+    {
+        $this->addAssetAction('enqueue_block_assets', $callable, $priority);
+    }
+
+    protected function enqueueFrontendAssets(callable $callable, int $priority = 10): void
+    {
+        $this->addAssetAction('wp_enqueue_scripts', $callable, $priority);
+    }
+
+    protected function enqueueEditorPreviewAssets(callable $callable, int $priority = 10): void
+    {
+        $this->addAssetAction('enqueue_block_assets', function(ModuleAssets $assets) use ($callable) {
+            if (!is_admin()) {
+                return;
+            }
+            $callable($assets);
+        }, $priority);
+    }
+
+    protected function enqueueEditorUIAssets(callable $callable, int $priority = 10): void
+    {
+        $this->addAssetAction('enqueue_block_editor_assets', $callable, $priority);
+    }
+
+    protected function registerAssets(callable $callable, int $priority = 20): void
+    {
+        $this->addAssetAction('init', $callable, $priority);
+    }
+
+    protected function enqueueBlockStyles(callable $callable, int $priority = 30): void
+    {
+        $this->addAssetAction('init', $callable, $priority);
+    }
+
+    private function addAssetAction(string $action, callable $callable, int $priority): void
+    {
+        add_action($action, fn() => $callable($this->assets()), $priority);
     }
 
 }
