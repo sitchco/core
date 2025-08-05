@@ -4,6 +4,8 @@ namespace Sitchco\Utils;
 
 use ACF_Post_Type;
 use ACF_Taxonomy;
+use Sitchco\Framework\Module;
+use Sitchco\Support\FilePath;
 
 /**
  * Class Acf
@@ -114,4 +116,41 @@ class Acf
 
         return sprintf('<a %s>%s</a>', ArrayUtil::toAttributes($field), htmlspecialchars($text, ENT_QUOTES, 'UTF-8'));
     }
+
+    /**
+     * Filter a list of modules by whether it has a relative acf-json folder
+     * an relative acf-json directory is present
+     *
+     * @param Module[] $modules
+     * @return Module[]
+     */
+
+    public static function findModulesWithJsonPath(array $modules): array
+    {
+        return array_filter($modules, function ($module) {
+            return $module->path('acf-json')->isDir();
+        });
+    }
+
+    /**
+     * Given a set of FilePath instances referencing acf-json directories and an ACF entity key,
+     * find the directory where the given entity is saved
+     *
+     * @param FilePath[] $paths
+     * @param string $key
+     * @return FilePath|null
+     */
+    public static function findJsonFile(array $paths, string $key): ?FilePath
+    {
+        $fieldGroupKey = sanitize_text_field($key);
+
+        foreach ($paths as $jsonPath) {
+            $possibleFile = $jsonPath->append($fieldGroupKey . '.json');
+            if ($possibleFile->exists()) {
+                return $jsonPath;
+            }
+        }
+        return null;
+    }
+
 }

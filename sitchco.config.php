@@ -1,6 +1,7 @@
 <?php
 
 use Sitchco\Modules\AdminTools;
+use Sitchco\Modules\AdvancedCustomFields\AcfOptions;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminColumns;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminFilters;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
@@ -35,6 +36,7 @@ return [
         AcfPostTypeAdminColumns::class,
         AcfPostTypeAdminSort::class,
         AcfPostTypeAdminFilters::class,
+        AcfOptions::class,
         WPRocket::class,
         YoastSEO::class,
         Imagify::class,
@@ -45,7 +47,7 @@ return [
         BlockConfig::class,
         UIFramework::class,
         PageOrder::class,
-        AdminTools::class
+        AdminTools::class,
     ],
     'disallowedBlocks' => [],
 ];
