@@ -18,7 +18,7 @@
         "dev:teardown": "pnpm unlink && rm -rf ./packages && git restore package.json && pnpm install"
     },
     "devDependencies": {
-        "@sitchco/cli": "^2.0.3",
+        "@sitchco/cli": "^2.0.4",
         "@sitchco/eslint-config": "^1.0.1"
     },
     "pnpm": {
