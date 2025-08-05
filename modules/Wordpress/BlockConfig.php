@@ -22,12 +22,12 @@ class BlockConfig extends Module
 
     public function postTypeBlockVisibility(): void
     {
-        $blockSettings = $this->configRegistry->load('disallowedBlocks');
-        $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
-        if (empty($customBlocks)) {
-            return;
-        }
-        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) use ($customBlocks) {
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
+            $blockSettings = $this->configRegistry->load('disallowedBlocks');
+            $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
+            if (empty($customBlocks)) {
+                return;
+            }
             $assets->enqueueScript(static::hookName('custom-block-visibility'), $assets->scriptUrl('block-visibility.js'), [
                 'wp-blocks',
                 'wp-dom-ready',

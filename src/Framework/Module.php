@@ -77,6 +77,11 @@ abstract class Module
         $this->addAssetAction('enqueue_block_assets', $callable, $priority);
     }
 
+    protected function enqueueAdminAssets(callable $callable, int $priority = 10): void
+    {
+        $this->addAssetAction('admin_enqueue_scripts', $callable, $priority);
+    }
+
     protected function enqueueFrontendAssets(callable $callable, int $priority = 10): void
     {
         $this->addAssetAction('wp_enqueue_scripts', $callable, $priority);
@@ -104,6 +109,9 @@ abstract class Module
 
     private function addAssetAction(string $action, callable $callable, int $priority): void
     {
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            return;
+        }
         add_action($action, fn() => $callable($this->assets()), $priority);
     }
 
