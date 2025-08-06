@@ -64,51 +64,55 @@ abstract class Module
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
-    public function assets(): ModuleAssets
+    private function assets(): ModuleAssets
     {
         if (!isset($this->assets)) {
-            $this->assets = new ModuleAssets($this->path());
+            $this->assets = new ModuleAssets($this);
         }
         return $this->assets;
     }
 
-    public function registerScript(string $handle, string $src, array $deps = []): void
+    protected function enqueueGlobalAssets(callable $callable, int $priority = 10): void
     {
-        $this->assets()->registerScript($handle, $src, $deps);
+        $this->addAssetAction('enqueue_block_assets', $callable, $priority);
     }
 
-    public function enqueueScript(string $handle, string $src = '', array $deps = []): void
+    protected function enqueueAdminAssets(callable $callable, int $priority = 10): void
     {
-        $this->assets()->enqueueScript($handle, $src, $deps);
+        $this->addAssetAction('admin_enqueue_scripts', $callable, $priority);
     }
 
-    public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
+    protected function enqueueFrontendAssets(callable $callable, int $priority = 10): void
     {
-        $this->assets()->registerStyle($handle, $src, $deps, $media);
+        $this->addAssetAction('wp_enqueue_scripts', $callable, $priority);
     }
 
-    public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
+    protected function enqueueEditorPreviewAssets(callable $callable, int $priority = 10): void
     {
-        $this->assets()->enqueueStyle($handle, $src, $deps, $media);
+        $this->addAssetAction('enqueue_block_assets', fn($a) => is_admin() && $callable($a), $priority);
     }
 
-    public function enqueueBlockStyle(string $blockName, array $args): void
+    protected function enqueueEditorUIAssets(callable $callable, int $priority = 10): void
     {
-        $this->assets()->enqueueBlockStyle($blockName, $args);
+        $this->addAssetAction('enqueue_block_editor_assets', $callable, $priority);
     }
 
-    public function inlineScript(string $handle, $data, $position = null)
+    protected function registerAssets(callable $callable, int $priority = 20): void
     {
-        $this->assets()->inlineScript($handle, $data, $position);
+        $this->addAssetAction('init', $callable, $priority);
     }
 
-    protected function scriptUrl(string $relative): string
+    protected function enqueueBlockStyles(callable $callable, int $priority = 30): void
     {
-        return $this->assets()->assetUrl("assets/scripts/$relative");
+        $this->addAssetAction('init', $callable, $priority);
     }
 
-    protected function styleUrl(string $relative): string
+    private function addAssetAction(string $action, callable $callable, int $priority): void
     {
-        return $this->assets()->assetUrl("assets/styles/$relative");
+        if (defined('DOING_AJAX') && DOING_AJAX) {
+            return;
+        }
+        add_action($action, fn() => $callable($this->assets()), $priority);
     }
+
 }

@@ -4,6 +4,7 @@ namespace Sitchco\Modules\Wordpress;
 
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
+use Sitchco\Framework\ModuleAssets;
 
 class BlockConfig extends Module
 {
@@ -21,7 +22,24 @@ class BlockConfig extends Module
 
     public function postTypeBlockVisibility(): void
     {
-        add_action('enqueue_block_editor_assets', [$this, 'configureCustomVisibility']);
+        $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
+            $blockSettings = $this->configRegistry->load('disallowedBlocks');
+            $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
+            if (empty($customBlocks)) {
+                return;
+            }
+            $assets->enqueueScript('custom-block-visibility', 'block-visibility.js', [
+                'wp-blocks',
+                'wp-dom-ready',
+                'wp-edit-post',
+            ]);
+            $assets->inlineScriptData(
+               'custom-block-visibility',
+                'sitchcoBlockVisibility',
+                $customBlocks
+            );
+        });
+
     }
 
     public function registerBlockCategory(): void
@@ -34,24 +52,6 @@ class BlockConfig extends Module
         $disallowedBlockList = $this->configRegistry->load('disallowedBlocks');
 
         return array_keys(array_filter($disallowedBlockList, fn($block) => $block === true));
-    }
-
-    public function configureCustomVisibility(): void
-    {
-        $blockSettings = $this->configRegistry->load('disallowedBlocks');
-        $customBlocks = array_filter($blockSettings, fn($block) => is_array($block));
-
-        if (!empty($customBlocks)) {
-            $this->enqueueScript(static::hookName('custom-block-visibility'), $this->scriptUrl('block-visibility.js'), [
-                'wp-blocks',
-                'wp-dom-ready',
-                'wp-edit-post',
-            ]);
-            $this->inlineScript(
-                static::hookName('custom-block-visibility'),
-                sprintf('window.sitchcoBlockVisibility = %s;', wp_json_encode($customBlocks))
-            );
-        }
     }
 
     public function blockCategories($categories)

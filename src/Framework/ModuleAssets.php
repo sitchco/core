@@ -3,10 +3,14 @@
 namespace Sitchco\Framework;
 
 use Sitchco\Support\FilePath;
+use Sitchco\Support\HookName;
+use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
     public readonly FilePath $modulePath;
+
+    public readonly string $namespace;
 
     public readonly ?FilePath $productionBuildPath;
     public readonly ?FilePath $devBuildPath;
@@ -15,9 +19,10 @@ class ModuleAssets
 
     private static array $manifestCache = [];
 
-    public function __construct(FilePath $modulePath)
+    public function __construct(Module $module)
     {
-        $this->modulePath = $modulePath;
+        $this->modulePath = $module->path();
+        $this->namespace = $module::hookName();
         $this->productionBuildPath = $this->modulePath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local') {
             $this->isDevServer = false;
@@ -53,6 +58,8 @@ class ModuleAssets
 
     public function registerScript(string $handle, string $src, array $deps = []): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->scriptUrl($src);
         wp_register_script($handle, $src, $deps);
         if ($this->isDevServer) {
             wp_register_script_module($handle, $src, $deps);
@@ -61,6 +68,8 @@ class ModuleAssets
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->scriptUrl($src);
         if (!$this->isDevServer) {
             wp_enqueue_script($handle, $src, $deps);
             return;
@@ -72,43 +81,64 @@ class ModuleAssets
             $deps = $registered->deps;
         }
         foreach ($deps as $dep) {
-            wp_enqueue_script($dep);
-            wp_enqueue_script_module($dep);
+            // only treat our dependencies as modules
+            if ($this->isDevServer && str_starts_with($dep, Hooks::ROOT)) {
+                wp_enqueue_script_module($dep);
+            } else {
+                wp_enqueue_script($dep);
+            }
         }
         wp_enqueue_script_module($handle, $src, $deps);
     }
 
     public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->styleUrl($src);
         wp_register_style($handle, $src, $deps, null, $media);
     }
 
-    public function enqueueStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
+    public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
     {
+        $handle = $this->namespacedHandle($handle);
+        $src = $this->styleUrl($src);
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
         wp_enqueue_style($handle, $src, $deps, null, $media);
     }
 
-    public function enqueueBlockStyle(string $blockName, array $args = []): void
+    public function enqueueBlockStyle(string $blockName, string $src): void
     {
+        if (!doing_action('init') && did_action('init')) {
+            _doing_it_wrong(
+                __METHOD__,
+                'wp_enqueue_block_style() should be called during or before the init hook.',
+                '6.1.0'
+            );
+        }
+        $src = $this->styleUrl($src);
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
-        wp_enqueue_block_style($blockName, $args);
+        wp_enqueue_block_style($blockName, [
+            'handle' => $blockName,
+            'src' => $src,
+            'path' =>  $this->modulePath->append($src),
+        ]);
     }
 
-    public function inlineScript(string $handle, $data, $position = null): void
+    public function inlineScript(string $handle, string $content, $position = null): void
     {
+        $handle = $this->namespacedHandle($handle);
         if (!$this->isDevServer) {
-            wp_add_inline_script($handle, $data, $position);
+            wp_add_inline_script($handle, $content, $position);
             return;
         }
         $isHeader = $position !== 'after';
         $hook = $isHeader ? (is_admin() ? 'admin_head' : 'wp_head') : (is_admin() ? 'admin_footer' : 'wp_footer');
-        $callback = function () use ($data) {
-            echo "<script>{$data}</script>";
+        $callback = function () use ($content) {
+            echo "<script>{$content}</script>";
         };
         if (did_action($hook)) {
             $callback();
@@ -117,19 +147,48 @@ class ModuleAssets
         }
     }
 
-    public function assetUrl(string $relativePath): string
+    public function inlineScriptData(string $handle, string $object_name, $data, $position = null): void
     {
+        $content = sprintf("window.$object_name = %s;", wp_json_encode($data));
+        $this->inlineScript($handle, $content, $position);
+    }
+
+    private function assetUrl(string $relativePath): string
+    {
+        if (empty($relativePath) || str_starts_with($relativePath, $this->modulePath->value())) {
+            return $relativePath;
+        }
         $assetPath = $this->modulePath->append($relativePath);
         if ($this->isDevServer) {
             return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
         $buildAssetPath = $this->buildAssetPath($assetPath);
-        return $buildAssetPath ? $buildAssetPath->url() : '';
+        return $buildAssetPath ? $buildAssetPath->url() : $relativePath;
+    }
+
+    private function scriptUrl(string $relative): string
+    {
+        return $this->assetUrl("assets/scripts/$relative");
+    }
+
+    private function styleUrl(string $relative): string
+    {
+        return $this->assetUrl("assets/styles/$relative");
     }
 
     private function enqueueViteClient(): void
     {
-        $namespace = $this->productionBuildPath->name();
-        wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
+        if (doing_action('enqueue_block_assets')) {
+            $namespace = $this->productionBuildPath->name();
+            wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
+        }
+    }
+
+    private function namespacedHandle(string $handle): string
+    {
+        if (!str_starts_with($handle, $this->namespace)) {
+            $handle = HookName::join($this->namespace, $handle);
+        }
+        return $handle;
     }
 }
