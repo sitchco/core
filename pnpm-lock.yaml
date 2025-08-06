@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@sitchco/cli':
-        specifier: ^2.0.4
-        version: 2.0.4(@babel/core@7.28.0)(@types/node@24.2.0)(eslint@9.32.0)(rollup@4.46.2)(sass@1.90.0)
+        specifier: ^2.0.6
+        version: 2.0.6(@babel/core@7.28.0)(@types/node@24.2.0)(eslint@9.32.0)(rollup@4.46.2)(sass@1.90.0)
       '@sitchco/eslint-config':
         specifier: ^1.0.1
         version: 1.0.1(@babel/core@7.28.0)(eslint@9.32.0)
@@ -975,8 +975,8 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@sitchco/cli@2.0.4':
-    resolution: {integrity: sha512-3T+jZcGRjP0aUsAxH/bxk4Kiofgugwzzg257sP1oDcd/7BHCwqZujtVH3CuULBlkfl8nskXWb1gsoIcnCrToew==}
+  '@sitchco/cli@2.0.6':
+    resolution: {integrity: sha512-Mnexd/xG8svvuBf3Zwj/JcxNy6hDPKKHapPrQsceWSQkQeuHJMzzA+noLadBM4yVhtdpP+ViRLvGL+YXqHxy4g==}
     hasBin: true
 
   '@sitchco/eslint-config@1.0.1':
@@ -3388,7 +3388,7 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@sitchco/cli@2.0.4(@babel/core@7.28.0)(@types/node@24.2.0)(eslint@9.32.0)(rollup@4.46.2)(sass@1.90.0)':
+  '@sitchco/cli@2.0.6(@babel/core@7.28.0)(@types/node@24.2.0)(eslint@9.32.0)(rollup@4.46.2)(sass@1.90.0)':
     dependencies:
       '@sitchco/formatter': 1.0.1(@babel/core@7.28.0)(eslint@9.32.0)
       '@sitchco/linter': 2.1.1(@babel/core@7.28.0)
