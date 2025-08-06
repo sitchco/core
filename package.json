@@ -15,7 +15,7 @@
         "reset": "pnpm clean && pnpm install",
         "test": "pnpm -r test",
         "dev:setup": "sitchco link",
-        "dev:teardown": "sitcho unlink"
+        "dev:teardown": "sitchco unlink"
     },
     "devDependencies": {
         "@sitchco/cli": "^2.0.5",
