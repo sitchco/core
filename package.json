@@ -14,11 +14,11 @@
         "clean": "sitchco clean; find . -type d -name node_modules -prune -exec rm -rf {} \\;",
         "reset": "pnpm clean && pnpm install",
         "test": "pnpm -r test",
-        "dev:setup": "rm -rf ./packages && git clone git@github.com:sitchco/sitchco-packages.git ./packages && (cd ./packages && pnpm install) && pnpm link ./packages/packages/*/*",
-        "dev:teardown": "pnpm unlink && rm -rf ./packages && git restore package.json && pnpm install"
+        "dev:setup": "sitchco link",
+        "dev:teardown": "sitcho unlink"
     },
     "devDependencies": {
-        "@sitchco/cli": "^2.0.4",
+        "@sitchco/cli": "^2.0.5",
         "@sitchco/eslint-config": "^1.0.1"
     },
     "pnpm": {
