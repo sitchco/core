@@ -18,7 +18,7 @@
         "dev:teardown": "sitchco unlink"
     },
     "devDependencies": {
-        "@sitchco/cli": "^2.0.6",
+        "@sitchco/cli": "^2.0.7",
         "@sitchco/eslint-config": "^1.0.1"
     },
     "pnpm": {
