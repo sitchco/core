@@ -13,9 +13,7 @@
         "lint": "sitchco lint",
         "clean": "sitchco clean; find . -type d -name node_modules -prune -exec rm -rf {} \\;",
         "reset": "pnpm clean && pnpm install",
-        "test": "pnpm -r test",
-        "dev:setup": "sitchco link",
-        "dev:teardown": "sitchco unlink"
+        "test": "pnpm -r test"
     },
     "devDependencies": {
         "@sitchco/cli": "^2.0.7",
