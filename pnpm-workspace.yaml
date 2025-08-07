@@ -1,6 +1,0 @@
-packages:
-  - packages/build-tools/*
-
-onlyBuiltDependencies:
-  - esbuild
-  - eslint-config-prettier
