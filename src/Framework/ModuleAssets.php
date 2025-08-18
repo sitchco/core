@@ -17,27 +17,28 @@ class ModuleAssets
     public readonly string $devBuildUrl;
     public readonly bool $isDevServer;
 
+
     private static array $manifestCache = [];
 
-    public function __construct(Module $module)
+    public function __construct(Module $module, $devServerFile = SITCHCO_DEV_HOT_FILE)
     {
-        $this->modulePath = $module->path();
+        $this->modulePath = $module->assetsPath();
         $this->namespace = $module::hookName();
         $this->productionBuildPath = $this->modulePath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local') {
             $this->isDevServer = false;
             return;
         }
-        $this->devBuildPath = $this->productionBuildPath->findAncestor(SITCHCO_DEV_HOT_FILE);
+        $this->devBuildPath = $this->productionBuildPath->findAncestor($devServerFile);
         $this->isDevServer = $this->devBuildPath && $this->devBuildPath->exists();
         if ($this->isDevServer) {
-            $devBuildUrl = file_get_contents($this->devBuildPath->append(SITCHCO_DEV_HOT_FILE));
+            $devBuildUrl = file_get_contents($this->devBuildPath->append($devServerFile));
             $port = parse_url($devBuildUrl, PHP_URL_PORT) ?: 5173;
             $this->devBuildUrl = "https://{$_SERVER['HTTP_HOST']}:$port";
         }
     }
 
-    public function buildAssetPath(FilePath $assetPath): ?FilePath
+    protected function buildAssetPath(FilePath $assetPath): ?FilePath
     {
         $buildPath = $this->productionBuildPath?->append('dist');
         $manifestPath = $buildPath->append('.vite/manifest.json');

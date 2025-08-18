@@ -3,6 +3,7 @@
 namespace Sitchco\Tests\Fakes;
 
 use Sitchco\Framework\Module;
+use Sitchco\Support\FilePath;
 
 class ModuleTester extends Module
 {
@@ -35,5 +36,16 @@ class ModuleTester extends Module
     public function featureThree(): void
     {
         $this->featureThreeRan = true;
+    }
+
+    /**
+     * Override to force assets to fixture directory
+     *
+     * @param string $relative
+     * @return FilePath
+     */
+    public function assetsPath(string $relative = ''): FilePath
+    {
+        return FilePath::create(SITCHCO_CORE_FIXTURES_DIR);
     }
 }

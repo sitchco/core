@@ -64,6 +64,11 @@ abstract class Module
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
+    public function assetsPath(string $relative = ''): FilePath
+    {
+        return $this->path($relative);
+    }
+
     private function assets(): ModuleAssets
     {
         if (!isset($this->assets)) {

@@ -1,0 +1,8 @@
+{
+  "assets/scripts/test.js": {
+    "file": "assets/test-abcde.js",
+    "name": "main",
+    "src": "assets/scripts/test.js",
+    "isEntry": true
+  }
+}
