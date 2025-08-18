@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Tests\Support;
+namespace Sitchco\Tests\Fakes;
 
 use Sitchco\Model\PostBase;
 

@@ -8,9 +8,7 @@ use Sitchco\Rewrite\QueryRewrite;
 use Sitchco\Rewrite\RedirectRoute;
 use Sitchco\Rewrite\RewriteService;
 use Sitchco\Rewrite\Route;
-use Sitchco\Support\Exception\ExitException;
 use Sitchco\Support\Exception\RedirectExitException;
-use Sitchco\Tests\Support\TestCase;
 
 /**
  * class RewriteServiceTest

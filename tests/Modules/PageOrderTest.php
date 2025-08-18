@@ -3,7 +3,7 @@
 namespace Sitchco\Tests\Modules;
 
 use Sitchco\Modules\PageOrder;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 
 class PageOrderTest extends TestCase
 {

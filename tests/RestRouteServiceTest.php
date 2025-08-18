@@ -4,10 +4,7 @@ namespace Sitchco\Tests;
 
 use Sitchco\Rest\RestRoute;
 use Sitchco\Rest\RestRouteService;
-use Sitchco\Tests\Support\TestCase;
 use WP_REST_Request;
-use WP_REST_Response;
-use WP_Error;
 
 /**
  * class RestRouteServiceTest

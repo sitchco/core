@@ -4,7 +4,7 @@ namespace Sitchco\Tests\Modules\AdvancedCustomFields;
 
 use ACF_Post_Type;
 use ACF_Taxonomy;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 use Sitchco\Utils\Acf;
 use WP_Query;
 

@@ -4,7 +4,7 @@ namespace Sitchco\Tests\Flash;
 
 use Sitchco\Flash\AdminNotification;
 use Sitchco\Flash\AdminNotificationService;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 
 /**
  * Class AdminNotificationServiceTest

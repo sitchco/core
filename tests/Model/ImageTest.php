@@ -4,7 +4,7 @@ namespace Sitchco\Tests\Model;
 
 use Sitchco\Model\Image;
 use Sitchco\Support\CropDirection;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 
 class ImageTest extends TestCase
 {

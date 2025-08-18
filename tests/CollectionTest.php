@@ -3,7 +3,6 @@
 namespace Sitchco\Tests;
 
 use Sitchco\Collection;
-use Sitchco\Tests\Support\TestCase;
 use Timber\PostQuery;
 use WP_Query;
 

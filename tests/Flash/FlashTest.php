@@ -4,7 +4,7 @@ namespace Sitchco\Tests\Flash;
 
 use Sitchco\Flash\AdminNotificationService;
 use Sitchco\Modules\Flash;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 
 /**
  * Class FlashTest

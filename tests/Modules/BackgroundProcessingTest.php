@@ -5,7 +5,7 @@ namespace Sitchco\Tests\Modules;
 use Sitchco\BackgroundProcessing\BackgroundActionQueue;
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Events\SavePostQueueEvent;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 use Sitchco\Utils\Hooks;
 
 /**

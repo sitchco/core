@@ -6,10 +6,9 @@ use DI\DependencyException;
 use DI\NotFoundException;
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\ModuleRegistry;
-use Sitchco\Tests\Support\ModuleTester;
-use Sitchco\Tests\Support\ParentModuleTester;
-use Sitchco\Tests\Support\PostTester;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\Fakes\ModuleTester;
+use Sitchco\Tests\Fakes\ParentModuleTester;
+use Sitchco\Tests\Fakes\PostTester;
 
 class CoreMuPluginTest extends TestCase
 {
@@ -58,7 +57,7 @@ class CoreMuPluginTest extends TestCase
     {
         $ModuleInstance = $this->container->get(ModuleTester::class);
         $this->assertEquals(
-            WP_CONTENT_DIR . '/mu-plugins/sitchco-core/tests/Support/',
+            WP_CONTENT_DIR . '/mu-plugins/sitchco-core/tests/Fakes/',
             $ModuleInstance->path()->value()
         );
     }

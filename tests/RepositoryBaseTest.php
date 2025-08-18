@@ -6,10 +6,9 @@ use InvalidArgumentException;
 use Sitchco\Collection;
 use Sitchco\Model\Category;
 use Sitchco\Repository\PostRepository;
-use Sitchco\Tests\Support\EventPostTester;
-use Sitchco\Tests\Support\EventRepositoryTester;
-use Sitchco\Tests\Support\PostTester;
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\Fakes\EventPostTester;
+use Sitchco\Tests\Fakes\EventRepositoryTester;
+use Sitchco\Tests\Fakes\PostTester;
 use Timber\PostCollectionInterface;
 use Timber\Timber;
 
@@ -56,7 +55,7 @@ class RepositoryBaseTest extends TestCase
 
         // Test checkBoundModelType()
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Model Class is not an instance of :Sitchco\Tests\Support\EventPost');
+        $this->expectExceptionMessage('Model Class is not an instance of :Sitchco\Tests\Fakes\EventPost');
         $this->container->get(EventRepositoryTester::class)->add($createdPost);
 
         $this->container->get(PostRepository::class)->add($createdPost);

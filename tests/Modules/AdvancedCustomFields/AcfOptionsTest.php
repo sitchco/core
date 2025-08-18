@@ -2,7 +2,7 @@
 
 namespace Sitchco\Tests\Modules\AdvancedCustomFields;
 
-use Sitchco\Tests\Support\TestCase;
+use Sitchco\Tests\TestCase;
 
 class AcfOptionsTest extends TestCase
 {
