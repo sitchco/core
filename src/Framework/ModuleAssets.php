@@ -83,7 +83,7 @@ class ModuleAssets
         }
         foreach ($deps as $dep) {
             // only treat our dependencies as modules
-            if ($this->isDevServer && str_starts_with($dep, Hooks::ROOT)) {
+            if (str_starts_with($dep, Hooks::ROOT)) {
                 wp_enqueue_script_module($dep);
             } else {
                 wp_enqueue_script($dep);
@@ -118,14 +118,13 @@ class ModuleAssets
                 '6.1.0'
             );
         }
-        $src = $this->styleUrl($src);
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
         wp_enqueue_block_style($blockName, [
             'handle' => $blockName,
-            'src' => $src,
-            'path' =>  $this->modulePath->append($src),
+            'src' => $this->styleUrl($src),
+            'path' =>  $this->stylePath($src)->value(),
         ]);
     }
 
@@ -175,6 +174,11 @@ class ModuleAssets
     private function styleUrl(string $relative): string
     {
         return $this->assetUrl("assets/styles/$relative");
+    }
+
+    private function stylePath(string $relative): FilePath
+    {
+        return $this->modulePath->append("assets/styles/$relative");
     }
 
     private function enqueueViteClient(): void

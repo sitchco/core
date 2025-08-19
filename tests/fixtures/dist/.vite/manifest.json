@@ -4,5 +4,17 @@
     "name": "main",
     "src": "assets/scripts/test.js",
     "isEntry": true
+  },
+  "assets/styles/test.css": {
+    "file": "assets/test-abcde.css",
+    "name": "main",
+    "src": "assets/styles/test.css",
+    "isEntry": true
+  },
+  "assets/styles/test-block.css": {
+    "file": "assets/test-block-abcde.css",
+    "name": "main",
+    "src": "assets/styles/test-block.css",
+    "isEntry": true
   }
 }
