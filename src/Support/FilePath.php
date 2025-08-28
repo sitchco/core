@@ -10,6 +10,16 @@ class FilePath
 
     public function __construct(string $filename)
     {
+        $this->build($filename);
+    }
+
+    public function reset(): void
+    {
+        $this->build($this->filename);
+    }
+
+    protected function build(string $filename): void
+    {
         $this->filename = wp_normalize_path($filename);
         $this->isFile = is_file($this->filename);
         $this->isDirectory = is_dir($this->filename);
@@ -18,6 +28,11 @@ class FilePath
     public static function create(string $filename): self
     {
         return new static($filename);
+    }
+
+    public function clone(): static
+    {
+        return new static($this->filename);
     }
 
     public static function createFromClassDir(object $object): static

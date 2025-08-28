@@ -8,7 +8,7 @@ use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
-    public readonly FilePath $modulePath;
+    public readonly FilePath $moduleAssetsPath;
 
     public readonly string $namespace;
 
@@ -22,9 +22,9 @@ class ModuleAssets
 
     public function __construct(Module $module, $devServerFile = SITCHCO_DEV_HOT_FILE)
     {
-        $this->modulePath = $module->assetsPath();
+        $this->moduleAssetsPath = $module->assetsPath();
         $this->namespace = $module::hookName();
-        $this->productionBuildPath = $this->modulePath->findAncestor(SITCHCO_CONFIG_FILENAME);
+        $this->productionBuildPath = $this->moduleAssetsPath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local') {
             $this->isDevServer = false;
             return;
@@ -40,7 +40,7 @@ class ModuleAssets
 
     protected function buildAssetPath(FilePath $assetPath): ?FilePath
     {
-        $buildPath = $this->productionBuildPath?->append('dist');
+        $buildPath = $this->productionAssetsPath();
         $manifestPath = $buildPath->append('.vite/manifest.json');
         if (!$manifestPath->exists()) {
             return null;
@@ -124,7 +124,7 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, [
             'handle' => $blockName,
             'src' => $this->styleUrl($src),
-            'path' =>  $this->stylePath($src)->value(),
+            'path' => $this->stylePath($src)->value(),
         ]);
     }
 
@@ -153,12 +153,22 @@ class ModuleAssets
         $this->inlineScript($handle, $content, $position);
     }
 
+    public function registerSvgSpriteLocation(string $relative): void
+    {
+        $path = $this->moduleAssetsPath->append($relative);
+        $productionPath = $this->productionAssetsPath();
+        add_filter(Hooks::name('svg-sprite', 'locations'), function(array $locations) use ($path, $productionPath) {
+            $locations[] = [$path, $productionPath];
+            return $locations;
+        });
+    }
+
     private function assetUrl(string $relativePath): string
     {
-        if (empty($relativePath) || str_starts_with($relativePath, $this->modulePath->value())) {
+        if (empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value())) {
             return $relativePath;
         }
-        $assetPath = $this->modulePath->append($relativePath);
+        $assetPath = $this->moduleAssetsPath->append($relativePath);
         if ($this->isDevServer) {
             return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
@@ -178,7 +188,12 @@ class ModuleAssets
 
     private function stylePath(string $relative): FilePath
     {
-        return $this->modulePath->append("assets/styles/$relative");
+        return $this->moduleAssetsPath->append("assets/styles/$relative");
+    }
+
+    public function productionAssetsPath()
+    {
+        return $this->productionBuildPath?->append('dist');
     }
 
     private function enqueueViteClient(): void

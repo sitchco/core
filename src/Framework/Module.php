@@ -64,12 +64,12 @@ abstract class Module
         return $relative ? $this->modulePath->append($relative) : $this->modulePath;
     }
 
-    public function assetsPath(string $relative = ''): FilePath
+    public function assetsPath(): FilePath
     {
-        return $this->path($relative);
+        return $this->path('assets');
     }
 
-    private function assets(): ModuleAssets
+    protected function assets(): ModuleAssets
     {
         if (!isset($this->assets)) {
             $this->assets = new ModuleAssets($this);
@@ -110,6 +110,11 @@ abstract class Module
     protected function enqueueBlockStyles(callable $callable, int $priority = 30): void
     {
         $this->addAssetAction('init', $callable, $priority);
+    }
+
+    protected function registerSvgSprite(string $relative = 'images/svg-sprite'): void
+    {
+        $this->assets()->registerSvgSpriteLocation($relative);
     }
 
     private function addAssetAction(string $action, callable $callable, int $priority): void
