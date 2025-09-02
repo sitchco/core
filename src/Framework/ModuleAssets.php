@@ -163,7 +163,10 @@ class ModuleAssets
             return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
         $buildAssetPath = $this->buildAssetPath($assetPath);
-        return $buildAssetPath ? $buildAssetPath->url() : $relativePath;
+        if ($buildAssetPath) {
+            return $buildAssetPath->url();
+        }
+        return $assetPath->exists() ? $assetPath->url() : $relativePath;
     }
 
     private function scriptUrl(string $relative): string
