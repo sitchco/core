@@ -1,3 +1,15 @@
-# Exclude package.json and pnpm-lock.yaml from git
+# Exclude files and directories not needed in production environments
+# Development configuration files
+.editorconfig export-ignore
+.prettierrc.js export-ignore
+eslint.config.mjs export-ignore
+
+# Dependency management files
 package.json export-ignore
 pnpm-lock.yaml export-ignore
+
+# Test files and directories
+tests/ export-ignore
+
+# Node.js dependencies
+node_modules/ export-ignore
