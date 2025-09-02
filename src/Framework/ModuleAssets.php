@@ -60,36 +60,44 @@ class ModuleAssets
     public function registerScript(string $handle, string $src, array $deps = []): void
     {
         $handle = $this->namespacedHandle($handle);
-        $src = $this->scriptUrl($src);
-        wp_register_script($handle, $src, $deps);
-        if ($this->isDevServer) {
-            wp_register_script_module($handle, $src, $deps);
+        $src_url = $this->scriptUrl($src);
+        $is_module = str_ends_with(strtolower($src), '.mjs');
+
+        if ($this->isDevServer || $is_module) {
+            wp_register_script_module($handle, $src_url, $deps);
+        } else {
+            wp_register_script($handle, $src_url, $deps);
         }
     }
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
     {
         $handle = $this->namespacedHandle($handle);
-        $src = $this->scriptUrl($src);
+        $src_url = $this->scriptUrl($src);
+        $is_module = str_ends_with(strtolower($src), '.mjs');
+
         if (!$this->isDevServer) {
-            wp_enqueue_script($handle, $src, $deps);
+            if ($is_module) {
+                wp_enqueue_script_module($handle, $src_url, $deps);
+            } else {
+                wp_enqueue_script($handle, $src_url, $deps);
+            }
             return;
         }
+
         $this->enqueueViteClient();
-        // fetch registered dependencies
         $registered = wp_scripts()->registered[$handle] ?? null;
         if ($registered) {
             $deps = $registered->deps;
         }
         foreach ($deps as $dep) {
-            // only treat our dependencies as modules
             if (str_starts_with($dep, Hooks::ROOT)) {
                 wp_enqueue_script_module($dep);
             } else {
                 wp_enqueue_script($dep);
             }
         }
-        wp_enqueue_script_module($handle, $src, $deps);
+        wp_enqueue_script_module($handle, $src_url, $deps);
     }
 
     public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
