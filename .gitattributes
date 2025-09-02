@@ -1,0 +1,3 @@
+# Exclude package.json and pnpm-lock.yaml from git
+package.json export-ignore
+pnpm-lock.yaml export-ignore

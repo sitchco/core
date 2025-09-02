@@ -1,6 +1,7 @@
 {
     "name": "sitchco/sitchco-core",
     "description": "Core Monorepo for Sitchco WordPress projects",
+    "version": "0.0.1",
     "autoload": {
         "psr-4": {
             "Sitchco\\": "src",
