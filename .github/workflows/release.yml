@@ -39,6 +39,11 @@ jobs:
       - name: Create test branch
         run: git checkout -b $BRANCH_NAME
 
+      - name: Set Composer version
+        run: |
+          jq --arg version "${{ github.event.inputs.tag }}" '.version = $version' composer.json > composer.tmp.json
+          mv composer.tmp.json composer.json
+
       - name: Run build
         run: pnpm build
 
