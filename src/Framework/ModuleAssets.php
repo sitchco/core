@@ -153,16 +153,6 @@ class ModuleAssets
         $this->inlineScript($handle, $content, $position);
     }
 
-    public function registerSvgSpriteLocation(string $relative): void
-    {
-        $path = $this->moduleAssetsPath->append($relative);
-        $productionPath = $this->productionAssetsPath();
-        add_filter(Hooks::name('svg-sprite', 'locations'), function(array $locations) use ($path, $productionPath) {
-            $locations[] = [$path, $productionPath];
-            return $locations;
-        });
-    }
-
     private function assetUrl(string $relativePath): string
     {
         if (empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value())) {
@@ -178,17 +168,34 @@ class ModuleAssets
 
     private function scriptUrl(string $relative): string
     {
-        return $this->assetUrl("assets/scripts/$relative");
+        return $this->assetUrl("scripts/$relative");
     }
 
     private function styleUrl(string $relative): string
     {
-        return $this->assetUrl("assets/styles/$relative");
+        return $this->assetUrl("styles/$relative");
     }
 
     private function stylePath(string $relative): FilePath
     {
-        return $this->moduleAssetsPath->append("assets/styles/$relative");
+        return $this->moduleAssetsPath->append("styles/$relative");
+    }
+
+    public function imageUrl(string $relative): string
+    {
+        return $this->assetUrl("images/$relative");
+    }
+
+    public function inlineSVGSymbol(string $name): string
+    {
+        if (!$this->isDevServer) {
+            return '<svg><use fill="currentColor" href="#' . $name .'"></use></svg>';
+        }
+        $svgFile = $this->moduleAssetsPath->append("assets/images/svg-sprite/$name.svg");
+        if (!$svgFile->exists()) {
+            return "<!-- SVG Symbol $name not found -->";
+        }
+        return file_get_contents($svgFile->value());
     }
 
     public function productionAssetsPath()

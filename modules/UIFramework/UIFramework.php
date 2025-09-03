@@ -31,7 +31,6 @@ class UIFramework extends Module
                     : str_replace('class="', 'class="no-js ', $attributes)
             );
         });
-        $this->registerSvgSprite();
     }
 
     public function loadAssets(): void

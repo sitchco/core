@@ -112,11 +112,6 @@ abstract class Module
         $this->addAssetAction('init', $callable, $priority);
     }
 
-    protected function registerSvgSprite(string $relative = 'images/svg-sprite'): void
-    {
-        $this->assets()->registerSvgSpriteLocation($relative);
-    }
-
     private function addAssetAction(string $action, callable $callable, int $priority): void
     {
         if (defined('DOING_AJAX') && DOING_AJAX) {

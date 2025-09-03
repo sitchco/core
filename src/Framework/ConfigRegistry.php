@@ -19,7 +19,7 @@ class ConfigRegistry
     private ?array $requestCache = null;
 
     /** @var array<string>|null Ordered list of base paths to search (null until initialized) */
-    private ?array $basePaths = null;
+    public readonly ?array $basePaths;
 
     /** @var string Current WP environment type */
     private string $environmentType;
@@ -101,7 +101,7 @@ class ConfigRegistry
             return $cachedValue;
         }
 
-        if ($this->basePaths === null) {
+        if (!isset($this->basePaths)) {
             $this->initializeBasePaths();
         }
 
@@ -155,7 +155,7 @@ class ConfigRegistry
      */
     private function loadAndMergeFiles(): ?array
     {
-        if ($this->basePaths === null) {
+        if (!isset($this->basePaths)) {
             error_log('Sitchco Config Error: Base paths not initialized before loading files.');
 
             return null;
