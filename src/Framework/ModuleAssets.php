@@ -61,6 +61,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->scriptUrl($src);
+        if (!$src) {
+            return;
+        }
         wp_register_script($handle, $src, $deps);
         if ($this->isDevServer) {
             wp_register_script_module($handle, $src, $deps);
@@ -71,6 +74,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->scriptUrl($src);
+        if (!$src) {
+            return;
+        }
         if (!$this->isDevServer) {
             wp_enqueue_script($handle, $src, $deps);
             return;
@@ -96,6 +102,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->styleUrl($src);
+        if (!$src) {
+            return;
+        }
         wp_register_style($handle, $src, $deps, null, $media);
     }
 
@@ -103,6 +112,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->styleUrl($src);
+        if (!$src) {
+            return;
+        }
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
@@ -121,9 +133,13 @@ class ModuleAssets
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
+        $url = $this->styleUrl($src);
+        if (!$url) {
+            return;
+        }
         wp_enqueue_block_style($blockName, [
             'handle' => $blockName,
-            'src' => $this->styleUrl($src),
+            'src' => $url,
             'path' => $this->stylePath($src)->value(),
         ]);
     }
@@ -155,15 +171,18 @@ class ModuleAssets
 
     private function assetUrl(string $relativePath): string
     {
-        if (empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value())) {
-            return $relativePath;
+        if (!(empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value()))) {
+            $assetPath = $this->moduleAssetsPath->append($relativePath);
+            if ($this->isDevServer) {
+                return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
+            }
+            $buildAssetPath = $this->buildAssetPath($assetPath);
+            if ($buildAssetPath) {
+                return $buildAssetPath->url();
+            }
         }
-        $assetPath = $this->moduleAssetsPath->append($relativePath);
-        if ($this->isDevServer) {
-            return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
-        }
-        $buildAssetPath = $this->buildAssetPath($assetPath);
-        return $buildAssetPath ? $buildAssetPath->url() : $relativePath;
+        error_log('Asset URL not found: ' . $relativePath, E_USER_WARNING);
+        return '';
     }
 
     private function scriptUrl(string $relative): string
