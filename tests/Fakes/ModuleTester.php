@@ -46,6 +46,6 @@ class ModuleTester extends Module
      */
     public function assetsPath(string $relative = ''): FilePath
     {
-        return FilePath::create(SITCHCO_CORE_FIXTURES_DIR);
+        return FilePath::create(SITCHCO_CORE_FIXTURES_DIR)->append('assets');
     }
 }

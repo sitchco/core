@@ -49,7 +49,7 @@ class ModuleAssetsTest extends TestCase
     public function test_creating_from_module()
     {
         $module = $this->container->get(ModuleTester::class);
-        $this->assertEquals($module->assetsPath()->value(), $this->prodAssets->modulePath->value());
+        $this->assertEquals($module->assetsPath()->value(), $this->prodAssets->moduleAssetsPath->value());
         $this->assertEquals(SITCHCO_CORE_FIXTURES_DIR . '/', $this->prodAssets->productionBuildPath->value());
         $this->assertFalse($this->prodAssets->isDevServer);
         $this->assertNull($this->prodAssets->devBuildPath);
