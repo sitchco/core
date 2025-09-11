@@ -1,15 +1,15 @@
 # Exclude files and directories not needed in production environments
 # Development configuration files
-.editorconfig export-ignore
-.prettierrc.js export-ignore
-eslint.config.mjs export-ignore
+# .editorconfig export-ignore
+# .prettierrc.js export-ignore
+# eslint.config.mjs export-ignore
 
 # Dependency management files
-package.json export-ignore
-pnpm-lock.yaml export-ignore
+# package.json export-ignore
+# pnpm-lock.yaml export-ignore
 
 # Test files and directories
-tests/ export-ignore
+# tests/ export-ignore
 
 # Node.js dependencies
-node_modules/ export-ignore
+# node_modules/ export-ignore
