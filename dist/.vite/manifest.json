@@ -1,0 +1,22 @@
+{
+  "modules/UIFramework/assets/scripts/main.mjs": {
+    "file": "assets/main-o-eYvYSf.js",
+    "name": "main",
+    "src": "modules/UIFramework/assets/scripts/main.mjs",
+    "isEntry": true
+  },
+  "modules/UIFramework/assets/styles/main.css": {
+    "file": "assets/main-0K4q4Jxx.css",
+    "src": "modules/UIFramework/assets/styles/main.css",
+    "isEntry": true,
+    "names": [
+      "main.css"
+    ]
+  },
+  "modules/Wordpress/assets/scripts/block-visibility.js": {
+    "file": "assets/block-visibility-IivHfoFQ.js",
+    "name": "block-visibility",
+    "src": "modules/Wordpress/assets/scripts/block-visibility.js",
+    "isEntry": true
+  }
+}
