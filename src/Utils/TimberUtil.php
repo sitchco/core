@@ -23,11 +23,12 @@ class TimberUtil
         return Timber::compile($template, $context);
     }
 
-    static function addContext(string $template, array $additionalContext): void
+    static function addContext(string $template, array $additionalContext, int $priority = 10, int $args = 2): void
     {
         add_filter(
             Hooks::name('template-context', $template),
-            fn($context) => array_merge($context, $additionalContext)
+            fn($context) => array_merge($context, $additionalContext),
+            $priority, $args
         );
     }
 }
