@@ -8,7 +8,7 @@ use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
-    public readonly FilePath $modulePath;
+    public readonly FilePath $moduleAssetsPath;
 
     public readonly string $namespace;
 
@@ -22,9 +22,9 @@ class ModuleAssets
 
     public function __construct(Module $module, $devServerFile = SITCHCO_DEV_HOT_FILE)
     {
-        $this->modulePath = $module->assetsPath();
+        $this->moduleAssetsPath = $module->assetsPath();
         $this->namespace = $module::hookName();
-        $this->productionBuildPath = $this->modulePath->findAncestor(SITCHCO_CONFIG_FILENAME);
+        $this->productionBuildPath = $this->moduleAssetsPath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local') {
             $this->isDevServer = false;
             return;
@@ -40,7 +40,7 @@ class ModuleAssets
 
     protected function buildAssetPath(FilePath $assetPath): ?FilePath
     {
-        $buildPath = $this->productionBuildPath?->append('dist');
+        $buildPath = $this->productionAssetsPath();
         $manifestPath = $buildPath->append('.vite/manifest.json');
         if (!$manifestPath->exists()) {
             return null;
@@ -61,6 +61,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->scriptUrl($src);
+        if (!$src) {
+            return;
+        }
         wp_register_script($handle, $src, $deps);
         if ($this->isDevServer) {
             wp_register_script_module($handle, $src, $deps);
@@ -71,6 +74,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->scriptUrl($src);
+        if (!$src) {
+            return;
+        }
         if (!$this->isDevServer) {
             wp_enqueue_script($handle, $src, $deps);
             return;
@@ -96,6 +102,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->styleUrl($src);
+        if (!$src) {
+            return;
+        }
         wp_register_style($handle, $src, $deps, null, $media);
     }
 
@@ -103,6 +112,9 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         $src = $this->styleUrl($src);
+        if (!$src) {
+            return;
+        }
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
@@ -121,10 +133,14 @@ class ModuleAssets
         if ($this->isDevServer) {
             $this->enqueueViteClient();
         }
+        $url = $this->styleUrl($src);
+        if (!$url) {
+            return;
+        }
         wp_enqueue_block_style($blockName, [
             'handle' => $blockName,
-            'src' => $this->styleUrl($src),
-            'path' =>  $this->stylePath($src)->value(),
+            'src' => $url,
+            'path' => $this->stylePath($src)->value(),
         ]);
     }
 
@@ -155,30 +171,55 @@ class ModuleAssets
 
     private function assetUrl(string $relativePath): string
     {
-        if (empty($relativePath) || str_starts_with($relativePath, $this->modulePath->value())) {
-            return $relativePath;
+        if (!(empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value()))) {
+            $assetPath = $this->moduleAssetsPath->append($relativePath);
+            if ($this->isDevServer) {
+                return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
+            }
+            $buildAssetPath = $this->buildAssetPath($assetPath);
+            if ($buildAssetPath) {
+                return $buildAssetPath->url();
+            }
         }
-        $assetPath = $this->modulePath->append($relativePath);
-        if ($this->isDevServer) {
-            return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
-        }
-        $buildAssetPath = $this->buildAssetPath($assetPath);
-        return $buildAssetPath ? $buildAssetPath->url() : $relativePath;
+        error_log('Asset URL not found: ' . $relativePath, E_USER_WARNING);
+        return '';
     }
 
     private function scriptUrl(string $relative): string
     {
-        return $this->assetUrl("assets/scripts/$relative");
+        return $this->assetUrl("scripts/$relative");
     }
 
     private function styleUrl(string $relative): string
     {
-        return $this->assetUrl("assets/styles/$relative");
+        return $this->assetUrl("styles/$relative");
     }
 
     private function stylePath(string $relative): FilePath
     {
-        return $this->modulePath->append("assets/styles/$relative");
+        return $this->moduleAssetsPath->append("styles/$relative");
+    }
+
+    public function imageUrl(string $relative): string
+    {
+        return $this->assetUrl("images/$relative");
+    }
+
+    public function inlineSVGSymbol(string $name): string
+    {
+        if (!$this->isDevServer) {
+            return '<svg><use fill="currentColor" href="#' . $name .'"></use></svg>';
+        }
+        $svgFile = $this->moduleAssetsPath->append("assets/images/svg-sprite/$name.svg");
+        if (!$svgFile->exists()) {
+            return "<!-- SVG Symbol $name not found -->";
+        }
+        return file_get_contents($svgFile->value());
+    }
+
+    public function productionAssetsPath()
+    {
+        return $this->productionBuildPath?->append('dist');
     }
 
     private function enqueueViteClient(): void

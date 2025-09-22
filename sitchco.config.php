@@ -15,6 +15,7 @@ use Sitchco\Modules\Model\PostModel;
 use Sitchco\Modules\Model\TermModel;
 use Sitchco\Modules\PageOrder;
 use Sitchco\Modules\Stream;
+use Sitchco\Modules\SvgSprite;
 use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Modules\Wordpress\BlockConfig;
 use Sitchco\Modules\Wordpress\Cleanup;
@@ -48,6 +49,7 @@ return [
         UIFramework::class,
         PageOrder::class,
         AdminTools::class,
+        SvgSprite::class,
     ],
     'disallowedBlocks' => [],
 ];
