@@ -69,6 +69,16 @@ abstract class Module
         return $this->path('assets');
     }
 
+    public function blocksPath(): FilePath
+    {
+        return $this->path('blocks');
+    }
+
+    public function filterBlockAssets(array $blocksConfig): void
+    {
+        add_filter('block_type_metadata', fn($metadata) => $this->assets()->blockTypeMetadata($metadata, $blocksConfig));
+    }
+
     protected function assets(): ModuleAssets
     {
         if (!isset($this->assets)) {

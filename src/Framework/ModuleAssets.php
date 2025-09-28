@@ -8,7 +8,13 @@ use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
+    const BLOCK_METADATA_FIELDS = [
+        'script', 'editorScript', 'viewScript',
+        'style', 'editorStyle', 'viewStyle',
+    ];
+
     public readonly FilePath $moduleAssetsPath;
+    public readonly FilePath $blocksPath;
 
     public readonly string $namespace;
 
@@ -23,6 +29,7 @@ class ModuleAssets
     public function __construct(Module $module, $devServerFile = SITCHCO_DEV_HOT_FILE)
     {
         $this->moduleAssetsPath = $module->assetsPath();
+        $this->blocksPath = $module->blocksPath();
         $this->namespace = $module::hookName();
         $this->productionBuildPath = $this->moduleAssetsPath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local') {
@@ -87,14 +94,7 @@ class ModuleAssets
         if ($registered) {
             $deps = $registered->deps;
         }
-        foreach ($deps as $dep) {
-            // only treat our dependencies as modules
-            if (str_starts_with($dep, Hooks::ROOT)) {
-                wp_enqueue_script_module($dep);
-            } else {
-                wp_enqueue_script($dep);
-            }
-        }
+        $this->enqueueDependencies($deps);
         wp_enqueue_script_module($handle, $src, $deps);
     }
 
@@ -169,6 +169,46 @@ class ModuleAssets
         $this->inlineScript($handle, $content, $position);
     }
 
+    public function blockTypeMetadata(array $metadata, array $blocksConfig): array
+    {
+        $blockPath = $blocksConfig[$metadata['name']] ?? null;
+        if (!$blockPath) {
+            return $metadata;
+        }
+        if ($this->isDevServer) {
+            $this->enqueueViteClient();
+            // Enqueue block dependencies first
+            $this->enqueueDependencies($metadata['dependencies'] ?? []);
+        }
+        foreach (static::BLOCK_METADATA_FIELDS as $fieldName) {
+            $metadata = $this->updateBlockAssets($metadata, $fieldName, $blockPath);
+        }
+        return $metadata;
+    }
+
+    private function updateBlockAssets(
+        array $metadata,
+        string $fieldName,
+        string $blockPath,
+    ): array
+    {
+        if (!isset($metadata[$fieldName])) {
+            return $metadata;
+        }
+        $isScript = str_ends_with(strtolower($metadata[$fieldName]), 'script');
+        $assetPaths = is_array($metadata[$fieldName]) ? $metadata[$fieldName] : [$metadata[$fieldName]];
+        foreach ($assetPaths as $index => &$assetPath) {
+            $fullPath = $this->blockAssetPath($blockPath, $assetPath)->value();
+            $assetPath = $isScript ? $this->scriptUrl($fullPath) : $this->styleUrl($fullPath);
+            // For dev server mode, unhook from metadata and manually register as module script
+            if ($isScript && $this->isDevServer) {
+                register_block_script_module_id($metadata, $fieldName, $index);
+                $assetPath = null;
+            }
+        }
+        return $metadata;
+    }
+
     private function assetUrl(string $relativePath): string
     {
         if (!(empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value()))) {
@@ -222,6 +262,12 @@ class ModuleAssets
         return $this->productionBuildPath?->append('dist');
     }
 
+    public function blockAssetPath(string $blockPath, string $relativePath): FilePath
+    {
+        $relativePath = str_replace('file:', '', $relativePath);
+        return $this->blocksPath->append($blockPath)->append($relativePath);
+    }
+
     private function enqueueViteClient(): void
     {
         if (doing_action('enqueue_block_assets')) {
@@ -237,4 +283,17 @@ class ModuleAssets
         }
         return $handle;
     }
+
+    private function enqueueDependencies(array $dependencies): void
+    {
+        foreach ($dependencies as $dep) {
+            // only treat our dependencies as modules
+            if (str_starts_with($dep, Hooks::ROOT)) {
+                wp_enqueue_script_module($dep);
+            } else {
+                wp_enqueue_script($dep);
+            }
+        }
+    }
+
 }

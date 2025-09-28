@@ -45,7 +45,7 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     public function init(): void
     {
         foreach ($this->modules as $module) {
-            $blocksPath = $module->path('blocks');
+            $blocksPath = $module->blocksPath();
 
             // Skip modules without a blocks folder.
             if (!$blocksPath->isDir()) {
@@ -85,6 +85,7 @@ class BlockRegistrationModuleExtension implements ModuleExtension
                 $fullPath = $blocksPath->append($relativeDir)->value();
                 register_block_type($fullPath);
             }
+            $module->filterBlockAssets($blocksConfig);
         }
     }
 
