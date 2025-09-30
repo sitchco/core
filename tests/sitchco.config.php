@@ -1,6 +1,6 @@
 <?php
 
-use Sitchco\Tests\Fakes\ModuleTester;
+use Sitchco\Tests\Fakes\ModuleTester\ModuleTester;
 
 return [
     'modules' => [

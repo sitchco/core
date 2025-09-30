@@ -1,0 +1,32 @@
+{
+  "Fakes/ModuleTester/assets/scripts/test.js": {
+    "file": "assets/test-abcde.js",
+    "name": "main",
+    "src": "Fakes/ModuleTester/assets/scripts/test.js",
+    "isEntry": true
+  },
+  "Fakes/ModuleTester/assets/styles/test.css": {
+    "file": "assets/test-abcde.css",
+    "name": "main",
+    "src": "Fakes/ModuleTester/assets/styles/test.css",
+    "isEntry": true
+  },
+  "Fakes/ModuleTester/assets/styles/test-block.css": {
+    "file": "assets/test-block-abcde.css",
+    "name": "main",
+    "src": "Fakes/ModuleTester/assets/styles/test-block.css",
+    "isEntry": true
+  },
+  "Fakes/ModuleTester/blocks/test-block/test1.js": {
+    "file": "assets/test-block-test1-abcde.js",
+    "name": "main",
+    "src": "Fakes/ModuleTester/blocks/test-block/test1.js",
+    "isEntry": true
+  },
+  "Fakes/ModuleTester/blocks/test-block/test2.js": {
+    "file": "assets/test-block-test2-abcde.js",
+    "name": "main",
+    "src": "Fakes/ModuleTester/blocks/test-block/test2.js",
+    "isEntry": true
+  }
+}

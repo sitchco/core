@@ -20,7 +20,7 @@ class Bootstrap
 
         if (defined('WP_TESTS_CONFIG_FILE_PATH')) {
             add_filter(Hooks::name(ConfigRegistry::PATH_FILTER_HOOK), function (array $paths) {
-                $paths[] = SITCHCO_CORE_FIXTURES_DIR;
+                $paths[] = SITCHCO_CORE_TESTS_DIR;
 
                 return $paths;
             });

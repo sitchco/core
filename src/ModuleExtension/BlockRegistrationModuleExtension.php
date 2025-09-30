@@ -93,6 +93,9 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     {
         foreach ($this->moduleBlocksPaths as $blocksPath) {
             $pathParts = explode('/modules/', $blocksPath->value());
+            if (!isset($pathParts[1])) {
+                continue;
+            }
             $paths[] = array_filter([
                 // child theme override for block template path
                 get_stylesheet_directory() . '/modules/' . $pathParts[1],

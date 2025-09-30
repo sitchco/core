@@ -80,9 +80,8 @@ class ModuleAssets
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
     {
         $handle = $this->namespacedHandle($handle);
-        $src = $this->scriptUrl($src);
-        if (!$src) {
-            return;
+        if ($src) {
+            $src = $this->scriptUrl($src);
         }
         if (!$this->isDevServer) {
             wp_enqueue_script($handle, $src, $deps);
@@ -105,15 +104,15 @@ class ModuleAssets
         if (!$src) {
             return;
         }
+
         wp_register_style($handle, $src, $deps, null, $media);
     }
 
     public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
     {
         $handle = $this->namespacedHandle($handle);
-        $src = $this->styleUrl($src);
-        if (!$src) {
-            return;
+        if ($src) {
+            $src = $this->styleUrl($src);;
         }
         if ($this->isDevServer) {
             $this->enqueueViteClient();
@@ -195,44 +194,55 @@ class ModuleAssets
         if (!isset($metadata[$fieldName])) {
             return $metadata;
         }
-        $isScript = str_ends_with(strtolower($metadata[$fieldName]), 'script');
+        $isScript = str_ends_with(strtolower($fieldName), 'script');
         $assetPaths = is_array($metadata[$fieldName]) ? $metadata[$fieldName] : [$metadata[$fieldName]];
+        $assetPaths = array_filter($assetPaths);
         foreach ($assetPaths as $index => &$assetPath) {
-            $fullPath = $this->blockAssetPath($blockPath, $assetPath)->value();
-            $assetPath = $isScript ? $this->scriptUrl($fullPath) : $this->styleUrl($fullPath);
+            $fullPath = $this->blockAssetPath($blockPath, $assetPath);
+            $assetPath = $this->assetUrl($fullPath);
             // For dev server mode, unhook from metadata and manually register as module script
             if ($isScript && $this->isDevServer) {
                 register_block_script_module_id($metadata, $fieldName, $index);
                 $assetPath = null;
             }
         }
+        $metadata[$fieldName] = $assetPaths;
         return $metadata;
     }
 
-    private function assetUrl(string $relativePath): string
+    private function assetUrl(FilePath $assetPath): string
     {
-        if (!(empty($relativePath) || str_starts_with($relativePath, $this->moduleAssetsPath->value()))) {
-            $assetPath = $this->moduleAssetsPath->append($relativePath);
-            if ($this->isDevServer) {
-                return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
-            }
-            $buildAssetPath = $this->buildAssetPath($assetPath);
-            if ($buildAssetPath) {
-                return $buildAssetPath->url();
-            }
+        if ($this->isDevServer) {
+            return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
-        error_log('Asset URL not found: ' . $relativePath, E_USER_WARNING);
+        $buildAssetPath = $this->buildAssetPath($assetPath);
+        if ($buildAssetPath) {
+            return $buildAssetPath->url();
+        }
+        error_log('Production build path not found for asset: ' . $assetPath->value(), E_USER_WARNING);
         return '';
+    }
+
+    private function assetUrlRelative(string $relativePath): string
+    {
+        if (empty($relativePath)) {
+            error_log('Empty Asset Relative Path: ', E_USER_WARNING);
+            return '';
+        }
+        $assetPath = str_starts_with($relativePath, $this->moduleAssetsPath->value()) ?
+            new FilePath($this->moduleAssetsPath->value()) : $this->moduleAssetsPath->append($relativePath);
+
+        return $this->assetUrl($assetPath);
     }
 
     private function scriptUrl(string $relative): string
     {
-        return $this->assetUrl("scripts/$relative");
+        return $this->assetUrlRelative("scripts/$relative");
     }
 
     private function styleUrl(string $relative): string
     {
-        return $this->assetUrl("styles/$relative");
+        return $this->assetUrlRelative("styles/$relative");
     }
 
     private function stylePath(string $relative): FilePath
@@ -242,7 +252,7 @@ class ModuleAssets
 
     public function imageUrl(string $relative): string
     {
-        return $this->assetUrl("images/$relative");
+        return $this->assetUrlRelative("images/$relative");
     }
 
     public function inlineSVGSymbol(string $name): string
