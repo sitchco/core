@@ -28,5 +28,23 @@
     "name": "main",
     "src": "Fakes/ModuleTester/blocks/test-block/test2.js",
     "isEntry": true
+  },
+  "Fakes/ModuleTester/blocks/test-block/test-editor.js": {
+    "file": "assets/test-block-test-editor-abcde.js",
+    "name": "main",
+    "src": "Fakes/ModuleTester/blocks/test-block/test-editor.js",
+    "isEntry": true
+  },
+  "Fakes/ModuleTester/blocks/test-block/test-view.css": {
+    "file": "assets/test-block-test-view-abcde.css",
+    "name": "main",
+    "src": "Fakes/ModuleTester/blocks/test-block/test-view.css",
+    "isEntry": true
+  },
+  "Fakes/ModuleTester/blocks/test-block/test.css": {
+    "file": "assets/test-block-test-abcde.css",
+    "name": "main",
+    "src": "Fakes/ModuleTester/blocks/test-block/test.css",
+    "isEntry": true
   }
 }
