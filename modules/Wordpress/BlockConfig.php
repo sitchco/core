@@ -33,13 +33,8 @@ class BlockConfig extends Module
                 'wp-dom-ready',
                 'wp-edit-post',
             ]);
-            $assets->inlineScriptData(
-               'custom-block-visibility',
-                'sitchcoBlockVisibility',
-                $customBlocks
-            );
+            $assets->inlineScriptData('custom-block-visibility', 'sitchcoBlockVisibility', $customBlocks);
         });
-
     }
 
     public function registerBlockCategory(): void

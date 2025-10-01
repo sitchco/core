@@ -69,18 +69,14 @@ class AcfOptions extends Module
 
         $class_name = preg_replace('/\W/', '', $field_group['title']);
         $target = $targetPath->append("$class_name.php")->value();
-        $template = file_exists($target) ?
-            file_get_contents($target) :
-            file_get_contents(SITCHCO_CORE_TEMPLATES_DIR . '/options-class.php.tpl');
+        $template = file_exists($target)
+            ? file_get_contents($target)
+            : file_get_contents(SITCHCO_CORE_TEMPLATES_DIR . '/options-class.php.tpl');
         $property_lines = array_map(function ($field) {
             $type = $this->acfFieldTypeToPhpType($field['type']);
             return " * @property $type \${$field['name']} {$field['label']}";
         }, $field_group['fields']);
-        $template = str_replace(
-            ['[namespace]','[class_name]'],
-            [$namespace, $class_name],
-            $template
-        );
+        $template = str_replace(['[namespace]', '[class_name]'], [$namespace, $class_name], $template);
         $template = preg_replace(
             '#(\[properties])[\s\S]+(\[/properties])#',
             implode("\n", array_merge(['$1'], $property_lines, ['$2'])),
@@ -96,24 +92,23 @@ class AcfOptions extends Module
      * @param string $acf_type The ACF field type (e.g. 'text', 'image', 'true_false').
      * @return string The corresponding PHP type for annotations.
      */
-    protected function acfFieldTypeToPhpType(string $acf_type): string {
+    protected function acfFieldTypeToPhpType(string $acf_type): string
+    {
         return match ($acf_type) {
             // Simple scalars
             'text', 'textarea', 'email', 'url', 'password', 'wysiwyg', 'select' => 'string',
             'number', 'range' => 'float',
             'true_false', 'checkbox', 'radio' => 'bool',
-            'date_picker', 'date_time_picker', 'time_picker' => 'string', // could also be DateTimeInterface
-
+            // could also be DateTimeInterface
+            'date_picker', 'date_time_picker', 'time_picker' => 'string',
             // Media and attachments
-            'image', 'file' => 'array', // or 'array|string|int' depending on return format
-
+            // or 'array|string|int' depending on return format
+            'image', 'file' => 'array',
             // Post and relationship fields
             'post_object', 'page_link', 'relationship' => 'WP_Post|array',
             'taxonomy' => 'array|string',
-
             // Complex types
             'group', 'repeater', 'flexible_content' => 'array',
-
             // Default fallback
             default => 'mixed',
         };

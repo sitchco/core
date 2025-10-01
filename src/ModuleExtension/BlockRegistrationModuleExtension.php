@@ -96,13 +96,15 @@ class BlockRegistrationModuleExtension implements ModuleExtension
             if (!isset($pathParts[1])) {
                 continue;
             }
-            $paths[] = array_filter([
-                // child theme override for block template path
-                get_stylesheet_directory() . '/modules/' . $pathParts[1],
-                // default block template path
-                $blocksPath->value()
-            ], 'is_dir');
-
+            $paths[] = array_filter(
+                [
+                    // child theme override for block template path
+                    get_stylesheet_directory() . '/modules/' . $pathParts[1],
+                    // default block template path
+                    $blocksPath->value(),
+                ],
+                'is_dir'
+            );
         }
         return $paths;
     }

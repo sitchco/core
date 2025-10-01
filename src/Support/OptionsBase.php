@@ -50,8 +50,7 @@ class OptionsBase
 
     protected function get($name)
     {
-        $default_value = func_get_args()[1] ??
-            $this->default_values[$name] ?? null;
+        $default_value = func_get_args()[1] ?? ($this->default_values[$name] ?? null);
         $value = get_field($name, 'option');
         $type = gettype($default_value);
         if (in_array($type, ['boolean', 'integer', 'double', 'string', 'array', 'object'])) {
@@ -73,9 +72,11 @@ class OptionsBase
      */
     protected function getKeyFromCalledMethod(string $name, array $arguments): string
     {
-        if ($name != 'get') { //normal accessor method called
+        if ($name != 'get') {
+            //normal accessor method called
             $key = Str::toSnakeCase($name);
-        } else if (isset($arguments[0])) { //direct "get" call
+        } elseif (isset($arguments[0])) {
+            //direct "get" call
             $key = array_shift($arguments);
         } else {
             throw new InvalidArgumentException('Invalid option name specified');

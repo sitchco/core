@@ -15,14 +15,13 @@ class PageOrder extends Module
     public const MENU_LOCATION_PRIMARY = 'primary_navigation';
     public const MENU_LOCATION_FOOTER = 'footer_navigation';
 
-
     public function init(): void
     {
         add_action('admin_init', [$this, 'sortPagesWhenTriggered']);
         add_action('save_post_page', [$this, 'setSortOrderTrigger']);
         add_action('save_post_nav_menu_item', [$this, 'setSortOrderTrigger']);
         add_action('current_screen', [$this, 'checkCurrentScreen']);
-        add_action('after_setup_theme', function() {
+        add_action('after_setup_theme', function () {
             register_nav_menus([
                 static::MENU_LOCATION_PRIMARY => 'Primary Navigation',
                 static::MENU_LOCATION_FOOTER => 'Footer Navigation',

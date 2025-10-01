@@ -21,7 +21,7 @@ class UIFramework extends Module
 
     public function init(): void
     {
-        $this->registerAssets(function(ModuleAssets $assets) {
+        $this->registerAssets(function (ModuleAssets $assets) {
             $assets->registerScript(static::ASSET_HANDLE, 'main.mjs', ['wp-hooks']);
             $assets->registerStyle(static::ASSET_HANDLE, 'main.css');
             add_filter(
@@ -41,6 +41,4 @@ class UIFramework extends Module
             $assets->inlineScript(static::ASSET_HANDLE, static::NO_JS_SCRIPT, 'before');
         });
     }
-
-
 }

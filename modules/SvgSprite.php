@@ -31,9 +31,12 @@ class SvgSprite extends Module
                 continue;
             }
             $contents = file_get_contents($sprite->value());
-            $contents = str_replace('<svg', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"', $contents);
+            $contents = str_replace(
+                '<svg',
+                '<svg width="0" height="0" style="position:absolute" aria-hidden="true"',
+                $contents
+            );
             echo $contents;
         }
     }
-
 }

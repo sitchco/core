@@ -44,11 +44,11 @@ class PageOrderTest extends TestCase
 
         // Create two menus and assign them to theme locations
         $primary_menu_id = wp_create_nav_menu('Primary Menu');
-        $footer_menu_id  = wp_create_nav_menu('Footer Menu');
+        $footer_menu_id = wp_create_nav_menu('Footer Menu');
 
         set_theme_mod('nav_menu_locations', [
             PageOrder::MENU_LOCATION_PRIMARY => $primary_menu_id,
-            PageOrder::MENU_LOCATION_FOOTER  => $footer_menu_id,
+            PageOrder::MENU_LOCATION_FOOTER => $footer_menu_id,
         ]);
 
         // Add pages to the menus, omitting last page
@@ -62,13 +62,7 @@ class PageOrderTest extends TestCase
             $this->assertSame(0, $menu_order);
         }
 
-        $expected_page_id_order = [
-            $pages[1],
-            $pages[3],
-            $pages[4],
-            $pages[0],
-            $pages[2],
-        ];
+        $expected_page_id_order = [$pages[1], $pages[3], $pages[4], $pages[0], $pages[2]];
 
         $menu_orders = $this->container->get(PageOrder::class)->sortPagesByMenuOrder();
         $this->assertEquals($expected_page_id_order, $menu_orders);
@@ -78,5 +72,4 @@ class PageOrderTest extends TestCase
             $this->assertSame($index, $menu_order);
         }
     }
-
 }

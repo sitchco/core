@@ -76,7 +76,10 @@ abstract class Module
 
     public function filterBlockAssets(array $blocksConfig): void
     {
-        add_filter('block_type_metadata', fn($metadata) => $this->assets()->blockTypeMetadata($metadata, $blocksConfig));
+        add_filter(
+            'block_type_metadata',
+            fn($metadata) => $this->assets()->blockTypeMetadata($metadata, $blocksConfig)
+        );
     }
 
     protected function assets(): ModuleAssets
@@ -129,5 +132,4 @@ abstract class Module
         }
         add_action($action, fn() => $callable($this->assets()), $priority);
     }
-
 }

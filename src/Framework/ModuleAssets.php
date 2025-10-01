@@ -8,10 +8,7 @@ use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
-    const BLOCK_METADATA_FIELDS = [
-        'script', 'editorScript', 'viewScript',
-        'style', 'editorStyle', 'viewStyle',
-    ];
+    const BLOCK_METADATA_FIELDS = ['script', 'editorScript', 'viewScript', 'style', 'editorStyle', 'viewStyle'];
 
     public readonly FilePath $moduleAssetsPath;
     public readonly FilePath $blocksPath;
@@ -22,7 +19,6 @@ class ModuleAssets
     public readonly ?FilePath $devBuildPath;
     public readonly string $devBuildUrl;
     public readonly bool $isDevServer;
-
 
     private static array $manifestCache = [];
 
@@ -112,7 +108,7 @@ class ModuleAssets
     {
         $handle = $this->namespacedHandle($handle);
         if ($src) {
-            $src = $this->styleUrl($src);;
+            $src = $this->styleUrl($src);
         }
         if ($this->isDevServer) {
             $this->enqueueViteClient();
@@ -185,11 +181,7 @@ class ModuleAssets
         return $metadata;
     }
 
-    private function updateBlockAssets(
-        array $metadata,
-        string $fieldName,
-        string $blockPath,
-    ): array
+    private function updateBlockAssets(array $metadata, string $fieldName, string $blockPath): array
     {
         if (!isset($metadata[$fieldName])) {
             return $metadata;
@@ -229,8 +221,9 @@ class ModuleAssets
             error_log('Empty Asset Relative Path: ', E_USER_WARNING);
             return '';
         }
-        $assetPath = str_starts_with($relativePath, $this->moduleAssetsPath->value()) ?
-            new FilePath($this->moduleAssetsPath->value()) : $this->moduleAssetsPath->append($relativePath);
+        $assetPath = str_starts_with($relativePath, $this->moduleAssetsPath->value())
+            ? new FilePath($this->moduleAssetsPath->value())
+            : $this->moduleAssetsPath->append($relativePath);
 
         return $this->assetUrl($assetPath);
     }
@@ -258,7 +251,7 @@ class ModuleAssets
     public function inlineSVGSymbol(string $name): string
     {
         if (!$this->isDevServer) {
-            return '<svg><use fill="currentColor" href="#' . $name .'"></use></svg>';
+            return '<svg><use fill="currentColor" href="#' . $name . '"></use></svg>';
         }
         $svgFile = $this->moduleAssetsPath->append("assets/images/svg-sprite/$name.svg");
         if (!$svgFile->exists()) {
@@ -305,5 +298,4 @@ class ModuleAssets
             }
         }
     }
-
 }
