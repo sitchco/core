@@ -13,11 +13,12 @@
         "lint": "sitchco lint",
         "clean": "sitchco clean; find . -type d -name node_modules -prune -exec rm -rf {} \\;",
         "reset": "pnpm clean && pnpm install",
+        "prepare": "sitchco prepare",
         "test": "pnpm -r test"
     },
     "devDependencies": {
-        "@sitchco/cli": "2.0.17",
-        "@sitchco/eslint-config": "^1.0.3"
+        "@sitchco/cli": "2.1.1",
+        "@sitchco/eslint-config": "^2.1.0"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
