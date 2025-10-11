@@ -87,7 +87,7 @@ class BackgroundActionQueue extends \WP_Background_Process
         string $task_action,
         callable $task_callback,
         int $priority = 10,
-        array $query_args = []
+        array $query_args = [],
     ): void {
         add_action($trigger_action, function () use ($query_args, $task_action, $task_callback, $priority) {
             $query = wp_parse_args($query_args, [
@@ -105,14 +105,14 @@ class BackgroundActionQueue extends \WP_Background_Process
     public function addSavePermalinksBulkSavePostsTask(
         callable $task_callback,
         int $priority = 10,
-        array $query_args = []
+        array $query_args = [],
     ): void {
         $this->addBulkPostsTask(
             SavePermalinksRequestEvent::hookName(),
             SavePostQueueEvent::HOOK_SUFFIX,
             $task_callback,
             $priority,
-            $query_args
+            $query_args,
         );
     }
 

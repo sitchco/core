@@ -27,7 +27,7 @@ class TimberUtil
     {
         add_filter(
             Hooks::name('template-context', $template),
-            fn($context) => array_merge($context, $additionalContext)
+            fn($context) => array_merge($context, $additionalContext),
         );
     }
 }

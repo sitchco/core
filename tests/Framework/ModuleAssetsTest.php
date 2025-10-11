@@ -181,7 +181,7 @@ class ModuleAssetsTest extends TestCase
                 ],
                 'dependencies' => ['jquery', 'sitchco/test-lib'],
             ],
-            $updatedProd
+            $updatedProd,
         );
         $this->resetWPDependencies();
         $this->devAssets->registerScript('test-lib', 'test-lib.js');
@@ -197,7 +197,7 @@ class ModuleAssetsTest extends TestCase
                 'viewStyle' => ['https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-view.css'],
                 'dependencies' => ['jquery', 'sitchco/test-lib'],
             ],
-            $updatedDev
+            $updatedDev,
         );
         $this->assertViteClientEnqueued();
         $this->assertTrue(wp_script_is('jquery'));

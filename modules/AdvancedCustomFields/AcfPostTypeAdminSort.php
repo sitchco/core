@@ -59,7 +59,7 @@ class AcfPostTypeAdminSort extends Module
     {
         add_filter(
             "manage_edit-{$post_type}_sortable_columns",
-            fn(array $columns) => $this->sortableColumns($columns, $post_type_config)
+            fn(array $columns) => $this->sortableColumns($columns, $post_type_config),
         );
     }
 
@@ -111,7 +111,7 @@ class AcfPostTypeAdminSort extends Module
     {
         return array_filter(
             AcfPostTypeAdminColumns::getColumnConfig($post_type_config),
-            fn($row) => $row['sortable'] ?? false
+            fn($row) => $row['sortable'] ?? false,
         );
     }
 }

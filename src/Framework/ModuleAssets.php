@@ -122,7 +122,7 @@ class ModuleAssets
             _doing_it_wrong(
                 __METHOD__,
                 'wp_enqueue_block_style() should be called during or before the init hook.',
-                '6.1.0'
+                '6.1.0',
             );
         }
         if ($this->isDevServer) {

@@ -203,7 +203,7 @@ class ModuleRegistry
         }
 
         $this->registeredModuleClassnames = array_unique(
-            array_merge($this->registeredModuleClassnames, $valid_classnames)
+            array_merge($this->registeredModuleClassnames, $valid_classnames),
         );
 
         return $this;

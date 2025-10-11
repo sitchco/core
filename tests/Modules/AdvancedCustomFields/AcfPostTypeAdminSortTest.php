@@ -12,7 +12,7 @@ class AcfPostTypeAdminSortTest extends AcfPostTypeTest
         [, , $sortable] = $table->get_column_info();
         $this->assertEquals(
             ['title', 'parent', 'comments', 'date', 'taxonomy-performance-category', 'price_code'],
-            array_keys($sortable)
+            array_keys($sortable),
         );
     }
 

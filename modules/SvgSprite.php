@@ -34,7 +34,7 @@ class SvgSprite extends Module
             $contents = str_replace(
                 '<svg',
                 '<svg width="0" height="0" style="position:absolute" aria-hidden="true"',
-                $contents
+                $contents,
             );
             echo $contents;
         }

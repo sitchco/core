@@ -20,7 +20,7 @@ class AcfPostTypeAdminColumnsTest extends AcfPostTypeTest
                 'price_code' => 'Price Code',
                 'taxonomy-performance-category' => 'Performance Categories',
             ],
-            $table->get_columns()
+            $table->get_columns(),
         );
         ob_start();
         $table->column_default($this->posts[1], 'active');

@@ -105,7 +105,7 @@ class RepositoryBase implements Repository
         array $term_ids,
         string $taxonomy = 'category',
         $count = 10,
-        array $excluded_post_ids = []
+        array $excluded_post_ids = [],
     ): Collection {
         if (empty($term_ids)) {
             return new Collection(new PostQuery(new WP_Query([])));

@@ -22,7 +22,7 @@ class Template
     public static function getTemplateScoped(
         string|array $templateNames,
         array $scope = [],
-        string $basePath = ''
+        string $basePath = '',
     ): ?string {
         if (!($file = self::locateTemplate($templateNames, $basePath))) {
             return null;
@@ -71,7 +71,7 @@ class Template
             fn($name) => in_array(pathinfo($name, PATHINFO_EXTENSION), $allowedExtensions, true)
                 ? $name
                 : "{$name}.{$defaultExtension}",
-            (array) $templateNames
+            (array) $templateNames,
         );
 
         $basePaths = array_filter((array) $basePaths);

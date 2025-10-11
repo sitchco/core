@@ -92,7 +92,7 @@ class AcfPostTypeQueries extends Module
                 'layout' => 'table',
                 'button_label' => 'Add Parameter',
             ],
-            $values
+            $values,
         );
     }
 
@@ -215,8 +215,8 @@ class AcfPostTypeQueries extends Module
         return !!count(
             array_filter(
                 $default_query_parameters,
-                fn($row) => $row['key'] === 'orderby' && $row['value'] === 'menu_order'
-            )
+                fn($row) => $row['key'] === 'orderby' && $row['value'] === 'menu_order',
+            ),
         );
     }
 
@@ -240,9 +240,9 @@ class AcfPostTypeQueries extends Module
         $result = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT MAX(menu_order) AS menu_order FROM $wpdb->posts WHERE post_type=%s",
-                $post_obj->post_type
+                $post_obj->post_type,
             ),
-            ARRAY_A
+            ARRAY_A,
         );
         $order = intval($result[0]['menu_order']) + 1;
         $post_obj->menu_order = $order;

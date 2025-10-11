@@ -141,11 +141,11 @@ class ConfigRegistry
                     array_map(
                         // Add trailing slashes
                         'trailingslashit',
-                        array_filter($potentialPaths, fn($path) => is_string($path) && !empty($path))
-                    )
+                        array_filter($potentialPaths, fn($path) => is_string($path) && !empty($path)),
+                    ),
                 ),
-                'is_dir'
-            )
+                'is_dir',
+            ),
         );
     }
 
@@ -176,8 +176,8 @@ class ConfigRegistry
                         sprintf(
                             'Sitchco Config Error: Failed to load/parse PHP config file "%s". Error: %s',
                             $filePath,
-                            $e->getMessage()
-                        )
+                            $e->getMessage(),
+                        ),
                     );
 
                     continue;

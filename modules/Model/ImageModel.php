@@ -29,7 +29,7 @@ class ImageModel extends Module
             'sitchco/acf_post_type_admin_columns/column_content/thumbnail',
             [$this, 'postThumbnailColumn'],
             5,
-            2
+            2,
         );
     }
 

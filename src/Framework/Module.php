@@ -78,7 +78,7 @@ abstract class Module
     {
         add_filter(
             'block_type_metadata',
-            fn($metadata) => $this->assets()->blockTypeMetadata($metadata, $blocksConfig)
+            fn($metadata) => $this->assets()->blockTypeMetadata($metadata, $blocksConfig),
         );
     }
 

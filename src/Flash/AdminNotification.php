@@ -41,7 +41,7 @@ class AdminNotification extends FlashMessage
             '<div class="notice notice-%s%s"><p>%s</p></div>',
             $this->status,
             $this->dismissible ? ' is-dismissible' : '',
-            $this->message
+            $this->message,
         );
     }
 

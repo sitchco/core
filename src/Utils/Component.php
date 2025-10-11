@@ -39,7 +39,7 @@ class Component
     public static function componentAttributes(
         string $base,
         array $classModifiers = [],
-        array $elementAttributes = []
+        array $elementAttributes = [],
     ): string {
         return ArrayUtil::toAttributes(self::componentAttributesArray($base, $classModifiers, $elementAttributes));
     }
@@ -56,7 +56,7 @@ class Component
     public static function componentAttributesArray(
         string $base,
         array $classModifiers = [],
-        array $elementAttributes = []
+        array $elementAttributes = [],
     ): array {
         $core = ['data-gtm' => $base];
 

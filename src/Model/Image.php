@@ -199,7 +199,7 @@ class Image extends \Timber\Image
                 $this->resize_width,
                 $this->resize_height,
                 parent::width(),
-                parent::height()
+                parent::height(),
             );
         }
         return [$width, $height];
@@ -223,7 +223,7 @@ class Image extends \Timber\Image
             parent::width(),
             parent::height(),
             $this->resize_width,
-            $this->resize_height
+            $this->resize_height,
         );
     }
 

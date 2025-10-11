@@ -21,7 +21,7 @@ class CoreMuPluginTest extends TestCase
                 'featureTwo' => true,
                 'featureThree' => false,
             ],
-            $loaded_config[ModuleTester::class]
+            $loaded_config[ModuleTester::class],
         );
         $this->assertArrayNotHasKey(ParentModuleTester::class, $loaded_config);
         $full_feature_list = $this->container->get(ModuleRegistry::class)->getModuleFeatures();
@@ -58,7 +58,7 @@ class CoreMuPluginTest extends TestCase
         $ModuleInstance = $this->container->get(ModuleTester::class);
         $this->assertEquals(
             WP_CONTENT_DIR . '/mu-plugins/sitchco-core/tests/Fakes/ModuleTester/',
-            $ModuleInstance->path()->value()
+            $ModuleInstance->path()->value(),
         );
     }
 }

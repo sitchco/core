@@ -27,10 +27,10 @@ class AcfSettings
                         'prefix' => 'acf_post_type',
                         'value' => $values[$name] ?? '',
                     ],
-                    $settings
+                    $settings,
                 ),
-                $values
-            )
+                $values,
+            ),
         );
     }
 

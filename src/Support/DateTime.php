@@ -12,7 +12,7 @@ class DateTime extends CarbonImmutable
 {
     public function __construct(
         DateTimeInterface|WeekDay|Month|string|int|float|null $time = 'now',
-        DateTimeZone|string|int|null $timezone = null
+        DateTimeZone|string|int|null $timezone = null,
     ) {
         parent::__construct($time, $this->getDefaultTimezone($timezone));
     }
@@ -26,7 +26,7 @@ class DateTime extends CarbonImmutable
 
     protected function getDefaultTimezone(
         DateTimeInterface|WeekDay|Month|string|int|float|null $time = 'now',
-        DateTimeZone|string|int|null $timezone = null
+        DateTimeZone|string|int|null $timezone = null,
     ) {
         return is_null($timezone) ? new DateTimeZone($this->getDefaultTimezoneName($time)) : $timezone;
     }

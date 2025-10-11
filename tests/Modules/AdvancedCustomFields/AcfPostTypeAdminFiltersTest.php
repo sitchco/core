@@ -52,7 +52,7 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
                     ],
                 ],
             ],
-            $filters
+            $filters,
         );
     }
 
@@ -90,7 +90,7 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
                     ],
                 ],
             ],
-            $filters
+            $filters,
         );
     }
 
@@ -108,7 +108,7 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         $wp_query->query(['post_type' => $this->post_type]);
         $this->assertEquals(
             [['key' => 'active', 'value' => '0'], ['key' => 'price_code', 'value' => 'B']],
-            $wp_query->query_vars['meta_query']
+            $wp_query->query_vars['meta_query'],
         );
     }
 }

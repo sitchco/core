@@ -24,12 +24,12 @@ class AdminNotificationService
     public function dispatch(
         string|array|AdminNotification $message,
         string $status = AdminNotification::SUCCESS,
-        bool $dismissible = true
+        bool $dismissible = true,
     ): int {
         if (is_array($message)) {
             $message = implode(
                 '</p><p>',
-                array_map(fn($count, $msg) => "$msg: $count", $message, array_keys($message))
+                array_map(fn($count, $msg) => "$msg: $count", $message, array_keys($message)),
             );
         }
 

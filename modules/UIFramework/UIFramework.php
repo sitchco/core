@@ -28,7 +28,7 @@ class UIFramework extends Module
                 'language_attributes',
                 fn($attributes) => !str_contains($attributes, 'class=')
                     ? $attributes . ' class="no-js"'
-                    : str_replace('class="', 'class="no-js ', $attributes)
+                    : str_replace('class="', 'class="no-js ', $attributes),
             );
         });
     }

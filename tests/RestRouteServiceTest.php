@@ -43,7 +43,7 @@ class RestRouteServiceTest extends TestCase
                 'callback' => [$route, 'handleRequest'],
                 'permission_callback' => fn() => true,
             ],
-            $routes['/sitchco/example-read'][0]
+            $routes['/sitchco/example-read'][0],
         );
         // Simulate a GET request to the registered route
         $request = new WP_REST_Request('GET', '/sitchco/example-read');
@@ -77,7 +77,7 @@ class RestRouteServiceTest extends TestCase
                 'callback' => [$route, 'handleRequest'],
                 'permission_callback' => fn() => true,
             ],
-            $routes['/sitchco/example-create'][0]
+            $routes['/sitchco/example-create'][0],
         );
 
         // Simulate a POST request to the registered route

@@ -13,7 +13,7 @@ class DateRange
         DateTime $start_date,
         DateTime $end_date,
         DateFormat $date_format = null,
-        string $separator = ' - '
+        string $separator = ' - ',
     ) {
         $this->start_date = $start_date;
         $this->end_date = $end_date;

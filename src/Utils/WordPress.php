@@ -56,12 +56,12 @@ class WordPress
             $my_posts[] = [
                 'post_title' => Str::getLastWords(
                     Str::placeholderText('1 long plaintext prude'),
-                    rand($min_title, $max_title)
+                    rand($min_title, $max_title),
                 ),
                 'post_content' => trim(
                     Str::placeholderText(
-                        rand(2, $body_paragraphs) . ' ' . $length[rand($min_body, $max_body)] . ' ' . $params
-                    )
+                        rand(2, $body_paragraphs) . ' ' . $length[rand($min_body, $max_body)] . ' ' . $params,
+                    ),
                 ),
                 'post_status' => 'publish',
                 'post_type' => $post_type,
@@ -143,11 +143,11 @@ class WordPress
         $built_in = array_diff(get_post_types(['public' => true, '_builtin' => true]), ['attachment']);
         $custom_types = array_filter(
             get_post_types(['public' => true, 'publicly_queryable' => true, '_builtin' => false], 'objects') ?: [],
-            fn($post_type) => !empty($post_type->rewrite)
+            fn($post_type) => !empty($post_type->rewrite),
         );
 
         $all_types = array_values(
-            array_unique(array_merge($built_in, array_map(fn($post_type) => $post_type->name, $custom_types)))
+            array_unique(array_merge($built_in, array_map(fn($post_type) => $post_type->name, $custom_types))),
         );
 
         return array_filter($all_types, function ($post_type) {

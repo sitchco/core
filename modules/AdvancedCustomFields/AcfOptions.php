@@ -80,7 +80,7 @@ class AcfOptions extends Module
         $template = preg_replace(
             '#(\[properties])[\s\S]+(\[/properties])#',
             implode("\n", array_merge(['$1'], $property_lines, ['$2'])),
-            $template
+            $template,
         );
         file_put_contents($target, $template);
         return $target;

@@ -78,7 +78,7 @@ class Stream extends Module
             }
             echo Template::getTemplateScoped(
                 SITCHCO_CORE_TEMPLATES_DIR . '/stream-activity-report.php',
-                compact('report', 'date')
+                compact('report', 'date'),
             );
         }
     }

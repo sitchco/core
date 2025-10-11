@@ -271,7 +271,7 @@ class Cleanup extends Module
                 wp_dequeue_style('global-styles');
                 wp_dequeue_style('classic-theme-styles');
             },
-            200
+            200,
         );
         add_action('wp_footer', fn() => wp_dequeue_style('core-block-supports'), 5);
         add_filter('wp_img_tag_add_auto_sizes', '__return_false');
@@ -503,7 +503,7 @@ class Cleanup extends Module
             'embed_oembed_html',
             fn(string $html) => str_contains($html, 'youtube.com')
                 ? str_replace('youtube.com', 'youtube-nocookie.com', $html)
-                : $html
+                : $html,
         );
     }
 }

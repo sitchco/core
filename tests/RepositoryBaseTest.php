@@ -45,7 +45,7 @@ class RepositoryBaseTest extends TestCase
         ]);
 
         $thumbnail_id = $this->factory()->attachment->create_upload_object(
-            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg'
+            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg',
         );
 
         $createdPost->wp_object()->post_title = $title;
@@ -94,7 +94,7 @@ class RepositoryBaseTest extends TestCase
         // Set a thumbnail (note: this does not set the thumbnail, instead just attaches to the post)
         $thumbnail_id = $this->factory()->attachment->create_upload_object(
             SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg',
-            $post_id
+            $post_id,
         );
         wp_set_post_terms($post_id, [$third_test_term_id], 'category');
 
@@ -188,7 +188,7 @@ class RepositoryBaseTest extends TestCase
         $this->assertCount(3, $found_posts);
         $this->assertEquals(
             [$first_post_id, $second_post_id, $third_post_id],
-            array_column($found_posts->to_array(), 'ID')
+            array_column($found_posts->to_array(), 'ID'),
         );
     }
 

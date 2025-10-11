@@ -25,7 +25,7 @@ class Acf
         $acf_store->data = array_filter(
             $acf_store->data,
             fn(string $key): bool => !str_contains($key, (string) $post_id),
-            ARRAY_FILTER_USE_KEY
+            ARRAY_FILTER_USE_KEY,
         );
     }
 
@@ -93,7 +93,7 @@ class Acf
     {
         return array_filter(
             [...$field, ...$atts, 'href' => $field['url'] ?? ''],
-            fn($value) => !is_null($value) && $value !== ''
+            fn($value) => !is_null($value) && $value !== '',
         );
     }
 

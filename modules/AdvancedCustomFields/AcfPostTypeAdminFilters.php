@@ -66,7 +66,7 @@ class AcfPostTypeAdminFilters extends Module
         }
         $filters = array_merge(
             $this->getCustomFilters($post_type_config),
-            $this->getTaxonomyFilters($post_type_config)
+            $this->getTaxonomyFilters($post_type_config),
         );
         $keys = array_column($filters, 'id');
         $filters = array_combine($keys, $filters);
@@ -92,7 +92,7 @@ class AcfPostTypeAdminFilters extends Module
             foreach ($filters as $filter) {
                 echo Template::getTemplateScoped(
                     SITCHCO_CORE_TEMPLATES_DIR . '/admin-filter-select.php',
-                    compact('filter')
+                    compact('filter'),
                 );
             }
         }
@@ -119,7 +119,7 @@ class AcfPostTypeAdminFilters extends Module
             }
             // Get list of existing values in the db for this columns
             $field_values = $wpdb->get_results(
-                $wpdb->prepare("SELECT DISTINCT meta_value FROM $wpdb->postmeta WHERE meta_key=%s ORDER BY 1", $id)
+                $wpdb->prepare("SELECT DISTINCT meta_value FROM $wpdb->postmeta WHERE meta_key=%s ORDER BY 1", $id),
             );
             if (empty($field_values)) {
                 continue;
@@ -229,7 +229,7 @@ class AcfPostTypeAdminFilters extends Module
         return array_filter(
             AcfPostTypeAdminColumns::getColumnConfig($post_type_config),
             fn($row) => ($row['filterable'] ?? false) &&
-                !in_array($row['name'], (array) $post_type_config['taxonomies'])
+                !in_array($row['name'], (array) $post_type_config['taxonomies']),
         );
     }
 }

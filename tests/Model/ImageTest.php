@@ -13,7 +13,7 @@ class ImageTest extends TestCase
     protected function setUp(): void
     {
         $this->attachment_id = $this->factory()->attachment->create_upload_object(
-            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg'
+            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg',
         );
         update_post_meta($this->attachment_id, '_wp_attachment_image_alt', 'Image Description');
         parent::setUp();
@@ -33,7 +33,7 @@ class ImageTest extends TestCase
             '<img src="' .
                 $image->src() .
                 '" width="880" height="660" class="card-image card-image--test" data-test="image" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -44,7 +44,7 @@ class ImageTest extends TestCase
         $resized_src = str_replace('.jpg', '-440x330-c-default.jpg', $image->src());
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="440" height="330" alt="Image Description" loading="eager" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -55,7 +55,7 @@ class ImageTest extends TestCase
         $resized_src = str_replace('.jpg', '-440x330-c-default.jpg', $image->src());
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="440" height="330" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -66,7 +66,7 @@ class ImageTest extends TestCase
         $resized_src = str_replace('.jpg', '-440x330-c-default.jpg', $image->src());
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="440" height="330" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -77,7 +77,7 @@ class ImageTest extends TestCase
         $resized_src = str_replace('.jpg', '-330x330-c-center.jpg', $image->src());
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="330" height="330" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -88,7 +88,7 @@ class ImageTest extends TestCase
         $resized_src = str_replace('.jpg', '-330x330-c-left.jpg', $image->src());
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="330" height="330" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -98,7 +98,7 @@ class ImageTest extends TestCase
         $image->setWidth(1100);
         $this->assertHTMLEquals(
             '<img src="' . $image->src() . '" width="1100" height="825" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -108,7 +108,7 @@ class ImageTest extends TestCase
         $image->resize(1100, 825);
         $this->assertHTMLEquals(
             '<img src="' . $image->src() . '" width="1100" height="825" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -119,7 +119,7 @@ class ImageTest extends TestCase
         $resized_src = str_replace('.jpg', '-660x660-c-center.jpg', $image->src());
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="1000" height="1000" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
     }
 
@@ -133,14 +133,14 @@ class ImageTest extends TestCase
                 return $src . '?' . build_query(compact('width', 'height', 'crop'));
             },
             10,
-            2
+            2,
         );
         $image = Image::buildFromAttachmentId($this->attachment_id);
         $image->resize(440, 330);
         $resized_src = $image->src() . '?width=440&height=330&crop=default';
         $this->assertHTMLEquals(
             '<img src="' . $resized_src . '" width="440" height="330" alt="Image Description" loading="lazy" />',
-            (string) $image
+            (string) $image,
         );
         remove_all_filters('sitchco/image/resize');
     }

@@ -93,7 +93,7 @@
                     '',
                     array_map(function ($summary) {
                         return '<span>' . $summary . '</span>';
-                    }, $item['summary'])
+                    }, $item['summary']),
                 ) ?></td>
                 <td class="min-width">
                     <button class="toggle">

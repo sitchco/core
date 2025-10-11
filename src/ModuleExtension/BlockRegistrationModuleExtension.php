@@ -103,7 +103,7 @@ class BlockRegistrationModuleExtension implements ModuleExtension
                     // default block template path
                     $blocksPath->value(),
                 ],
-                'is_dir'
+                'is_dir',
             );
         }
         return $paths;

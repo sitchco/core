@@ -99,7 +99,7 @@ class Str
         string $character,
         string $string,
         string $side = 'left',
-        bool $keepCharacter = true
+        bool $keepCharacter = true,
     ): string|false {
         $offset = $keepCharacter ? 1 : 0;
         $wholeLength = strlen($string);

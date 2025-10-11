@@ -27,7 +27,7 @@ abstract class TestCase extends \WPTest\Test\TestCase
                 ];
             },
             1,
-            3
+            3,
         );
     }
 

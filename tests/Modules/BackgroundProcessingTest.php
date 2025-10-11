@@ -60,7 +60,7 @@ class BackgroundProcessingTest extends TestCase
         $post = $this->factory()->post->create_and_get();
         $this->assertEquals(
             [['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post->ID]]],
-            $Queue->getQueuedItems()
+            $Queue->getQueuedItems(),
         );
         $url = $this->saveQueue();
         $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_SUFFIX);
@@ -91,7 +91,7 @@ class BackgroundProcessingTest extends TestCase
                 ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[1]]],
                 ['action' => SavePostQueueEvent::HOOK_SUFFIX, 'args' => ['post_id' => $post_ids[2]]],
             ],
-            $Queue->getQueuedItems()
+            $Queue->getQueuedItems(),
         );
         $url = $this->saveQueue();
         $this->setupAjaxHandle($url, BackgroundActionQueue::HOOK_SUFFIX);

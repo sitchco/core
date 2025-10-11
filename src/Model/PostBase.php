@@ -119,7 +119,7 @@ class PostBase extends Post
     {
         return array_merge(
             array_keys($this->_local_add_terms_reference),
-            array_keys($this->_local_remove_terms_reference)
+            array_keys($this->_local_remove_terms_reference),
         );
     }
 

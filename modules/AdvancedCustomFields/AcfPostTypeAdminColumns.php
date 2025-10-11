@@ -86,7 +86,7 @@ class AcfPostTypeAdminColumns extends Module
                 'layout' => 'table',
                 'button_label' => 'Add Row',
             ],
-            $values
+            $values,
         );
     }
 
@@ -104,13 +104,13 @@ class AcfPostTypeAdminColumns extends Module
         }
         add_filter(
             "manage_{$post_type}_posts_columns",
-            fn(array $columns) => $this->columnHeaders($columns, $post_type_config)
+            fn(array $columns) => $this->columnHeaders($columns, $post_type_config),
         );
         add_action(
             "manage_{$post_type}_posts_custom_column",
             fn(string $column_name, int $post_id) => $this->columnContent($column_name, $post_id, $post_type_config),
             10,
-            2
+            2,
         );
         add_action('admin_print_styles', fn() => $this->outputAdminStyles($post_type));
         do_action(static::hookName('post_type_config'), $post_type, $post_type_config);
@@ -153,7 +153,7 @@ class AcfPostTypeAdminColumns extends Module
                 $get_defaults(['cb', 'title']),
                 $headers,
                 $get_defaults($taxonomies),
-                $get_defaults(['author', 'comments', 'date'])
+                $get_defaults(['author', 'comments', 'date']),
             );
         /* Hook: sitchco/acf_post_type_admin_columns/column_headers */
         return apply_filters(static::hookName('column_headers'), $columns, $post_type_config);
@@ -196,7 +196,7 @@ class AcfPostTypeAdminColumns extends Module
             static::hookName($filter_base, $column_name, $slug),
             $content,
             $post_id,
-            $post_type_config
+            $post_type_config,
         );
 
         if (is_array($content)) {
@@ -224,7 +224,7 @@ class AcfPostTypeAdminColumns extends Module
         }
         $styles = apply_filters(
             static::hookName('output_styles', $post_type),
-            '.column-thumbnail { text-align: center; width:75px; } .column-thumbnail img{ display:block;margin: 0 auto;max-width:100%; height:auto; }'
+            '.column-thumbnail { text-align: center; width:75px; } .column-thumbnail img{ display:block;margin: 0 auto;max-width:100%; height:auto; }',
         );
         echo "<style>$styles</style>";
     }

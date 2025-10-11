@@ -23,7 +23,7 @@ class Image
             $width,
             $height,
             $width,
-            $height
+            $height,
         );
     }
 }

@@ -80,7 +80,7 @@ class ArrayUtil
                 'item_class' => '',
                 'attr' => [],
             ],
-            $args
+            $args,
         );
 
         $attrs = self::toAttributes($args['attr']);
@@ -105,8 +105,8 @@ class ArrayUtil
             array_map(
                 fn($key, $value) => is_array($value) ? "$key=\"" . implode($glue, $value) . "\"" : "$key=\"$value\"",
                 array_keys($arr),
-                $arr
-            )
+                $arr,
+            ),
         );
     }
 
@@ -146,7 +146,7 @@ class ArrayUtil
     {
         return array_map(
             fn($value) => is_array($value) ? self::numerify($value) : (is_numeric($value) ? $value + 0 : $value),
-            $array
+            $array,
         );
     }
 }
