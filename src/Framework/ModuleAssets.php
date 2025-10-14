@@ -160,7 +160,10 @@ class ModuleAssets
 
     public function inlineScriptData(string $handle, string $object_name, $data, $position = null): void
     {
-        $content = sprintf("window.$object_name = %s;", wp_json_encode($data));
+        $content = sprintf(
+            "window.sitchco = window.sitchco || {}; window.sitchco.$object_name = %s;",
+            wp_json_encode($data),
+        );
         $this->inlineScript($handle, $content, $position);
     }
 

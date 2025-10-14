@@ -11,7 +11,7 @@ import { registerCssVarsActions } from './lib/css-vars.mjs';
 import { registerExitIntentActions } from './lib/exit-intent.mjs';
 
 const register = (cb) => hooks.addAction(constants.REGISTER, cb, 100);
-window.sitchco = {
+window.sitchco = Object.assign(window.sitchco || {}, {
     constants,
     hooks,
     util,
@@ -22,7 +22,7 @@ window.sitchco = {
     register,
     updateLayout,
     scrollWatch,
-};
+});
 
 // Init listeners
 hooks.addAction(
