@@ -73,7 +73,7 @@ class AcfOptions extends Module
             ? file_get_contents($target)
             : file_get_contents(SITCHCO_CORE_TEMPLATES_DIR . '/options-class.php.tpl');
         $property_lines = array_map(function ($field) {
-            $type = $this->acfFieldTypeToPhpType($field['type']);
+            $type = $this->acfFieldTypeToPhpType($field);
             return " * @property $type \${$field['name']} {$field['label']}";
         }, $field_group['fields']);
         $template = str_replace(['[namespace]', '[class_name]'], [$namespace, $class_name], $template);
@@ -89,23 +89,32 @@ class AcfOptions extends Module
     /**
      * Map an ACF field type to a PHPDoc type.
      *
-     * @param string $acf_type The ACF field type (e.g. 'text', 'image', 'true_false').
+     * @param array $acf_type The ACF field
      * @return string The corresponding PHP type for annotations.
      */
-    protected function acfFieldTypeToPhpType(string $acf_type): string
+    protected function acfFieldTypeToPhpType(array $acf_field): string
     {
-        return match ($acf_type) {
+        $return_type = match ($acf_field['return_format']) {
+            'id' => 'int',
+            'url' => 'string',
+            'array' => 'array',
+            default => null,
+        };
+        return match ($acf_field['type']) {
             // Simple scalars
             'text', 'textarea', 'email', 'url', 'password', 'wysiwyg', 'select' => 'string',
+
             'number', 'range' => 'float',
+
             'true_false', 'checkbox', 'radio' => 'bool',
             // could also be DateTimeInterface
             'date_picker', 'date_time_picker', 'time_picker' => 'string',
             // Media and attachments
-            // or 'array|string|int' depending on return format
-            'image', 'file' => 'array',
+            // 'array|string|int' depending on return format
+            'image', 'file' => $return_type,
             // Post and relationship fields
             'post_object', 'page_link', 'relationship' => 'WP_Post|array',
+
             'taxonomy' => 'array|string',
             // Complex types
             'group', 'repeater', 'flexible_content' => 'array',
