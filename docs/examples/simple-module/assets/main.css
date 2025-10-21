@@ -1,0 +1,19 @@
+/**
+ * Simple Module Styles
+ *
+ * Example stylesheet for SimpleModule.
+ */
+
+.simple-module-notice {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    background-color: #f0f0f0;
+    border-left: 4px solid #0073aa;
+    font-size: 0.875rem;
+    color: #333;
+}
+
+.simple-module-notice::before {
+    content: 'ℹ️ ';
+    margin-right: 0.5rem;
+}
