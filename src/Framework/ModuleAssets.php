@@ -251,18 +251,6 @@ class ModuleAssets
         return $this->assetUrlRelative("images/$relative");
     }
 
-    public function inlineSVGSymbol(string $name): string
-    {
-        if (!$this->isDevServer) {
-            return '<svg><use fill="currentColor" href="#' . $name . '"></use></svg>';
-        }
-        $svgFile = $this->moduleAssetsPath->append("assets/images/svg-sprite/$name.svg");
-        if (!$svgFile->exists()) {
-            return "<!-- SVG Symbol $name not found -->";
-        }
-        return file_get_contents($svgFile->value());
-    }
-
     public function productionAssetsPath()
     {
         return $this->productionBuildPath?->append('dist');

@@ -1,0 +1,13 @@
+{
+    "name": "sitchco/icon",
+    "title": "Icon",
+    "description": "A Gutenberg block for displaying a registered SVG icon.",
+    "category": "sitchco",
+    "keywords": ["icon", "svg", "acf"],
+    "icon": "info-outline",
+    "acf": {
+        "mode": "preview",
+        "renderCallback": "Sitchco\\Modules\\TimberModule::blockRenderCallback"
+    },
+    "supports": {}
+}
