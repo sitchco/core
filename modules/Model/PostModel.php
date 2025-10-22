@@ -17,8 +17,8 @@ class PostModel extends Module
 
     public function init(): void
     {
-        add_filter('acf/format_value/type=date_picker', [$this, 'transformDatePicker'], 11, 1);
-        add_filter('acf/format_value/type=date_time_picker', [$this, 'transformDatePicker'], 11, 1);
+        add_filter('acf/format_value/type=date_picker', [$this, 'transformDatePicker'], 1, 1);
+        add_filter('acf/format_value/type=date_time_picker', [$this, 'transformDatePicker'], 1, 1);
     }
 
     /**
