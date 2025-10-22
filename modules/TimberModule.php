@@ -38,12 +38,27 @@ class TimberModule extends Module
      * @param array $block Full block attributes and settings
      * @return void
      */
-    public static function blockRenderCallback(array $block): void
-    {
+    public static function blockRenderCallback(
+        array $block,
+        string $content = '',
+        bool $is_preview = false,
+        int $post_id = 0,
+        $wp_block = null,
+    ): void {
         $context = Timber::context();
-        $context['post'] = Timber::get_post();
-        $context['block'] = $block;
+        $context['post'] = $post_id ? Timber::get_post($post_id) : Timber::get_post();
         $context['fields'] = get_fields();
+        $context['is_preview'] = $is_preview;
+        $context['content'] = $content;
+
+        if ($wp_block instanceof \WP_Block) {
+            $childBlocks = iterator_to_array($wp_block->inner_blocks);
+            $block['innerBlocks'] = array_map(static fn(\WP_Block $child) => $child->parsed_block, $childBlocks);
+        } elseif (!isset($block['innerBlocks']) && $content) {
+            $block['innerBlocks'] = parse_blocks($content);
+        }
+
+        $context['block'] = $block;
         // Parent theme context inclusion
         $context = static::loadBlockContext($context, $block['path']);
         // Child theme context inclusion

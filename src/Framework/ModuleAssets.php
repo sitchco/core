@@ -53,7 +53,7 @@ class ModuleAssets
             static::$manifestCache[$manifestKey] = json_decode(file_get_contents($manifestPath), true);
         }
         $manifest = static::$manifestCache[$manifestKey];
-        $assetKey = $assetPath->relativeTo($this->productionBuildPath);
+        $assetKey = $assetPath->relativeTo($this->productionBuildPath->value());
         if (!isset($manifest[$assetKey])) {
             return null;
         }
@@ -190,19 +190,47 @@ class ModuleAssets
             return $metadata;
         }
         $isScript = str_ends_with(strtolower($fieldName), 'script');
-        $assetPaths = is_array($metadata[$fieldName]) ? $metadata[$fieldName] : [$metadata[$fieldName]];
+        $wasArray = is_array($metadata[$fieldName]);
+        $assetPaths = $wasArray ? $metadata[$fieldName] : [$metadata[$fieldName]];
         $assetPaths = array_filter($assetPaths);
-        foreach ($assetPaths as $index => &$assetPath) {
+        $handles = [];
+
+        foreach ($assetPaths as $index => $assetPath) {
             $fullPath = $this->blockAssetPath($blockPath, $assetPath);
-            $assetPath = $this->assetUrl($fullPath);
-            // For dev server mode, unhook from metadata and manually register as module script
-            if ($isScript && $this->isDevServer) {
-                register_block_script_module_id($metadata, $fieldName, $index);
-                $assetPath = null;
+            $url = $this->assetUrl($fullPath);
+
+            if (empty($url)) {
+                continue;
             }
+
+            // Generate a unique handle for this asset
+            $handle = $this->generateAssetHandle($metadata['name'], $fieldName, $index);
+
+            // Register the asset with WordPress
+            if ($isScript) {
+                if ($this->isDevServer) {
+                    wp_register_script_module($handle, $url, [], null);
+                } else {
+                    wp_register_script($handle, $url, [], null, true);
+                }
+            } else {
+                wp_register_style($handle, $url, [], null);
+            }
+
+            $handles[] = $handle;
         }
-        $metadata[$fieldName] = $assetPaths;
+
+        // Preserve original format: if it was a string, return first handle; if array, return array of handles
+        $metadata[$fieldName] = $wasArray ? $handles : $handles[0] ?? '';
         return $metadata;
+    }
+
+    private function generateAssetHandle(string $blockName, string $fieldName, int $index): string
+    {
+        // Convert block name to handle-safe format: roundabout/content-slider -> roundabout-content-slider
+        $blockSlug = str_replace('/', '-', $blockName);
+        $suffix = $index > 0 ? "-{$index}" : '';
+        return "{$blockSlug}-{$fieldName}{$suffix}";
     }
 
     private function assetUrl(FilePath $assetPath): string
@@ -271,6 +299,7 @@ class ModuleAssets
     public function blockAssetPath(string $blockPath, string $relativePath): FilePath
     {
         $relativePath = str_replace('file:', '', $relativePath);
+        $relativePath = ltrim($relativePath, './');
         return $this->blocksPath->append($blockPath)->append($relativePath);
     }
 

@@ -9,10 +9,11 @@ use Sitchco\Support\FilePath;
  * Class BlockRegistrationModuleExtension
  * This extension checks for a blocks folder in each module. If a blocks-config.php file exists,
  * it loads it; otherwise it globs the folders (verifying that each contains a block.json file),
- * generates a configuration array mapping block names to their directory names (relative to the blocks folder),
- * writes it to blocks-config.php for future use, and then registers the blocks using register_block_type.
- * This provides a hybrid approach that automates block discovery during development while
- * ensuring performance in production.
+ * reads the block name from each block.json, and generates a configuration array mapping
+ * block names (e.g., 'acf/my-block') to their directory names (relative to the blocks folder).
+ * It writes this configuration to blocks-config.php for future use, and then registers the blocks
+ * using register_block_type. This provides a hybrid approach that automates block discovery during
+ * development while ensuring performance in production.
  *
  * @package Sitchco\ModuleExtension
  */
@@ -65,10 +66,14 @@ class BlockRegistrationModuleExtension implements ModuleExtension
                     foreach ($directories as $dir) {
                         $blockJsonPath = (new FilePath($dir))->append('block.json');
                         if ($blockJsonPath->isFile()) {
-                            // Use the directory name as the block identifier.
-                            $blockName = basename($dir);
-                            // Store only the relative directory name.
-                            $blocksConfig[$blockName] = $blockName;
+                            // Read the block.json to get the actual block name
+                            $blockJson = json_decode(file_get_contents($blockJsonPath), true);
+                            if ($blockJson && isset($blockJson['name'])) {
+                                // Use the block name from block.json as the key
+                                $blockName = $blockJson['name'];
+                                // Store the directory name as the value for path resolution
+                                $blocksConfig[$blockName] = basename($dir);
+                            }
                         }
                     }
                 }
@@ -79,13 +84,15 @@ class BlockRegistrationModuleExtension implements ModuleExtension
                 file_put_contents($configFilePath, $phpContent);
             }
 
+            // Register the filter BEFORE registering blocks so it can transform asset paths
+            $module->filterBlockAssets($blocksConfig);
+
             // Register each block using register_block_type which accepts a directory containing block.json.
             foreach ($blocksConfig as $blockName => $relativeDir) {
                 // Rebuild the full path using the base blocks directory and the relative directory.
                 $fullPath = $blocksPath->append($relativeDir)->value();
                 register_block_type($fullPath);
             }
-            $module->filterBlockAssets($blocksConfig);
         }
     }
 

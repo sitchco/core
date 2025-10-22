@@ -148,7 +148,7 @@ class ModuleAssetsTest extends TestCase
     public function test_blockTypeMetadata()
     {
         $metadata = [
-            'name' => 'test-block',
+            'name' => 'acf/test-block',
             'script' => ['test1.js', 'test2.js'],
             'editorScript' => 'test-editor.js',
             'viewScript' => '',
@@ -158,50 +158,89 @@ class ModuleAssetsTest extends TestCase
             'dependencies' => ['jquery', 'sitchco/test-lib'],
         ];
         $blocksConfig = [
-            'test-block' => 'test-block',
+            'acf/test-block' => 'test-block',
         ];
         $updatedProd = $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
         $this->assertEquals(
             [
-                'name' => 'test-block',
-                'script' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test1-abcde.js',
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test2-abcde.js',
-                ],
-                'editorScript' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test-editor-abcde.js',
-                ],
-                'viewScript' => [],
-                'style' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test-abcde.css',
-                ],
-                'editorStyle' => [],
-                'viewStyle' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test-view-abcde.css',
-                ],
+                'name' => 'acf/test-block',
+                'script' => ['acf-test-block-script', 'acf-test-block-script-1'],
+                'editorScript' => 'acf-test-block-editorScript',
+                'viewScript' => '',
+                'style' => ['acf-test-block-style'],
+                'editorStyle' => '',
+                'viewStyle' => 'acf-test-block-viewStyle',
                 'dependencies' => ['jquery', 'sitchco/test-lib'],
             ],
             $updatedProd,
         );
+
+        // Verify the handles were registered with correct URLs
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test1-abcde.js',
+            wp_scripts()->registered['acf-test-block-script']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test2-abcde.js',
+            wp_scripts()->registered['acf-test-block-script-1']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test-editor-abcde.js',
+            wp_scripts()->registered['acf-test-block-editorScript']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test-abcde.css',
+            wp_styles()->registered['acf-test-block-style']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test-view-abcde.css',
+            wp_styles()->registered['acf-test-block-viewStyle']->src,
+        );
+
         $this->resetWPDependencies();
         $this->devAssets->registerScript('test-lib', 'test-lib.js');
         $updatedDev = $this->devAssets->blockTypeMetadata($metadata, $blocksConfig);
         $this->assertEquals(
             [
-                'name' => 'test-block',
-                'script' => [null, null],
-                'editorScript' => [null],
-                'viewScript' => [],
-                'style' => ['https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test.css'],
-                'editorStyle' => [],
-                'viewStyle' => ['https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-view.css'],
+                'name' => 'acf/test-block',
+                'script' => ['acf-test-block-script', 'acf-test-block-script-1'],
+                'editorScript' => 'acf-test-block-editorScript',
+                'viewScript' => '',
+                'style' => ['acf-test-block-style'],
+                'editorStyle' => '',
+                'viewStyle' => 'acf-test-block-viewStyle',
                 'dependencies' => ['jquery', 'sitchco/test-lib'],
             ],
             $updatedDev,
         );
+
+        // Verify dev server registered as script modules
+        $script_modules = $this->getScriptModuleRegistered();
+        $this->assertEquals(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test1.js',
+            $script_modules['acf-test-block-script']['src'],
+        );
+        $this->assertEquals(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test2.js',
+            $script_modules['acf-test-block-script-1']['src'],
+        );
+        $this->assertEquals(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-editor.js',
+            $script_modules['acf-test-block-editorScript']['src'],
+        );
+
+        // Verify styles registered with dev URLs
+        $this->assertEquals(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test.css',
+            wp_styles()->registered['acf-test-block-style']->src,
+        );
+        $this->assertEquals(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-view.css',
+            wp_styles()->registered['acf-test-block-viewStyle']->src,
+        );
+
         $this->assertViteClientEnqueued();
         $this->assertTrue(wp_script_is('jquery'));
-        $script_modules = $this->getScriptModuleRegistered();
         $this->assertTrue($script_modules['sitchco/test-lib']['enqueue']);
     }
 }
