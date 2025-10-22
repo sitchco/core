@@ -207,12 +207,10 @@ class ModuleAssets
             $handle = $this->generateAssetHandle($metadata['name'], $fieldName, $index);
 
             // Register the asset with WordPress
+            // Use regular script registration for both dev and production
+            // WordPress's block system expects regular script handles, not script modules
             if ($isScript) {
-                if ($this->isDevServer) {
-                    wp_register_script_module($handle, $url, [], null);
-                } else {
-                    wp_register_script($handle, $url, [], null, true);
-                }
+                wp_register_script($handle, $url, [], null, true);
             } else {
                 wp_register_style($handle, $url, [], null);
             }
@@ -305,10 +303,19 @@ class ModuleAssets
 
     private function enqueueViteClient(): void
     {
-        if (doing_action('enqueue_block_assets')) {
-            $namespace = $this->productionBuildPath->name();
-            wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
+        if (!$this->isDevServer) {
+            return;
         }
+
+        $namespace = $this->productionBuildPath->name();
+        $handle = "$namespace/vite-client";
+
+        // Only enqueue if not already enqueued
+        if (wp_script_is($handle, 'enqueued')) {
+            return;
+        }
+
+        wp_enqueue_script_module($handle, $this->devBuildUrl . '/@vite/client', [], null);
     }
 
     private function namespacedHandle(string $handle): string
