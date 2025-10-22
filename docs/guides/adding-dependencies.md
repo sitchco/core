@@ -55,7 +55,7 @@ Registration:
 
 ### TimberModule (For Custom Post Types)
 
-**Use when:** Creating custom post types with Timber post classes
+**Use when:** Creating custom post types with Timber post classes (post types registered through ACF Pro)
 
 ```php
 use Sitchco\Modules\PostModel\TimberModule;

@@ -755,7 +755,7 @@ $module = new EventModule($mockRepo);
 
 **Test:** Complete WordPress integration.
 
-**Verify:** Hooks registered, post types created, assets enqueued.
+**Verify:** Hooks registered, post types created (via ACF Pro), assets enqueued.
 
 ## Debugging
 

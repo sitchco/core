@@ -206,15 +206,16 @@ public function init(): void
 }
 
 // This method is called later when WordPress fires 'init' hook
-public function registerPostType(): void
-{
-    register_post_type('event', [ /* ... */ ]);
-}
+    public function registerPostType(): void
+    {
+        // Post type registration handled through ACF Pro UI
+        // No PHP registration needed - ACF Pro handles this
+    }
 ```
 
 **Details:**
 - Always called, regardless of feature flags
-- Use for registering post types, taxonomies, hooks, etc.
+- Use for registering hooks, etc. (post types and taxonomies handled through ACF Pro)
 - Can be empty if module only uses feature methods
 - Called after DI container has resolved all dependencies
 - Called during the ModuleRegistry initialization pass
@@ -713,11 +714,9 @@ class EventModule extends Module
 
     public function registerPostType(): void
     {
-        register_post_type('event', [
-            'label' => 'Events',
-            'public' => true,
-            'supports' => ['title', 'editor', 'thumbnail'],
-        ]);
+        // Post type registration handled through ACF Pro UI
+        // No PHP registration needed - ACF Pro handles this
+        // This method can be used for additional setup if needed
     }
 
     public function registerBlocks(): void

@@ -1,10 +1,10 @@
 # Custom Post Type Module Example
 
-A comprehensive example demonstrating custom post type registration with Timber integration, repository pattern, and admin customizations.
+A comprehensive example demonstrating custom post type setup with Timber integration, repository pattern, and admin customizations (registration handled through ACF Pro).
 
 ## What This Example Shows
 
-- Custom post type registration
+- Custom post type setup (registration through ACF Pro)
 - Timber post class integration
 - Repository pattern for data access
 - Feature flags for optional functionality
@@ -22,7 +22,7 @@ A comprehensive example demonstrating custom post type registration with Timber 
 ## Features Demonstrated
 
 ### Core Functionality
-- Custom post type registration (`event`)
+- Custom post type setup (`event` - registered through ACF Pro)
 - Timber integration with custom post class
 - Repository pattern for querying events
 
@@ -65,11 +65,9 @@ class ProductModule extends Module
 
     public function registerPostType(): void
     {
-        register_post_type('product', [  // Change 'event' to 'product'
-            'label' => 'Products',
-            'public' => true,
-            'supports' => ['title', 'editor', 'thumbnail'],
-        ]);
+        // Post type registration handled through ACF Pro UI
+        // Change 'event' to 'product' in ACF Pro field group settings
+        // This method can be used for additional setup if needed
     }
 }
 ```
@@ -271,7 +269,7 @@ $upcomingEvents = $repo->findUpcoming();
 
 ## Next Steps
 
-- Add taxonomy (e.g., event categories)
+- Add taxonomy (e.g., event categories - registered through ACF Pro)
 - Create custom Gutenberg block for events
 - Add frontend templates
 - Implement search and filtering

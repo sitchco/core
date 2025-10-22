@@ -547,6 +547,94 @@ class GalleryModule extends Module
 
 ---
 
+## CSS Authoring with PostCSS
+
+This framework uses PostCSS in the build process, which allows you to write modern CSS with nested selectors for better organization and maintainability.
+
+### Nested Selectors
+
+Use the `&` symbol to reference the parent selector:
+
+```css
+/* Instead of this */
+.button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+}
+.button:hover {
+    background-color: #005a87;
+}
+.button:focus {
+    outline: 2px solid #0073aa;
+}
+
+/* Use this */
+.button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 4px;
+
+    &:hover {
+        background-color: #005a87;
+    }
+
+    &:focus {
+        outline: 2px solid #0073aa;
+    }
+}
+```
+
+### Benefits of Nested CSS
+
+- **Organization:** Related styles are grouped together
+- **Readability:** Clear visual hierarchy of selectors
+- **Maintainability:** Easier to modify component variants
+- **DRY:** Reduces repetition of parent selectors
+
+### Example: Component Variants
+
+```css
+.gallery {
+    display: grid;
+    gap: 1rem;
+
+    &__item {
+        position: relative;
+        overflow: hidden;
+        border-radius: 8px;
+
+        &:hover {
+            transform: scale(1.02);
+        }
+    }
+
+    &__caption {
+        padding: 0.75rem;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+
+        &--centered {
+            text-align: center;
+        }
+    }
+
+    // Layout variants
+    &--grid {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    &--masonry {
+        column-count: 3;
+        column-gap: 1rem;
+    }
+}
+```
+
+**See:** [Simple Module Example](../examples/simple-module/assets/main.css) for a working example of nested CSS.
+
+---
+
 ## Related
 
 - [Common Patterns - Module with Assets](common-patterns.md#3-module-with-assets)

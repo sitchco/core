@@ -158,12 +158,9 @@ class EventModule extends Module
 
     public function registerPostType(): void
     {
-        register_post_type('event', [
-            'label' => 'Events',
-            'public' => true,
-            'supports' => ['title', 'editor', 'thumbnail'],
-            'show_in_rest' => true,
-        ]);
+        // Post type registration handled through ACF Pro UI
+        // No PHP registration needed - ACF Pro handles this
+        // This method can be used for additional setup if needed
     }
 }
 ```
@@ -438,7 +435,7 @@ class EventModule extends Module
 | Add WordPress hooks | [#1](#1-simple-module) | Module class only |
 | Use another module's functionality | [#2](#2-module-with-dependencies) | `DEPENDENCIES` constant |
 | Load CSS/JS | [#3](#3-module-with-assets) | Assets folder + enqueue |
-| Create custom post type | [#4](#4-custom-post-type-module) | `POST_CLASSES` + registration |
+| Create custom post type | [#4](#4-custom-post-type-module) | `POST_CLASSES` + ACF Pro registration |
 | Add Gutenberg blocks | [#5](#5-module-with-gutenberg-blocks) | `blocks/` directory |
 | Enable optional features | [#6](#6-module-with-feature-flags) | `FEATURES` + config |
 | Inject services/repos | [#7](#7-module-with-dependency-injection) | Constructor params |

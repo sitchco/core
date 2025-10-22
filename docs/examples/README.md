@@ -21,7 +21,7 @@ A minimal module example showing basic structure and asset management.
 ### 2. Custom Post Type Module
 **Directory:** `custom-post-type-module/`
 
-A complete example showing custom post type registration with Timber integration.
+A complete example showing custom post type setup with Timber integration (registration handled through ACF Pro).
 
 **Features:**
 - Custom post type registration
@@ -31,7 +31,7 @@ A complete example showing custom post type registration with Timber integration
 - Admin customizations (feature flags)
 - Asset management
 
-**Use when:** Creating a module with a custom post type.
+**Use when:** Creating a module with a custom post type (registered through ACF Pro).
 
 ---
 

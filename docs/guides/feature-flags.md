@@ -367,7 +367,8 @@ class EventModule extends Module
 
     public function registerPostType(): void
     {
-        register_post_type('event', [/* ... */]);
+        // Post type registration handled through ACF Pro UI
+        // No PHP registration needed
     }
 
     public function addColumn($columns): array

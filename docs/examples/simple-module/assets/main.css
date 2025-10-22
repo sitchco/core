@@ -2,6 +2,9 @@
  * Simple Module Styles
  *
  * Example stylesheet for SimpleModule.
+ * 
+ * This file uses PostCSS with nested selectors for better organization.
+ * The build process will compile this to standard CSS.
  */
 
 .simple-module-notice {
@@ -11,9 +14,25 @@
     border-left: 4px solid #0073aa;
     font-size: 0.875rem;
     color: #333;
-}
 
-.simple-module-notice::before {
-    content: 'ℹ️ ';
-    margin-right: 0.5rem;
+    &::before {
+        content: 'ℹ️ ';
+        margin-right: 0.5rem;
+    }
+
+    // Variants using nested selectors
+    &.success {
+        border-left-color: #46b450;
+        background-color: #f0f8f0;
+    }
+
+    &.error {
+        border-left-color: #dc3232;
+        background-color: #fdf0f0;
+    }
+
+    &.warning {
+        border-left-color: #ffb900;
+        background-color: #fdf8e0;
+    }
 }

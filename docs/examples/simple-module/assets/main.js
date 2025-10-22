@@ -4,6 +4,8 @@
  * Example script for SimpleModule.
  */
 
+/* global jQuery, document, console */
+
 (function ($) {
     'use strict';
 

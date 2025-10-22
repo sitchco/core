@@ -114,7 +114,7 @@ class EventModule extends Module
 }
 ```
 
-**Most commonly depended upon** by modules creating custom post types.
+**Most commonly depended upon** by modules working with custom post types created through ACF Pro.
 
 ---
 
@@ -123,7 +123,7 @@ class EventModule extends Module
 **Class:** `Sitchco\Modules\Model\TermModel`
 **File:** `modules/Model/TermModel.php`
 
-Provides Timber integration for taxonomy terms.
+Provides Timber integration for taxonomy terms created through ACF Pro.
 
 **Features:**
 - Custom term class mapping
@@ -214,11 +214,11 @@ Adds dropdown filters for ACF fields in admin post lists.
 Manages ACF options pages.
 
 **Features:**
-- Register ACF options pages
+- Register ACF options pages through ACF Pro's UI
 - Site-wide settings management
 - Option page utilities
 
-**Dependency for:** Modules creating theme options or global settings.
+**Dependency for:** Modules creating theme options or global settings through ACF Pro.
 
 ---
 

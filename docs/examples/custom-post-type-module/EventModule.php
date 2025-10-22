@@ -2,8 +2,10 @@
 /**
  * Event Module Example
  *
- * Demonstrates custom post type registration with Timber integration,
+ * Demonstrates custom post type setup with Timber integration,
  * repository pattern, and admin customizations.
+ *
+ * Note: Post type and taxonomy registration are handled through ACF Pro UI.
  */
 
 namespace Sitchco\App\Modules\Event;
@@ -72,52 +74,28 @@ class EventModule extends Module
 
     /**
      * Register the Event post type
+     *
+     * Note: Post type registration is handled through ACF Pro UI.
+     * This method can be used for additional setup if needed.
      */
     public function registerPostType(): void
     {
-        register_post_type('event', [
-            'labels' => [
-                'name' => 'Events',
-                'singular_name' => 'Event',
-                'add_new' => 'Add New Event',
-                'add_new_item' => 'Add New Event',
-                'edit_item' => 'Edit Event',
-                'new_item' => 'New Event',
-                'view_item' => 'View Event',
-                'search_items' => 'Search Events',
-                'not_found' => 'No events found',
-                'not_found_in_trash' => 'No events found in trash',
-            ],
-            'public' => true,
-            'has_archive' => true,
-            'supports' => ['title', 'editor', 'thumbnail', 'excerpt'],
-            'menu_icon' => 'dashicons-calendar-alt',
-            'rewrite' => ['slug' => 'events'],
-            'show_in_rest' => true, // Enable Gutenberg editor
-        ]);
+        // Post type registration handled through ACF Pro UI
+        // No PHP registration needed - ACF Pro handles this
+        // This method can be used for additional setup if needed
     }
 
     /**
      * Register Event Category taxonomy
+     *
+     * Note: Taxonomy registration is handled through ACF Pro UI.
+     * This method can be used for additional setup if needed.
      */
     public function registerTaxonomy(): void
     {
-        register_taxonomy('event_category', 'event', [
-            'labels' => [
-                'name' => 'Event Categories',
-                'singular_name' => 'Event Category',
-                'search_items' => 'Search Categories',
-                'all_items' => 'All Categories',
-                'edit_item' => 'Edit Category',
-                'update_item' => 'Update Category',
-                'add_new_item' => 'Add New Category',
-                'new_item_name' => 'New Category Name',
-            ],
-            'hierarchical' => true,
-            'show_admin_column' => true,
-            'show_in_rest' => true,
-            'rewrite' => ['slug' => 'event-category'],
-        ]);
+        // Taxonomy registration handled through ACF Pro UI
+        // No PHP registration needed - ACF Pro handles this
+        // This method can be used for additional setup if needed
     }
 
     /**
