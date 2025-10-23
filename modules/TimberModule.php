@@ -4,6 +4,7 @@ namespace Sitchco\Modules;
 
 use Sitchco\Framework\Module;
 
+use Sitchco\Support\DateTime;
 use Timber\Timber;
 use Sitchco\Utils\TimberUtil;
 
@@ -29,6 +30,22 @@ class TimberModule extends Module
             ];
             return $functions;
         });
+        add_filter('timber/meta/transform_value', '__return_true');
+        add_filter('acf/format_value/type=date_picker', [$this, 'transformDatePicker'], 20);
+        add_filter('acf/format_value/type=date_time_picker', [$this, 'transformDatePicker'], 20);
+    }
+
+    /**
+     * Transform ACF date picker field
+     * @param mixed $value
+     * @return DateTime|string
+     */
+    public static function transformDatePicker(mixed $value): DateTime|string
+    {
+        if (!$value instanceof \DateTimeImmutable) {
+            return $value;
+        }
+        return new DateTime($value);
     }
 
     /**
