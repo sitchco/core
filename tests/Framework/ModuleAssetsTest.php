@@ -141,7 +141,10 @@ class ModuleAssetsTest extends TestCase
         ob_start();
         do_action('wp_head');
         $html_out = ob_get_clean();
-        $this->assertStringContainsString('<script>window.test = {"key":"value"};</script>', $html_out);
+        $this->assertStringContainsString(
+            '<script>window.sitchco = window.sitchco || {}; window.sitchco.test = {"key":"value"};</script>',
+            $html_out,
+        );
         $this->assertViteClientEnqueued();
     }
 
