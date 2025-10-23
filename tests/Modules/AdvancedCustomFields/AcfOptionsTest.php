@@ -14,7 +14,14 @@ class AcfOptionsTest extends TestCase
         $field_group = [
             'key' => 'group_test',
             'title' => 'Test Options',
-            'fields' => [['type' => 'text', 'name' => 'test_field', 'label' => 'Test Field']],
+            'fields' => [
+                [
+                    'type' => 'text',
+                    'name' => 'test_field',
+                    'label' => 'Test Field',
+                    'return_format' => '',
+                ],
+            ],
             'location' => [[['param' => 'post_type', 'operator' => '==', 'value' => 'page']]],
         ];
         $modified = apply_filters('acf/prepare_field_group_for_export', $field_group);
