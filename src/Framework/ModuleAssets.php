@@ -22,6 +22,8 @@ class ModuleAssets
 
     private static array $manifestCache = [];
 
+    private static bool $hooked = false;
+
     public function __construct(Module $module, $devServerFile = SITCHCO_DEV_HOT_FILE)
     {
         $this->moduleAssetsPath = $module->assetsPath();
@@ -38,7 +40,18 @@ class ModuleAssets
             $devBuildUrl = file_get_contents($this->devBuildPath->append($devServerFile));
             $port = parse_url($devBuildUrl, PHP_URL_PORT) ?: 5173;
             $this->devBuildUrl = "https://{$_SERVER['HTTP_HOST']}:$port";
+            if (!self::$hooked) {
+                add_filter('wp_script_attributes', [$this, 'devServerScriptAttributes']);
+            }
         }
+    }
+
+    public function devServerScriptAttributes(array $attributes): array
+    {
+        if ($this->isDevServer && str_starts_with($attributes['src'], $this->devBuildUrl)) {
+            $attributes['type'] = 'module';
+        }
+        return $attributes;
     }
 
     protected function buildAssetPath(FilePath $assetPath): ?FilePath
@@ -68,9 +81,6 @@ class ModuleAssets
             return;
         }
         wp_register_script($handle, $src, $deps);
-        if ($this->isDevServer) {
-            wp_register_script_module($handle, $src, $deps);
-        }
     }
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
@@ -79,18 +89,8 @@ class ModuleAssets
         if ($src) {
             $src = $this->scriptUrl($src);
         }
-        if (!$this->isDevServer) {
-            wp_enqueue_script($handle, $src, $deps);
-            return;
-        }
+        wp_enqueue_script($handle, $src, $deps);
         $this->enqueueViteClient();
-        // fetch registered dependencies
-        $registered = wp_scripts()->registered[$handle] ?? null;
-        if ($registered) {
-            $deps = $registered->deps;
-        }
-        $this->enqueueDependencies($deps);
-        wp_enqueue_script_module($handle, $src, $deps);
     }
 
     public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
@@ -125,9 +125,7 @@ class ModuleAssets
                 '6.1.0',
             );
         }
-        if ($this->isDevServer) {
-            $this->enqueueViteClient();
-        }
+        $this->enqueueViteClient();
         $url = $this->styleUrl($src);
         if (!$url) {
             return;
@@ -173,36 +171,37 @@ class ModuleAssets
         if (!$blockPath) {
             return $metadata;
         }
-        if ($this->isDevServer) {
-            $this->enqueueViteClient();
-            // Enqueue block dependencies first
-            $this->enqueueDependencies($metadata['dependencies'] ?? []);
-        }
+        $this->enqueueViteClient();
         foreach (static::BLOCK_METADATA_FIELDS as $fieldName) {
-            $metadata = $this->updateBlockAssets($metadata, $fieldName, $blockPath);
+            $this->updateBlockAssets($metadata, $fieldName, $blockPath);
         }
         return $metadata;
     }
 
-    private function updateBlockAssets(array $metadata, string $fieldName, string $blockPath): array
+    private function updateBlockAssets(array $metadata, string $fieldName, string $blockPath): void
     {
         if (!isset($metadata[$fieldName])) {
-            return $metadata;
+            return;
         }
         $isScript = str_ends_with(strtolower($fieldName), 'script');
         $assetPaths = is_array($metadata[$fieldName]) ? $metadata[$fieldName] : [$metadata[$fieldName]];
         $assetPaths = array_filter($assetPaths);
-        foreach ($assetPaths as $index => &$assetPath) {
+        foreach ($assetPaths as $index => $assetPath) {
             $fullPath = $this->blockAssetPath($blockPath, $assetPath);
-            $assetPath = $this->assetUrl($fullPath);
+            $assetUrl = $this->assetUrl($fullPath);
+            if (!$assetUrl) {
+                continue;
+            }
+            $handle = generate_block_asset_handle($metadata['name'], $fieldName, $index);
+
             // For dev server mode, unhook from metadata and manually register as module script
-            if ($isScript && $this->isDevServer) {
-                register_block_script_module_id($metadata, $fieldName, $index);
-                $assetPath = null;
+            if ($isScript) {
+                $args = 'viewScript' === $fieldName ? ['strategy' => 'defer'] : [];
+                wp_register_script($handle, $assetUrl, [], $metadata['version'] ?? null, $args);
+            } else {
+                wp_register_style($handle, $assetUrl, [], $metadata['version'] ?? null);
             }
         }
-        $metadata[$fieldName] = $assetPaths;
-        return $metadata;
     }
 
     private function assetUrl(FilePath $assetPath): string
@@ -259,15 +258,17 @@ class ModuleAssets
     public function blockAssetPath(string $blockPath, string $relativePath): FilePath
     {
         $relativePath = str_replace('file:', '', $relativePath);
+        $relativePath = ltrim($relativePath, './');
         return $this->blocksPath->append($blockPath)->append($relativePath);
     }
 
     private function enqueueViteClient(): void
     {
-        if (doing_action('enqueue_block_assets')) {
-            $namespace = $this->productionBuildPath->name();
-            wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
+        if (!$this->isDevServer) {
+            return;
         }
+        $namespace = $this->productionBuildPath->name();
+        wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
     }
 
     private function namespacedHandle(string $handle): string
@@ -276,17 +277,5 @@ class ModuleAssets
             $handle = HookName::join($this->namespace, $handle);
         }
         return $handle;
-    }
-
-    private function enqueueDependencies(array $dependencies): void
-    {
-        foreach ($dependencies as $dep) {
-            // only treat our dependencies as modules
-            if (str_starts_with($dep, Hooks::ROOT)) {
-                wp_enqueue_script_module($dep);
-            } else {
-                wp_enqueue_script($dep);
-            }
-        }
     }
 }

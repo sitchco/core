@@ -1,0 +1,10 @@
+{
+    "name": "sitchco/test-block",
+    "script": ["file:./test1.js", "file:./test2.js"],
+    "editorScript": "file:./test-editor.js",
+    "viewScript": "",
+    "style": ["file:./test.css"],
+    "editorStyle": "",
+    "viewStyle": "file:./test-view.css",
+    "dependencies": ["jquery", "sitchco/test-lib"]
+}

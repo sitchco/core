@@ -15,6 +15,7 @@ class ModuleAssetsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        add_theme_support('html5', ['script', 'style']);
         $this->resetWPDependencies();
         $module = $this->container->get(ModuleTester::class);
         $this->prodAssets = new ModuleAssets($module, SITCHCO_DEV_HOT_FILE);
@@ -24,6 +25,7 @@ class ModuleAssetsTest extends TestCase
     protected function resetWPDependencies(): void
     {
         unset($GLOBALS['wp_scripts'], $GLOBALS['wp_styles'], $GLOBALS['wp_script_modules']);
+        remove_all_actions('wp_footer');
         $GLOBALS['wp_current_filter'] = [];
         wp_scripts();
         wp_styles();
@@ -47,6 +49,15 @@ class ModuleAssetsTest extends TestCase
         $this->assertEquals('https://example.org:5173/@vite/client', $script_modules['tests/vite-client']['src']);
     }
 
+    protected function assertAssetOutputs(\WP_Dependencies $deps, string $handle, string $expected): void
+    {
+        $this->assertTrue($deps->query($handle, 'enqueued'));
+        ob_start();
+        $deps->do_item($handle);
+        $output = ob_get_clean();
+        $this->assertStringStartsWith($expected, $output);
+    }
+
     public function test_creating_from_module()
     {
         $module = $this->container->get(ModuleTester::class);
@@ -64,34 +75,28 @@ class ModuleAssetsTest extends TestCase
         $this->prodAssets->registerScript('test', 'test.js');
         $registered = wp_scripts()->registered['sitchco/test'];
         $this->assertStringEndsWith('dist/assets/test-abcde.js', $registered->src);
+        $this->resetWPDependencies();
         $this->devAssets->registerScript('test', 'test.js');
-        $script = $this->getScriptModuleRegistered()['sitchco/test'];
-        $this->assertFalse($script['enqueue']);
-        $this->assertEquals('https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js', $script['src']);
+        $registered = wp_scripts()->registered['sitchco/test'];
+        $this->assertEquals('https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js', $registered->src);
     }
 
     public function test_enqueueScript()
     {
         $this->prodAssets->enqueueScript('test', 'test.js');
-        $this->assertTrue(wp_script_is('sitchco/test'));
-        $this->devAssets->enqueueScript('test', 'test.js');
-        $script_modules = $this->getScriptModuleRegistered();
-        $this->assertTrue($script_modules['sitchco/test']['enqueue']);
-        $this->assertViteClientEnqueued($script_modules);
-    }
-
-    public function test_enqueueScript_with_dependencies()
-    {
-        $this->prodAssets->enqueueScript('test', 'test.js', ['sitchco/test-lib']);
-        $this->assertTrue(wp_script_is('sitchco/test'));
-        $this->assertTrue(wp_script_is('sitchco/test-lib'));
+        $this->assertAssetOutputs(
+            wp_scripts(),
+            'sitchco/test',
+            '<script src="http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-abcde.js" id="sitchco/test-js">',
+        );
         $this->resetWPDependencies();
-        $this->devAssets->registerScript('test-lib', 'test-lib.js');
-        $this->devAssets->enqueueScript('test', 'test.js', ['jquery', 'sitchco/test-lib']);
-        $this->assertTrue(wp_script_is('jquery'));
-        $script_modules = $this->getScriptModuleRegistered();
-        $this->assertTrue($script_modules['sitchco/test-lib']['enqueue']);
-        $this->assertTrue($script_modules['sitchco/test']['enqueue']);
+        $this->devAssets->enqueueScript('test', 'test.js');
+        $this->assertAssetOutputs(
+            wp_scripts(),
+            'sitchco/test',
+            '<script src="https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js" id="sitchco/test-js" type="module">',
+        );
+        $this->assertViteClientEnqueued();
     }
 
     public function test_registerStyle()
@@ -122,9 +127,26 @@ class ModuleAssetsTest extends TestCase
         $registered = wp_styles()->registered['test-block'];
         $this->assertStringEndsWith('dist/assets/test-block-abcde.css', $registered->src);
         $this->assertStringEndsWith('assets/styles/test-block.css', $registered->extra['path']);
+        $this->assertAssetOutputs(
+            wp_styles(),
+            'test-block',
+            "<link rel='stylesheet' id='test-block-css' href='http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-abcde.css' media='all' />",
+        );
         $this->resetWPDependencies();
         $GLOBALS['wp_current_filter'][] = 'init';
-        $this->devAssets->enqueueBlockStyle('test-block', 'test-block.css');
+        $this->devAssets->enqueueBlockStyle('test-block-dev', 'test-block.css');
+        do_action('wp_enqueue_scripts');
+        $registered = wp_styles()->registered['test-block-dev'];
+        $this->assertStringEndsWith(
+            'https://example.org:5173/Fakes/ModuleTester/assets/styles/test-block.css',
+            $registered->src,
+        );
+        $this->assertStringEndsWith('assets/styles/test-block.css', $registered->extra['path']);
+        $this->assertAssetOutputs(
+            wp_styles(),
+            'test-block-dev',
+            "<link rel='stylesheet' id='test-block-dev-css' href='https://example.org:5173/Fakes/ModuleTester/assets/styles/test-block.css' media='all' />",
+        );
         $this->assertViteClientEnqueued();
     }
 
@@ -150,61 +172,67 @@ class ModuleAssetsTest extends TestCase
 
     public function test_blockTypeMetadata()
     {
-        $metadata = [
-            'name' => 'test-block',
-            'script' => ['test1.js', 'test2.js'],
-            'editorScript' => 'test-editor.js',
-            'viewScript' => '',
-            'style' => ['test.css'],
-            'editorStyle' => '',
-            'viewStyle' => 'test-view.css',
-            'dependencies' => ['jquery', 'sitchco/test-lib'],
-        ];
-        $blocksConfig = [
-            'test-block' => 'test-block',
-        ];
-        $updatedProd = $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
-        $this->assertEquals(
-            [
-                'name' => 'test-block',
-                'script' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test1-abcde.js',
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test2-abcde.js',
-                ],
-                'editorScript' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test-editor-abcde.js',
-                ],
-                'viewScript' => [],
-                'style' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test-abcde.css',
-                ],
-                'editorStyle' => [],
-                'viewStyle' => [
-                    'http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-test-view-abcde.css',
-                ],
-                'dependencies' => ['jquery', 'sitchco/test-lib'],
-            ],
-            $updatedProd,
+        $Module = $this->container->get(ModuleTester::class);
+        $block = $Module->blocksPath()->append('test-block')->value();
+        add_filter(
+            'block_type_metadata',
+            fn($metadata) => $this->prodAssets->blockTypeMetadata($metadata, ['sitchco/test-block' => 'test-block']),
         );
+        register_block_type($block);
+        $registeredScripts = wp_scripts()->registered;
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test1-abcde.js',
+            $registeredScripts['sitchco-test-block-script']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test2-abcde.js',
+            $registeredScripts['sitchco-test-block-script-2']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test-editor-abcde.js',
+            $registeredScripts['sitchco-test-block-editor-script']->src,
+        );
+        $registeredStyles = wp_styles()->registered;
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test-abcde.css',
+            $registeredStyles['sitchco-test-block-style']->src,
+        );
+        $this->assertStringEndsWith(
+            'dist/assets/test-block-test-view-abcde.css',
+            $registeredStyles['sitchco-test-block-view-style']->src,
+        );
+
         $this->resetWPDependencies();
-        $this->devAssets->registerScript('test-lib', 'test-lib.js');
-        $updatedDev = $this->devAssets->blockTypeMetadata($metadata, $blocksConfig);
-        $this->assertEquals(
-            [
-                'name' => 'test-block',
-                'script' => [null, null],
-                'editorScript' => [null],
-                'viewScript' => [],
-                'style' => ['https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test.css'],
-                'editorStyle' => [],
-                'viewStyle' => ['https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-view.css'],
-                'dependencies' => ['jquery', 'sitchco/test-lib'],
-            ],
-            $updatedDev,
+        unregister_block_type('sitchco/test-block');
+        remove_all_filters('block_type_metadata');
+
+        add_filter(
+            'block_type_metadata',
+            fn($metadata) => $this->devAssets->blockTypeMetadata($metadata, ['sitchco/test-block' => 'test-block']),
+        );
+        register_block_type($block);
+        $registeredScripts = wp_scripts()->registered;
+        $this->assertStringEndsWith(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test1.js',
+            $registeredScripts['sitchco-test-block-script']->src,
+        );
+        $this->assertStringEndsWith(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test2.js',
+            $registeredScripts['sitchco-test-block-script-2']->src,
+        );
+        $this->assertStringEndsWith(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-editor.js',
+            $registeredScripts['sitchco-test-block-editor-script']->src,
+        );
+        $registeredStyles = wp_styles()->registered;
+        $this->assertStringEndsWith(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test.css',
+            $registeredStyles['sitchco-test-block-style']->src,
+        );
+        $this->assertStringEndsWith(
+            'https://example.org:5173/Fakes/ModuleTester/blocks/test-block/test-view.css',
+            $registeredStyles['sitchco-test-block-view-style']->src,
         );
         $this->assertViteClientEnqueued();
-        $this->assertTrue(wp_script_is('jquery'));
-        $script_modules = $this->getScriptModuleRegistered();
-        $this->assertTrue($script_modules['sitchco/test-lib']['enqueue']);
     }
 }
