@@ -7,6 +7,7 @@ use Sitchco\Framework\Module;
 use Sitchco\Support\DateTime;
 use Timber\Timber;
 use Sitchco\Utils\TimberUtil;
+use WP_Block;
 
 /**
  * class Timber
@@ -53,6 +54,10 @@ class TimberModule extends Module
      * Used within block.json
      *
      * @param array $block Full block attributes and settings
+     * @param string $content
+     * @param bool $is_preview
+     * @param int $post_id
+     * @param null $wp_block
      * @return void
      */
     public static function blockRenderCallback(
@@ -60,7 +65,7 @@ class TimberModule extends Module
         string $content = '',
         bool $is_preview = false,
         int $post_id = 0,
-        $wp_block = null,
+        WP_Block $wp_block = null,
     ): void {
         $context = Timber::context();
         $context['post'] = $post_id ? Timber::get_post($post_id) : Timber::get_post();
@@ -68,14 +73,14 @@ class TimberModule extends Module
         $context['is_preview'] = $is_preview;
         $context['content'] = $content;
 
-        if ($wp_block instanceof \WP_Block) {
+        if ($wp_block instanceof WP_Block) {
             $childBlocks = iterator_to_array($wp_block->inner_blocks);
-            $block['innerBlocks'] = array_map(static fn(\WP_Block $child) => $child->parsed_block, $childBlocks);
+            $block['innerBlocks'] = array_map(static fn(WP_Block $child) => $child->parsed_block, $childBlocks);
         } elseif (!isset($block['innerBlocks']) && $content) {
             $block['innerBlocks'] = parse_blocks($content);
         }
-
         $context['block'] = $block;
+
         // Parent theme context inclusion
         $context = static::loadBlockContext($context, $block['path']);
         // Child theme context inclusion

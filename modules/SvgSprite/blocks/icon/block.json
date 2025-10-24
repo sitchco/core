@@ -5,9 +5,21 @@
     "category": "sitchco",
     "keywords": ["icon", "svg", "acf"],
     "icon": "info-outline",
+    "style": "file:./style.css",
     "acf": {
         "mode": "preview",
         "renderCallback": "Sitchco\\Modules\\TimberModule::blockRenderCallback"
     },
-    "supports": {}
+    "supports": {
+        "dimensions": {
+            "aspectRatio": true
+        },
+        "spacing": {
+            "margin": true,
+            "padding": true
+        },
+        "typography": {
+            "fontSize": true
+        }
+    }
 }

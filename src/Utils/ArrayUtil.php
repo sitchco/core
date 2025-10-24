@@ -110,6 +110,28 @@ class ArrayUtil
         );
     }
 
+    public static function toCSSProperties(array $arr): string
+    {
+        return implode(
+            '',
+            array_filter(
+                array_map(
+                    function ($value, $key) {
+                        if (empty($value)) {
+                            return '';
+                        }
+                        if (is_array($value)) {
+                            $value = implode(' ', $value);
+                        }
+                        return "$key: $value;";
+                    },
+                    $arr,
+                    array_keys($arr),
+                ),
+            ),
+        );
+    }
+
     /**
      * Computes the difference between two arrays and returns the changes.
      *

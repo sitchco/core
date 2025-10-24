@@ -90,7 +90,7 @@ class SvgSprite extends Module
             'configPath'
         ];
         if (!($this->assets()->isDevServer || $isEditorPreview)) {
-            return '<svg><use fill="currentColor" href="#' . $name . '"></use></svg>';
+            return '<svg aria-hidden="true"><use fill="currentColor" href="#icon-' . $name . '"></use></svg>';
         }
         /* @var ?FilePath $svgFile */
         $svgFile = collect($this->findSvgPaths($configPath, "icon-$name"))->last();
