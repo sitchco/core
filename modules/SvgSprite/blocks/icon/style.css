@@ -1,83 +1,16 @@
-.icon {
-    --sitchco-icon-primary-color: #000;
-    --sitchco-icon-contrast-color: #fff;
+.wp-block-sitchco-icon {
     --sitchco-icon-svg-size: 1.25em;
-    --sitchco-icon-svg-wide-size: 2.5em;
-    --sitchco-icon-large-size: 1.75em;
-
-    --sitchco-icon-square-bg-color: #000;
-    --sitchco-icon-square-color: #fff;
-    --sitchco-icon-square-padding: 0.5em 0.55em;
-    --sitchco-icon-square-padding-large: 0.375em;
-
-    --sitchco-icon-circle-bg-color: #000;
-    --sitchco-icon-circle-color: #fff;
-    --sitchco-icon-circle-inv-bg-color: var(--sitchco-icon-circle-color);
-    --sitchco-icon-circle-inv-color: var(--sitchco-icon-circle-bg-color);
-    --sitchco-icon-circle-padding: 0.5em 0.55em;
-    --sitchco-icon-circle-padding-large: 0.375em;
     --sitchco-icon-transform: rotate(0deg);
     display: inline-block;
     vertical-align: middle;
+}
+
+.sitchco-icon {
+    display: inline-block;
     transform: var(--sitchco-icon-transform);
     svg {
         display: block;
         width: var(--sitchco-icon-svg-size);
         height: var(--sitchco-icon-svg-size);
     }
-
-    /*
-    &.icon-wide svg {
-        width: var(--sitchco-icon-svg-wide-size);
-    }
-    &.icon-style-primary {
-        .icon-use {
-            color: var(--sitchco-icon-primary-color);
-        }
-    }
-    &.icon-style-contrast {
-        .icon-use {
-            color: var(--sitchco-icon-contrast-color);
-        }
-    }*/
 }
-/*.icon-youtube {
-   @extend .icon-wide;
-}
-.icon.icon-style-square {
-    background-color: var(--sitchco-icon-square-bg-color);
-    padding: var(--sitchco-icon-square-padding);
-    margin-top: -.25em;
-    margin-bottom: -.25em;
-    .icon-use {
-        color: var(--sitchco-icon-square-color);
-    }
-    &.icon-style-large {
-        padding: var(--sitchco-icon-square-padding-large);
-        margin-top: 0;
-        margin-bottom: 0;
-    }
-}
-.icon.icon-style-circle {
-    border-radius: 50%;
-    background-color: var(--sitchco-icon-circle-bg-color);
-    padding: var(--sitchco-icon-circle-padding);
-    margin-top: -.25em;
-    margin-bottom: -.25em;
-    .icon-use {
-        color: var(--sitchco-icon-circle-color);
-    }
-    &.icon-style-large {
-        padding: var(--sitchco-icon-circle-padding-large);
-        margin-top: 0;
-        margin-bottom: 0;
-    }
-}
-.icon.icon-style-circle-inverted {
-    @extend .icon, .icon-style-circle;
-    background-color: var(--sitchco-icon-circle-inv-bg-color);
-    .icon-use {
-        color: var(--sitchco-icon-circle-inv-color);
-    }
-}
-*/

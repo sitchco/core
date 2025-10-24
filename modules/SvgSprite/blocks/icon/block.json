@@ -11,6 +11,9 @@
         "renderCallback": "Sitchco\\Modules\\TimberModule::blockRenderCallback"
     },
     "supports": {
+        "color": {
+            "text": true
+        },
         "dimensions": {
             "aspectRatio": true
         },
