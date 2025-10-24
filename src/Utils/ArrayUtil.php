@@ -103,7 +103,12 @@ class ArrayUtil
         return implode(
             ' ',
             array_map(
-                fn($key, $value) => is_array($value) ? "$key=\"" . implode($glue, $value) . "\"" : "$key=\"$value\"",
+                function ($key, $value) use ($glue) {
+                    if (is_array($value)) {
+                        $value = $key == 'style' ? static::toCSSProperties($value) : implode($glue, $value);
+                    }
+                    return sprintf('%s="%s"', $key, $value);
+                },
                 array_keys($arr),
                 $arr,
             ),

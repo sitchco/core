@@ -45,13 +45,13 @@ class SvgSprite extends Module
     }
 
     /**
-     * @param FilePath $configPath
+     * @param ?FilePath $configPath
      * @param string $filename
      * @return array
      */
-    protected function findSvgPaths(FilePath $configPath, string $filename = '*'): array
+    protected function findSvgPaths(?FilePath $configPath, string $filename = '*'): array
     {
-        return $configPath->glob("modules/*/assets/images/svg-sprite/$filename.svg");
+        return $configPath?->glob("modules/*/assets/images/svg-sprite/$filename.svg") ?? [];
     }
 
     /**
@@ -86,9 +86,8 @@ class SvgSprite extends Module
             $this->iconList = apply_filters(static::hookName('icon-list'), []);
         }
         /* @var FilePath $configPath */
-        $configPath = collect($this->iconList)->where(fn($iconList) => in_array($name, $iconList['icons']))->first()[
-            'configPath'
-        ];
+        $foundIconList = collect($this->iconList)->where(fn($iconList) => in_array($name, $iconList['icons']))->first();
+        $configPath = $foundIconList['configPath'] ?? null;
         if (!($this->assets()->isDevServer || $isEditorPreview)) {
             return '<svg aria-hidden="true"><use fill="currentColor" href="#icon-' . $name . '"></use></svg>';
         }

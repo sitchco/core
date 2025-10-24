@@ -89,7 +89,10 @@ class TimberModule extends Module
             $child_path = get_stylesheet_directory() . '/modules/' . $path_parts[1];
             $context = static::loadBlockContext($context, $child_path);
         }
-
+        if ($context['render'] ?? false) {
+            echo $context['render'];
+            return;
+        }
         $template_path = trailingslashit(basename($block['path'])) . 'block.twig';
         $blockNameParts = explode('/', $block['name']);
         $blockName = array_pop($blockNameParts);

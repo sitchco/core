@@ -186,12 +186,14 @@ class Str
      *
      * @param string $content The content to wrap.
      * @param string $tag The HTML tag to use.
-     * @param array $attributes Attributes for the tag.
+     * @param array|string $attributes Attributes for the tag.
      * @return string The wrapped content.
      */
-    public static function wrapElement(string $content, string $tag, array $attributes = []): string
+    public static function wrapElement(string $content, string $tag, array|string $attributes = []): string
     {
-        $attributes = ArrayUtil::toAttributes($attributes);
+        if (is_array($attributes)) {
+            $attributes = ArrayUtil::toAttributes($attributes);
+        }
         return sprintf('<%1$s%2$s>%3$s</%1$s>', $tag, $attributes ? ' ' . $attributes : '', $content);
     }
 }

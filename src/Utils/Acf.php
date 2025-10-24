@@ -92,7 +92,7 @@ class Acf
     public static function linkToAttr(array $field, array $atts = []): array
     {
         return array_filter(
-            [...$field, ...$atts, 'href' => $field['url'] ?? ''],
+            [...$field, ...$atts, 'href' => $field['url'] ?? '', 'url' => null],
             fn($value) => !is_null($value) && $value !== '',
         );
     }
@@ -102,19 +102,28 @@ class Acf
      *
      * @param array $field The ACF field data for generating the link.
      * @param array $atts Additional attributes to apply to the link.
-     * @param string|null $text The link text. If null, the field title is used.
+     * @param string|null $content The link text. If null, the field title is used.
      * @return string The generated <a> element HTML.
      */
-    public static function linkToEl(array $field, array $atts = [], ?string $text = null): string
+    public static function linkToEl(array $field, array $atts = [], ?string $content = null): string
     {
-        $field = self::linkToAttr($field, $atts);
+        [$content, $attributes] = self::linkToElParts($field, $atts, $content);
+        return Str::wrapLink($content, null, $attributes);
+    }
 
-        if ($text === null && !empty($field['title'])) {
-            $text = $field['title'];
-            unset($field['title']); // Remove title attr for accessibility
+    public static function linkToElParts(array $field, array $atts = [], ?string $content = null): array
+    {
+        $attributes = self::linkToAttr($field, $atts);
+
+        if (strip_tags($content) === '' && !empty($attributes['title'])) {
+            if (empty($content)) {
+                $content = $attributes['title'];
+            } else {
+                $attributes['aria-label'] = $attributes['title'];
+            }
+            unset($attributes['title']); // Remove title attr for accessibility
         }
-
-        return sprintf('<a %s>%s</a>', ArrayUtil::toAttributes($field), htmlspecialchars($text, ENT_QUOTES, 'UTF-8'));
+        return compact('content', 'attributes');
     }
 
     /**

@@ -1,14 +1,14 @@
 .wp-block-sitchco-icon {
+    display: inline-block;
+}
+
+.sitchco-icon {
     --sitchco-icon-svg-size: 1.25em;
     --sitchco-icon-svg-width: var(--sitchco-icon-svg-size);
     --sitchco-icon-svg-height: var(--sitchco-icon-svg-size);
     --sitchco-icon-transform: rotate(0deg);
     display: inline-block;
     vertical-align: middle;
-}
-
-.sitchco-icon {
-    display: inline-block;
     transform: var(--sitchco-icon-transform);
     svg {
         display: block;
