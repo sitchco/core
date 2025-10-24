@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'icon' => 'icon',
+    'sitchco/icon' => 'icon',
 ];
