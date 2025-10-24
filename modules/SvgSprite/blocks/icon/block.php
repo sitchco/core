@@ -15,8 +15,6 @@ $rotation = $context['fields']['icon_rotation'] ?? 0;
 
 $transform = $rotation ? "rotate({$rotation}deg)" : null;
 
-$wp_styles = wp_style_engine_get_styles($context['block']['style'] ?? []);
-
 $context['attrs'] = Block::wrapperAttributes(
     [
         'class' => "sitchco-icon sitchco-icon--{$name}",
