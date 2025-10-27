@@ -110,10 +110,8 @@ class ModuleAssets
         if ($src) {
             $src = $this->styleUrl($src);
         }
-        if ($this->isDevServer) {
-            $this->enqueueViteClient();
-        }
         wp_enqueue_style($handle, $src, $deps, null, $media);
+        $this->enqueueViteClient();
     }
 
     public function enqueueBlockStyle(string $blockName, string $src): void
