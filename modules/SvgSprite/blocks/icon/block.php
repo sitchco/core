@@ -23,4 +23,4 @@ $content = Str::wrapElement($content, 'span', [
     'style' => ['--sitchco-icon-transform' => $transform],
 ]);
 
-$context['render'] = Block::wrapperElement($content, [], $context['is_preview'], $context['fields']['icon_link']);
+$context['render'] = Block::wrapperElement($content, [], $context['is_preview'], $context['fields']['icon_link'] ?: []);
