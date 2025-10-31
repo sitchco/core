@@ -2,17 +2,16 @@
 
 namespace Sitchco\ModuleExtension;
 
+use Sitchco\Framework\BlockManifestRegistry;
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
 
 /**
  * Class BlockRegistrationModuleExtension
- * This extension checks for a blocks folder in each module. If a blocks-config.php file exists,
- * it loads it; otherwise it globs the folders (verifying that each contains a block.json file),
- * generates a configuration array mapping block names to their directory names (relative to the blocks folder),
- * writes it to blocks-config.php for future use, and then registers the blocks using register_block_type.
- * This provides a hybrid approach that automates block discovery during development while
- * ensuring performance in production.
+ * This extension discovers and registers Gutenberg blocks for modules using a centralized
+ * block manifest (sitchco.blocks.json). The manifest is loaded from multiple locations
+ * (core, parent theme, child theme) and merged, providing a single source of truth for
+ * all block definitions.
  *
  * @package Sitchco\ModuleExtension
  */
@@ -27,6 +26,13 @@ class BlockRegistrationModuleExtension implements ModuleExtension
      * @var FilePath[]
      */
     protected array $moduleBlocksPaths = [];
+
+    /**
+     * Constructor.
+     *
+     * @param BlockManifestRegistry $manifestRegistry
+     */
+    public function __construct(private BlockManifestRegistry $manifestRegistry) {}
 
     /**
      * Extend the modules by registering their Gutenberg blocks.
@@ -44,6 +50,13 @@ class BlockRegistrationModuleExtension implements ModuleExtension
 
     public function init(): void
     {
+        // Load the merged block manifest
+        $manifest = $this->manifestRegistry->load();
+        $manifestBlocks = $manifest['blocks'] ?? [];
+
+        // Get base paths to resolve relative paths in manifest
+        $basePaths = $this->manifestRegistry->getBasePaths();
+
         foreach ($this->modules as $module) {
             $blocksPath = $module->blocksPath();
 
@@ -53,40 +66,34 @@ class BlockRegistrationModuleExtension implements ModuleExtension
             }
             $this->moduleBlocksPaths[] = $blocksPath;
 
-            $configFilePath = $blocksPath->append('blocks-config.php');
-            if ($configFilePath->isFile()) {
-                // Load the previously generated configuration mapping.
-                $blocksConfig = include $configFilePath;
-            } else {
-                // Otherwise, glob the blocks folder and build the configuration mapping.
-                $blocksConfig = [];
-                $directories = glob($blocksPath . '*', GLOB_ONLYDIR);
-                if ($directories !== false) {
-                    foreach ($directories as $dir) {
-                        $blockJsonPath = (new FilePath($dir))->append('block.json');
-                        if ($blockJsonPath->isFile()) {
-                            // Read the block.json to get the actual block name
-                            $blockJson = json_decode(file_get_contents($blockJsonPath), true);
-                            if ($blockJson && isset($blockJson['name'])) {
-                                // Use the block name from block.json as the key
-                                $blockName = $blockJson['name'];
-                                // Store the directory name as the value for path resolution
-                                $blocksConfig[$blockName] = basename($dir);
-                            }
-                        }
+            // Find blocks that belong to this module
+            $moduleBlocks = [];
+            $blocksPathStr = $blocksPath->value();
+
+            foreach ($manifestBlocks as $blockName => $relativePath) {
+                // Try to resolve the relative path against each base path
+                foreach ($basePaths as $basePath) {
+                    $fullPath = $basePath->append($relativePath)->value();
+
+                    // Check if this block path belongs to the current module
+                    if (str_starts_with($fullPath, $blocksPathStr)) {
+                        // Extract the relative directory within the module's blocks folder
+                        $relativeDir = substr($fullPath, strlen($blocksPathStr));
+                        $moduleBlocks[$blockName] = $relativeDir;
+                        break; // Found the base path for this block, move to next block
                     }
                 }
-
-                // Write the configuration array to a PHP file for future use.
-                $export = var_export($blocksConfig, true);
-                $phpContent = "<?php\n\nreturn " . $export . ";\n";
-                file_put_contents($configFilePath, $phpContent);
             }
 
-            $module->filterBlockAssets($blocksConfig);
+            // Only process modules that have blocks
+            if (empty($moduleBlocks)) {
+                continue;
+            }
+
+            $module->filterBlockAssets($moduleBlocks);
 
             // Register each block using register_block_type which accepts a directory containing block.json.
-            foreach ($blocksConfig as $blockName => $relativeDir) {
+            foreach ($moduleBlocks as $blockName => $relativeDir) {
                 // Rebuild the full path using the base blocks directory and the relative directory.
                 $fullPath = $blocksPath->append($relativeDir)->value();
                 register_block_type($fullPath);
