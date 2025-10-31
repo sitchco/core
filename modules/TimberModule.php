@@ -8,6 +8,7 @@ use Sitchco\Support\DateTime;
 use Timber\Timber;
 use Sitchco\Utils\TimberUtil;
 use WP_Block;
+use Traversable;
 
 /**
  * class Timber
@@ -15,6 +16,8 @@ use WP_Block;
  */
 class TimberModule extends Module
 {
+    protected static array $blockMetadataCache = [];
+
     public function init(): void
     {
         if (class_exists('Timber\Timber')) {
@@ -28,6 +31,10 @@ class TimberModule extends Module
         add_filter('timber/twig/functions', function ($functions) {
             $functions['include_with_context'] = [
                 'callable' => [TimberUtil::class, 'includeWithContext'],
+            ];
+            $functions['inner_blocks'] = [
+                'callable' => [self::class, 'renderInnerBlocksTag'],
+                'is_safe' => ['html'],
             ];
             return $functions;
         });
@@ -89,6 +96,28 @@ class TimberModule extends Module
             $child_path = get_stylesheet_directory() . '/modules/' . $path_parts[1];
             $context = static::loadBlockContext($context, $child_path);
         }
+
+        $metadata = static::getBlockMetadata($block['path'] ?? '');
+        if ($metadata) {
+            $innerBlocksDefaults = $metadata['innerBlocksConfig'] ?? [];
+            if (isset($metadata['allowedBlocks']) && !isset($innerBlocksDefaults['allowedBlocks'])) {
+                $innerBlocksDefaults['allowedBlocks'] = $metadata['allowedBlocks'];
+            }
+            if ($innerBlocksDefaults) {
+                $existingInnerBlocksConfig = $context['innerBlocksConfig'] ?? [];
+                if (is_array($existingInnerBlocksConfig)) {
+                    $innerBlocksDefaults = array_merge($innerBlocksDefaults, $existingInnerBlocksConfig);
+                }
+                $context['innerBlocksConfig'] = $innerBlocksDefaults;
+                if (!isset($context['allowedBlocks']) && isset($innerBlocksDefaults['allowedBlocks'])) {
+                    $context['allowedBlocks'] = $innerBlocksDefaults['allowedBlocks'];
+                }
+                if (!isset($context['innerBlocksTemplate']) && isset($innerBlocksDefaults['template'])) {
+                    $context['innerBlocksTemplate'] = $innerBlocksDefaults['template'];
+                }
+            }
+        }
+        $context = static::normalizeInnerBlocksContext($context);
         if ($context['render'] ?? false) {
             echo $context['render'];
             return;
@@ -99,6 +128,59 @@ class TimberModule extends Module
         echo TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
     }
 
+    public static function renderInnerBlocksTag(array $config = []): string
+    {
+        if (isset($config['allowed']) && !isset($config['allowedBlocks'])) {
+            $config['allowedBlocks'] = $config['allowed'];
+        }
+        if (isset($config['template_lock']) && !isset($config['templateLock'])) {
+            $config['templateLock'] = $config['template_lock'];
+        }
+
+        $attributeStrategies = [
+            'allowedBlocks' => 'json',
+            'template' => 'json',
+            'templateLock' => 'string',
+            'orientation' => 'string',
+            'renderAppender' => 'bool',
+            'templateInsertUpdatesSelection' => 'bool',
+            'layout' => 'json',
+            'align' => 'string',
+            'className' => 'string',
+        ];
+
+        $attributes = [];
+        foreach ($attributeStrategies as $key => $strategy) {
+            if (!array_key_exists($key, $config)) {
+                continue;
+            }
+            $formattedValue = static::formatInnerBlocksAttribute($config[$key], $strategy);
+            if ($formattedValue !== null) {
+                $attributes[$key] = $formattedValue;
+            }
+        }
+
+        if (isset($config['attributes']) && is_array($config['attributes'])) {
+            foreach ($config['attributes'] as $key => $value) {
+                $formattedValue = static::formatInnerBlocksAttribute($value);
+                if ($formattedValue !== null) {
+                    $attributes[$key] = $formattedValue;
+                }
+            }
+        }
+
+        if (!$attributes) {
+            return '<InnerBlocks />';
+        }
+
+        $parts = [];
+        foreach ($attributes as $key => $value) {
+            $parts[] = sprintf('%s="%s"', esc_attr($key), esc_attr($value));
+        }
+
+        return '<InnerBlocks ' . implode(' ', $parts) . ' />';
+    }
+
     protected static function loadBlockContext(array $context, $path): array
     {
         $context_file = trailingslashit($path) . 'block.php';
@@ -107,5 +189,96 @@ class TimberModule extends Module
             include $context_file;
         }
         return $context;
+    }
+
+    protected static function normalizeInnerBlocksContext(array $context): array
+    {
+        $config = $context['innerBlocksConfig'] ?? [];
+        if (!is_array($config)) {
+            $config = [];
+        }
+
+        $allowedBlocks = static::normalizeIterable($context['allowedBlocks'] ?? null);
+        if ($allowedBlocks !== null) {
+            $config['allowedBlocks'] = $allowedBlocks;
+        }
+
+        $template = static::normalizeIterable($context['innerBlocksTemplate'] ?? null, preserveKeys: false);
+        if ($template !== null) {
+            $config['template'] = $template;
+        }
+
+        if ($config) {
+            $context['innerBlocksConfig'] = $config;
+        }
+
+        return $context;
+    }
+
+    protected static function normalizeIterable(mixed $value, bool $preserveKeys = true): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_array($value)) {
+            return $preserveKeys ? $value : array_values($value);
+        }
+        if ($value instanceof Traversable) {
+            return iterator_to_array($value, $preserveKeys);
+        }
+        return null;
+    }
+
+    protected static function getBlockMetadata(string $path): array
+    {
+        if (!$path) {
+            return [];
+        }
+        if (array_key_exists($path, static::$blockMetadataCache)) {
+            return static::$blockMetadataCache[$path];
+        }
+        $metadataFile = trailingslashit($path) . 'block.json';
+        if (!is_readable($metadataFile)) {
+            static::$blockMetadataCache[$path] = [];
+            return static::$blockMetadataCache[$path];
+        }
+        $raw = file_get_contents($metadataFile);
+        if (!is_string($raw)) {
+            static::$blockMetadataCache[$path] = [];
+            return static::$blockMetadataCache[$path];
+        }
+        $decoded = json_decode($raw, true);
+        static::$blockMetadataCache[$path] = is_array($decoded) ? $decoded : [];
+        return static::$blockMetadataCache[$path];
+    }
+
+    protected static function formatInnerBlocksAttribute(mixed $value, string $strategy = 'auto'): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        switch ($strategy) {
+            case 'json':
+                $encoded = wp_json_encode($value);
+                if ($encoded === false) {
+                    return null;
+                }
+                return $encoded;
+            case 'bool':
+                return $value ? 'true' : 'false';
+            case 'string':
+                return (string) $value;
+            case 'auto':
+            default:
+                if (is_bool($value)) {
+                    return $value ? 'true' : 'false';
+                }
+                if (is_array($value) || is_object($value)) {
+                    $encoded = wp_json_encode($value);
+                    return $encoded === false ? null : $encoded;
+                }
+                return (string) $value;
+        }
     }
 }
