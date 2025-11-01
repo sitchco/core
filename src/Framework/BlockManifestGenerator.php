@@ -15,12 +15,11 @@ class BlockManifestGenerator
      * Generate a block manifest for the given base path.
      * Discovers all modules and their blocks, then writes sitchco.blocks.json.
      *
-     * @param string $basePath The base directory to search (e.g., core plugin root or theme root)
+     * @param FilePath $basePath The base directory to search (e.g., core plugin root or theme root)
      * @return array The generated manifest data
      */
-    public function generate(string $basePath): array
+    public function generate(FilePath $basePath): array
     {
-        $basePath = FilePath::create($basePath);
         $blocks = $this->discoverBlocks($basePath);
 
         $manifest = [
@@ -38,12 +37,11 @@ class BlockManifestGenerator
      * Check if a manifest needs regeneration by comparing hashes.
      * Only relevant in local environment.
      *
-     * @param string $basePath The base directory containing the manifest
+     * @param FilePath $basePath The base directory containing the manifest
      * @return bool True if manifest is missing or stale
      */
-    public function shouldRegenerate(string $basePath): bool
+    public function shouldRegenerate(FilePath $basePath): bool
     {
-        $basePath = FilePath::create($basePath);
         $manifestPath = $basePath->append(BlockManifestRegistry::MANIFEST_FILENAME);
 
         if (!$manifestPath->exists()) {
@@ -87,8 +85,8 @@ class BlockManifestGenerator
     public function ensureFreshManifests(array $basePaths): void
     {
         foreach ($basePaths as $basePath) {
-            if ($this->shouldRegenerate($basePath->value())) {
-                $this->generate($basePath->value());
+            if ($this->shouldRegenerate($basePath)) {
+                $this->generate($basePath);
             }
         }
     }

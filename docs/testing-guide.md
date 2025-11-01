@@ -73,14 +73,14 @@ public function test_manifest_generates_hash(): void
 
 **Bootstrap and Container Setup**
 ```php
-// BAD: Duplicates what integration tests already verify
+// BAD: Duplicates what existing tests already verify
 public function test_bootstrap_sets_global_container(): void
 {
     $bootstrap->initialize();
     $this->assertNotNull($GLOBALS['SitchcoContainer']);
 }
 ```
-*Why avoid?* If the container doesn't work, every integration test fails. No need to test it explicitly.
+*Why avoid?* If the container doesn't work, every test fails. No need to test it explicitly.
 
 **Trivial Getters/Setters**
 ```php
@@ -92,17 +92,6 @@ public function test_get_name_returns_name(): void
 }
 ```
 *Why avoid?* These break when you refactor to public properties. Test behavior that matters instead.
-
-**Cache Implementation Details**
-```php
-// BAD: Tests internal cache mechanics
-public function test_cache_cleared_on_manifest_regenerate(): void
-{
-    $registry->ensureFreshManifests();
-    $this->assertFalse(wp_cache_get('sitchco_blocks_manifest', 'sitchco'));
-}
-```
-*Why avoid?* Caching is an optimization detail. If blocks work correctly, the cache works correctly.
 
 ## Testing Patterns
 
@@ -254,7 +243,7 @@ class MyTest extends TestCase
 
 ### Don't add tests when:
 
-1. **Code is already covered by integration tests** - If existing tests would catch breakage, skip it
+1. **Code is already covered by existing tests** - If existing tests would catch breakage, skip it
 2. **Testing private implementation details** - If you need to use reflection or test helpers to access something, don't test it
 3. **Refactoring without behavior changes** - If behavior stays the same, existing tests should pass
 4. **Testing third-party code** - Trust that WordPress, ACF, etc. have their own tests
@@ -297,7 +286,7 @@ public function test_blocks_from_modules_are_registered(): void
 
 **Problem:** Writing a dedicated bootstrap test when CoreMuPluginTest already verifies the container and modules load.
 
-**Better approach:** Let integration tests provide implicit coverage of infrastructure.
+**Better approach:** Let existing tests provide implicit coverage of infrastructure.
 
 ## Running Tests
 
@@ -345,7 +334,7 @@ Tests utility functions with clear inputs/outputs and edge cases (TTL expiration
 
 1. **What behavior am I protecting?** - If the answer is vague, reconsider
 2. **Would this test break during safe refactoring?** - If yes, it's too coupled to implementation
-3. **Do existing tests already cover this?** - Check integration tests for implicit coverage
+3. **Do existing tests already cover this?** - Check existing tests for implicit coverage
 4. **Will this test be easy to understand in 6 months?** - Complexity is a smell
 5. **Am I testing my code or WordPress/third-party code?** - Only test your own code
 

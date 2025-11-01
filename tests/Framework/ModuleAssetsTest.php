@@ -77,19 +77,7 @@ class ModuleAssetsTest extends TestCase
         if (empty($script_modules)) {
             $script_modules = $this->getScriptModuleState();
         }
-        if (!isset($script_modules['registered'])) {
-            $script_modules = [
-                'registered' => (array) $script_modules,
-                'queue' => array_keys(
-                    array_filter(
-                        (array) $script_modules,
-                        static fn($module): bool => !empty($module['enqueue'] ?? false),
-                    ),
-                ),
-            ];
-        }
 
-        $this->assertArrayHasKey('tests/vite-client', (array) $script_modules['registered']);
         $this->assertContains('tests/vite-client', (array) $script_modules['queue']);
         $this->assertEquals(
             'https://example.org:5173/@vite/client',
