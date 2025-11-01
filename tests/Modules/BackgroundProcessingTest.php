@@ -47,7 +47,6 @@ class BackgroundProcessingTest extends TestCase
 
     function test_save_post_queue_event()
     {
-        $this->expectWpRocketDeprecations();
         $event = $this->container->get(SavePostQueueEvent::class);
         $event->init();
         $this->factory()->post->create();
@@ -71,7 +70,6 @@ class BackgroundProcessingTest extends TestCase
 
     function test_save_permalinks_bulk_save_posts_task()
     {
-        $this->expectWpRocketDeprecations();
         $event = $this->container->get(SavePermalinksRequestEvent::class);
         $event->init();
         $this->container->get(SavePostQueueEvent::class)->init();
@@ -116,21 +114,5 @@ class BackgroundProcessingTest extends TestCase
         parse_str(parse_url($url, PHP_URL_QUERY), $query);
         $_REQUEST['nonce'] = $query['nonce'];
         add_filter("sitchco_{$identifier}_wp_die", '__return_false');
-    }
-
-    protected function expectWpRocketDeprecations(): void
-    {
-        foreach (
-            [
-                'rocket_rucss_pending_jobs_cron_interval',
-                'rocket_remove_rucss_failed_jobs_cron_interval',
-                'rocket_remove_rucss_on_submit_jobs_cron_interval',
-            ]
-            as $hook_name
-        ) {
-            if (has_filter($hook_name)) {
-                $this->setExpectedDeprecated($hook_name);
-            }
-        }
     }
 }

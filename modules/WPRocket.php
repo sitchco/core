@@ -25,10 +25,10 @@ class WPRocket extends Module
         add_filter('rocket_preload_delay_between_requests', fn(): int => 2_000_000);
 
         // Remove Unused CSS: Adjust batch processing size.
-        add_filter('rocket_rucss_pending_jobs_cron_rows_count', fn(): int => 25);
+        add_filter('rocket_saas_pending_jobs_cron_rows_count', fn(): int => 25);
 
         // Increase cron interval for unused CSS processing.
-        add_filter('rocket_rucss_pending_jobs_cron_interval', fn(): int => 300);
+        add_filter('rocket_saas_pending_jobs_cron_interval', fn(): int => 300);
     }
 
     public function forceTrailingSlash(string $marker): string
