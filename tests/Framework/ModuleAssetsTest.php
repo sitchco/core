@@ -33,20 +33,56 @@ class ModuleAssetsTest extends TestCase
         $GLOBALS['wp_current_filter'][] = 'enqueue_block_assets';
     }
 
-    protected function getScriptModuleRegistered()
+    /**
+     * Get script module registration and queue state.
+     *
+     * This method handles compatibility across WordPress versions:
+     * - WP 6.5+ has a separate 'queue' property for enqueued modules
+     * - Earlier versions only have 'registered' with inline 'enqueue' flags
+     *
+     * The reflection approach is necessary because WP_Script_Modules properties
+     * are private and no public accessor methods exist for test inspection.
+     *
+     * @return array{registered: array, queue: array}
+     */
+    protected function getScriptModuleState(): array
     {
-        $ref = new ReflectionClass($GLOBALS['wp_script_modules']);
-        $scriptModulesRegisteredProp = $ref->getProperty('registered');
-        return $scriptModulesRegisteredProp->getValue($GLOBALS['wp_script_modules']);
+        $scriptModules = $GLOBALS['wp_script_modules'];
+        $reflection = new ReflectionClass($scriptModules);
+        $registeredProperty = $reflection->getProperty('registered');
+        $registered = (array) $registeredProperty->getValue($scriptModules);
+
+        // WP 6.5+ has a separate queue property
+        if ($reflection->hasProperty('queue')) {
+            $queueProperty = $reflection->getProperty('queue');
+            $queue = (array) $queueProperty->getValue($scriptModules);
+        } else {
+            // Earlier versions: build queue from 'enqueue' flags in registered modules
+            $queue = [];
+            foreach ($registered as $moduleId => $module) {
+                if (!empty($module['enqueue'] ?? false)) {
+                    $queue[] = $moduleId;
+                }
+            }
+        }
+
+        return [
+            'registered' => $registered,
+            'queue' => $queue,
+        ];
     }
 
     protected function assertViteClientEnqueued(?array $script_modules = null): void
     {
         if (empty($script_modules)) {
-            $script_modules = $this->getScriptModuleRegistered();
+            $script_modules = $this->getScriptModuleState();
         }
-        $this->assertTrue($script_modules['tests/vite-client']['enqueue']);
-        $this->assertEquals('https://example.org:5173/@vite/client', $script_modules['tests/vite-client']['src']);
+
+        $this->assertContains('tests/vite-client', (array) $script_modules['queue']);
+        $this->assertEquals(
+            'https://example.org:5173/@vite/client',
+            $script_modules['registered']['tests/vite-client']['src'],
+        );
     }
 
     protected function assertAssetOutputs(\WP_Dependencies $deps, string $handle, string $expected): void

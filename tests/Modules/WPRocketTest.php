@@ -27,8 +27,8 @@ class WPRocketTest extends TestCase
         $this->assertNotFalse(has_filter('rocket_preload_cache_pending_jobs_cron_rows_count'));
         $this->assertNotFalse(has_filter('rocket_preload_pending_jobs_cron_interval'));
         $this->assertNotFalse(has_filter('rocket_preload_delay_between_requests'));
-        $this->assertNotFalse(has_filter('rocket_rucss_pending_jobs_cron_rows_count'));
-        $this->assertNotFalse(has_filter('rocket_rucss_pending_jobs_cron_interval'));
+        $this->assertNotFalse(has_filter('rocket_saas_pending_jobs_cron_rows_count'));
+        $this->assertNotFalse(has_filter('rocket_saas_pending_jobs_cron_interval'));
 
         $marker = 'test_marker_content';
         $filtered_output = apply_filters('before_rocket_htaccess_rules', $marker);
@@ -41,8 +41,8 @@ class WPRocketTest extends TestCase
         $this->assertSame(25, apply_filters('rocket_preload_cache_pending_jobs_cron_rows_count', 10));
         $this->assertSame(120, apply_filters('rocket_preload_pending_jobs_cron_interval', 60));
         $this->assertSame(2000000, apply_filters('rocket_preload_delay_between_requests', 1000000));
-        $this->assertSame(25, apply_filters('rocket_rucss_pending_jobs_cron_rows_count', 10));
-        $this->assertSame(300, apply_filters('rocket_rucss_pending_jobs_cron_interval', 100));
+        $this->assertSame(25, apply_filters('rocket_saas_pending_jobs_cron_rows_count', 10));
+        $this->assertSame(300, apply_filters('rocket_saas_pending_jobs_cron_interval', 100));
     }
 
     /**

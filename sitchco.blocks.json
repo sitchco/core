@@ -1,0 +1,7 @@
+{
+    "version": "1.0",
+    "hash": "24d05ef42652c8d444911952004a4cf4",
+    "blocks": {
+        "sitchco/icon": "modules/SvgSprite/blocks/icon"
+    }
+}

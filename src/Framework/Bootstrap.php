@@ -42,6 +42,10 @@ class Bootstrap
         }
         $GLOBALS['SitchcoContainer'] = $container = $builder->build();
         $container->set(ConfigRegistry::class, $configRegistry);
+
+        $blockManifestRegistry = $container->get(BlockManifestRegistry::class);
+        $blockManifestRegistry->ensureFreshManifests();
+
         $moduleConfigs = $configRegistry->load('modules');
         $registry = $container->get(ModuleRegistry::class);
         $registry->activateModules($moduleConfigs);

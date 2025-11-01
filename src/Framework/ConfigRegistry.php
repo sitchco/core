@@ -3,6 +3,7 @@
 namespace Sitchco\Framework;
 
 use Sitchco\Utils\ArrayUtil;
+use Sitchco\Utils\Cache;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -11,45 +12,17 @@ use Sitchco\Utils\Hooks;
  * (Core defined path, additional filtered paths, parent theme, child theme),
  * merges their contents recursively, caches the result, and provides access
  * to specific configuration sections (top-level keys) within the merged array.
- * Caching is disabled in 'local' environment, enabled via transient otherwise.
  */
 class ConfigRegistry
 {
-    /** @var array|null Cache for the fully merged config within the current request */
-    private ?array $requestCache = null;
-
     /** @var array<string>|null Ordered list of base paths to search (null until initialized) */
     public readonly ?array $basePaths;
-
-    /** @var string Current WP environment type */
-    private string $environmentType;
-
-    /** @var bool Whether persistent object caching is enabled for this instance */
-    private bool $objectCacheEnabled;
-
-    /** @var int Default TTL for cached items in seconds (e.g., 1 day) */
-    private const CACHE_TTL = DAY_IN_SECONDS;
-
-    /** @var string Group name for WP Object Cache */
-    private const CACHE_GROUP = 'sitchco_cfg_group';
-
-    /** @var string Cache key for the merged configuration */
-    private const CACHE_KEY = 'sitchco_config';
 
     /** @var string Filter hook for adding additional config paths */
     public const PATH_FILTER_HOOK = 'config_paths';
 
-    /**
-     * Constructor.
-     *
-     * @param string|null $environmentType Override environment type (mainly for testing). Defaults to
-     *                                     wp_get_environment_type().
-     */
-    public function __construct(?string $environmentType = null)
-    {
-        $this->environmentType = $environmentType ?? wp_get_environment_type();
-        $this->objectCacheEnabled = $this->environmentType !== 'local';
-    }
+    /** @var string Cache key for merged configuration */
+    private const CACHE_KEY = 'sitchco_config';
 
     /**
      * Retrieves a specific configuration section (top-level key) from the merged configuration file.
@@ -87,33 +60,13 @@ class ConfigRegistry
      */
     private function loadAndCacheMergedConfig(): ?array
     {
-        if (is_array($this->requestCache)) {
-            return $this->requestCache;
-        }
+        return Cache::remember(self::CACHE_KEY, function () {
+            if (!isset($this->basePaths)) {
+                $this->initializeBasePaths();
+            }
 
-        $cachedValue = false;
-        if ($this->objectCacheEnabled) {
-            $cachedValue = wp_cache_get(self::CACHE_KEY, self::CACHE_GROUP);
-        }
-        if (is_array($cachedValue)) {
-            $this->requestCache = $cachedValue;
-
-            return $cachedValue;
-        }
-
-        if (!isset($this->basePaths)) {
-            $this->initializeBasePaths();
-        }
-
-        $mergedConfig = $this->loadAndMergeFiles();
-
-        if (is_array($mergedConfig) && $this->objectCacheEnabled) {
-            wp_cache_set(self::CACHE_KEY, $mergedConfig, self::CACHE_GROUP, self::CACHE_TTL);
-        }
-
-        $this->requestCache = $mergedConfig;
-
-        return $this->requestCache;
+            return $this->loadAndMergeFiles();
+        });
     }
 
     /**
