@@ -196,4 +196,34 @@ class Str
         }
         return sprintf('<%1$s%2$s>%3$s</%1$s>', $tag, $attributes ? ' ' . $attributes : '', $content);
     }
+
+    /**
+     * Normalize color value to RGB format
+     *
+     * @param string $hex Hex color (#RGB or #RRGGBB) or RGB string
+     * @return string Comma-separated RGB values (e.g., "255, 0, 0")
+     */
+    public static function hexToRGB(string $hex): string
+    {
+        if (str_starts_with($hex, '#')) {
+            $hex = ltrim($hex, '#');
+
+            if (strlen($hex) == 3) {
+                // 3-digit hex: #RGB
+                sscanf($hex, "%1x%1x%1x", $r, $g, $b);
+                $r = $r * 17; // Convert to 0-255 range (e.g., F -> FF)
+                $g = $g * 17;
+                $b = $b * 17;
+            } else {
+                // 6-digit hex: #RRGGBB
+                sscanf($hex, "%02x%02x%02x", $r, $g, $b);
+            }
+
+            return "$r, $g, $b";
+        }
+
+        // Already RGB format
+        preg_match('/(?<=\()(\d+,\s*\d+,\s*\d+)/', $hex, $matches);
+        return $matches[0] ?? '';
+    }
 }
