@@ -2,19 +2,24 @@
 
 namespace Sitchco\Support;
 
-use Carbon\CarbonImmutable;
+use Carbon\Carbon;
 use Carbon\Month;
 use Carbon\WeekDay;
 use DateTimeInterface;
 use DateTimeZone;
 
-class DateTime extends CarbonImmutable
+class DateTime extends Carbon
 {
     public function __construct(
         DateTimeInterface|WeekDay|Month|string|int|float|null $time = 'now',
         DateTimeZone|string|int|null $timezone = null,
     ) {
-        parent::__construct($time, $this->getDefaultTimezone($timezone));
+        // Always interpret incoming strings as UTC unless already a DateTime with tz
+        if (!($time instanceof \DateTimeInterface)) {
+            $timezone = new \DateTimeZone('UTC');
+        }
+        parent::__construct($time, $timezone);
+        $this->setTimezone($this->getDefaultTimezone($time));
     }
 
     public static function createFromTimestamp($timestamp, DateTimeZone|string|int $timezone = null): static
