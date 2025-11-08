@@ -102,6 +102,7 @@ class TimberModule extends Module
     protected static function loadBlockContext(array $context, $path): array
     {
         $context_file = trailingslashit($path) . 'block.php';
+        $container = $GLOBALS['SitchcoContainer'];
         if (file_exists($context_file)) {
             include $context_file;
         }
