@@ -10,14 +10,24 @@ namespace Sitchco\Utils;
  */
 class Block
 {
+    public static function isPreview(): bool
+    {
+        if (is_admin() && acf_is_block_editor()) {
+            return true;
+        }
+        if (wp_doing_ajax() && $_POST['action'] === 'acf/ajax/fetch-block') {
+            return !empty($_POST['query']['preview']);
+        }
+        return false;
+    }
+
     public static function wrapperElement(
         string $content,
         array $attributes,
-        bool $isPreview,
         ?array $link = null,
         string $tag = 'div',
     ): string {
-        if ($isPreview) {
+        if (static::isPreview()) {
             return $content;
         }
         if ($link) {
@@ -29,9 +39,9 @@ class Block
         return Str::wrapElement($content, $tag, $attributes);
     }
 
-    public static function wrapperAttributes(array $attributes, bool $isPreview = false): string
+    public static function wrapperAttributes(array $attributes): string
     {
-        return $isPreview
+        return static::isPreview()
             ? ArrayUtil::toAttributes($attributes)
             : get_block_wrapper_attributes(array_filter($attributes));
     }

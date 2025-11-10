@@ -5,6 +5,8 @@ namespace Sitchco\Modules\SvgSprite;
 use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
+use Sitchco\Utils\Block;
+use Sitchco\Utils\Str;
 
 class SvgSprite extends Module
 {
@@ -17,6 +19,12 @@ class SvgSprite extends Module
         $configPaths = array_map([FilePath::class, 'create'], $this->configRegistry->basePaths);
         $this->buildSpriteContents($configPaths);
         add_filter('acf/prepare_field/key=field_68f8fa1208258', [$this, 'iconNameFieldChoices']);
+        add_filter('timber/twig/functions', function ($functions) {
+            $functions['icon'] = [
+                'callable' => [$this, 'renderIcon'],
+            ];
+            return $functions;
+        });
     }
 
     public function iconNameFieldChoices($field)
@@ -80,17 +88,28 @@ class SvgSprite extends Module
         }
     }
 
-    public function renderIcon(string $name, bool $isEditorPreview = false): string
+    public function renderIcon(string $name, ?Rotation $rotation): string
     {
+        $transform = $rotation && $rotation !== Rotation::NONE ? "rotate({$rotation->value}deg)" : null;
+        $svg = $this->renderIconSvg($name);
+        return Str::wrapElement($svg, 'span', [
+            'class' => "sitchco-icon sitchco-icon--{$name}",
+            'style' => ['--sitchco-icon-transform' => $transform],
+        ]);
+    }
+
+    protected function renderIconSvg(string $name): string
+    {
+        if (!($this->assets()->isDevServer || Block::isPreview())) {
+            return '<svg aria-hidden="true"><use fill="currentColor" href="#icon-' . $name . '"></use></svg>';
+        }
         if (!isset($this->iconList)) {
             $this->iconList = apply_filters(static::hookName('icon-list'), []);
         }
         /* @var FilePath $configPath */
         $foundIconList = collect($this->iconList)->where(fn($iconList) => in_array($name, $iconList['icons']))->first();
         $configPath = $foundIconList['configPath'] ?? null;
-        if (!($this->assets()->isDevServer || $isEditorPreview)) {
-            return '<svg aria-hidden="true"><use fill="currentColor" href="#icon-' . $name . '"></use></svg>';
-        }
+
         /* @var ?FilePath $svgFile */
         $svgFile = collect($this->findSvgPaths($configPath, "icon-$name"))->last();
         if (!$svgFile?->exists()) {
