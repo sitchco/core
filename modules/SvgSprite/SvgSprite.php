@@ -16,7 +16,7 @@ class SvgSprite extends Module
 
     public function init(): void
     {
-        $configPaths = array_map([FilePath::class, 'create'], $this->configRegistry->basePaths);
+        $configPaths = array_map([FilePath::class, 'create'], $this->configRegistry->getBasePaths());
         $this->buildSpriteContents($configPaths);
         add_filter('acf/prepare_field/key=field_68f8fa1208258', [$this, 'iconNameFieldChoices']);
         add_filter('timber/twig/functions', function ($functions) {

@@ -2,6 +2,7 @@
 
 namespace Sitchco\Framework;
 
+use Sitchco\Support\FilePath;
 use Sitchco\Utils\ArrayUtil;
 use Sitchco\Utils\Cache;
 use Sitchco\Utils\Hooks;
@@ -16,7 +17,7 @@ use Sitchco\Utils\Hooks;
 class ConfigRegistry
 {
     /** @var array<string>|null Ordered list of base paths to search (null until initialized) */
-    public readonly ?array $basePaths;
+    protected readonly ?array $basePaths;
 
     /** @var string Filter hook for adding additional config paths */
     public const PATH_FILTER_HOOK = 'config_paths';
@@ -174,5 +175,18 @@ class ConfigRegistry
         }
 
         return $normalized;
+    }
+
+    /**
+     * Gets the base paths where config files are located.
+     *
+     * @return FilePath[] List of base directory paths as FilePath objects
+     */
+    public function getBasePaths(): array
+    {
+        if (!isset($this->basePaths)) {
+            $this->initializeBasePaths();
+        }
+        return $this->basePaths ?? [];
     }
 }

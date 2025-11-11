@@ -17,7 +17,7 @@ use Sitchco\Utils\Hooks;
 class BlockManifestRegistry
 {
     /** @var array<FilePath>|null Ordered list of base paths to search (null until initialized) */
-    public readonly ?array $basePaths;
+    protected readonly ?array $basePaths;
 
     /** @var string Current WP environment type */
     private string $environmentType;

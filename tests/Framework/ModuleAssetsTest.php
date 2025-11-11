@@ -6,6 +6,7 @@ use ReflectionClass;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Tests\Fakes\ModuleTester\ModuleTester;
 use Sitchco\Tests\TestCase;
+use WP_Hook;
 
 class ModuleAssetsTest extends TestCase
 {
@@ -26,6 +27,18 @@ class ModuleAssetsTest extends TestCase
     {
         unset($GLOBALS['wp_scripts'], $GLOBALS['wp_styles'], $GLOBALS['wp_script_modules']);
         remove_all_actions('wp_footer');
+        /* @var WP_Hook $wp_hook */
+        $wp_hook = $GLOBALS['wp_filter']['enqueue_block_assets'] ?? null;
+        if ($wp_hook) {
+            $callbacks = &$wp_hook->callbacks[10];
+        } else {
+            $callbacks = [];
+        }
+        foreach ($callbacks as $key => $callback) {
+            if ($callback['function'] instanceof \Closure) {
+                unset($callbacks[$key]);
+            }
+        }
         $GLOBALS['wp_current_filter'] = [];
         wp_scripts();
         wp_styles();
@@ -157,22 +170,24 @@ class ModuleAssetsTest extends TestCase
 
     public function test_enqueueBlockStyle()
     {
+        $handle = 'sitchco/test-block';
         $GLOBALS['wp_current_filter'][] = 'init';
-        $this->prodAssets->enqueueBlockStyle('test-block', 'test-block.css');
+        add_filter('should_load_block_assets_on_demand', '__return_false');
+        $this->prodAssets->enqueueBlockStyle($handle, 'test-block.css');
         do_action('wp_enqueue_scripts');
-        $registered = wp_styles()->registered['test-block'];
+        $registered = wp_styles()->registered[$handle];
         $this->assertStringEndsWith('dist/assets/test-block-abcde.css', $registered->src);
         $this->assertStringEndsWith('assets/styles/test-block.css', $registered->extra['path']);
         $this->assertAssetOutputs(
             wp_styles(),
-            'test-block',
-            "<link rel='stylesheet' id='test-block-css' href='http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-abcde.css' media='all' />",
+            $handle,
+            "<link rel='stylesheet' id='sitchco/test-block-css' href='http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-block-abcde.css' media='all' />",
         );
         $this->resetWPDependencies();
         $GLOBALS['wp_current_filter'][] = 'init';
-        $this->devAssets->enqueueBlockStyle('test-block-dev', 'test-block.css');
+        $this->devAssets->enqueueBlockStyle($handle, 'test-block.css');
         do_action('wp_enqueue_scripts');
-        $registered = wp_styles()->registered['test-block-dev'];
+        $registered = wp_styles()->registered[$handle];
         $this->assertStringEndsWith(
             'https://example.org:5173/Fakes/ModuleTester/assets/styles/test-block.css',
             $registered->src,
@@ -180,8 +195,8 @@ class ModuleAssetsTest extends TestCase
         $this->assertStringEndsWith('assets/styles/test-block.css', $registered->extra['path']);
         $this->assertAssetOutputs(
             wp_styles(),
-            'test-block-dev',
-            "<link rel='stylesheet' id='test-block-dev-css' href='https://example.org:5173/Fakes/ModuleTester/assets/styles/test-block.css' media='all' />",
+            $handle,
+            "<link rel='stylesheet' id='sitchco/test-block-css' href='https://example.org:5173/Fakes/ModuleTester/assets/styles/test-block.css' media='all' />",
         );
         $this->assertViteClientEnqueued();
     }

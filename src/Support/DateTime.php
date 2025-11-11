@@ -48,7 +48,8 @@ class DateTime extends Carbon
         $gmtOffset = get_option('gmt_offset', 0) * HOUR_IN_SECONDS;
 
         // Check if DST is in effect at this time using the system timezone
-        $localtime_assoc = localtime(strtotime($time ?? 'now'), true);
+        $timestamp = $time instanceof DateTimeInterface ? $time->getTimestamp() : strtotime($time ?? 'now');
+        $localtime_assoc = localtime($timestamp, true);
 
         return timezone_name_from_abbr('', $gmtOffset, $localtime_assoc['tm_isdst']);
     }
