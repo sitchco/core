@@ -36,6 +36,14 @@ class TimberModule extends Module
                 'callable' => [self::class, 'renderInnerBlocksTag'],
                 'is_safe' => ['html'],
             ];
+            $functions['render_block'] = [
+                'callable' => 'render_block',
+                'is_safe' => ['html'],
+            ];
+            $functions['block_wrapper_attributes'] = [
+                'callable' => 'get_block_wrapper_attributes',
+                'is_safe' => ['html'],
+            ];
             return $functions;
         });
         add_filter('timber/meta/transform_value', '__return_true');
@@ -118,6 +126,11 @@ class TimberModule extends Module
             }
         }
         $context = static::normalizeInnerBlocksContext($context);
+
+        // Auto-inject helper variables for templates
+        $context['inner_blocks'] = $block['innerBlocks'] ?? [];
+        $context['wrapper_attributes'] = $block['wrapper_attributes'] ?? [];
+
         if ($context['render'] ?? false) {
             echo $context['render'];
             return;
