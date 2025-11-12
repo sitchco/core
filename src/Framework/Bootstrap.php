@@ -27,6 +27,11 @@ class Bootstrap
                 Hooks::name(BlockManifestRegistry::PATH_FILTER_HOOK),
                 fn($paths) => [...$paths, SITCHCO_CORE_TESTS_DIR],
             );
+            add_filter('timber/locations', function ($paths) {
+                $paths[] = [SITCHCO_CORE_FIXTURES_DIR];
+
+                return $paths;
+            });
         }
     }
 
