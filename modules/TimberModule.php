@@ -265,6 +265,11 @@ class TimberModule extends Module
         return static::$blockMetadataCache[$path];
     }
 
+    public static function resetBlockMetadataCache(): void
+    {
+        static::$blockMetadataCache = [];
+    }
+
     protected static function formatInnerBlocksAttribute(mixed $value, string $strategy = 'auto'): ?string
     {
         if ($value === null) {
