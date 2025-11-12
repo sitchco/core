@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@sitchco/cli':
-        specifier: 2.1.6
-        version: 2.1.6(@babel/core@7.28.5)(@types/node@24.10.0)(eslint@9.39.1)(rollup@4.53.2)(sass@1.93.3)
+        specifier: 2.1.7
+        version: 2.1.7(@babel/core@7.28.5)(@types/node@24.10.1)(eslint@9.39.1)(postcss@8.5.6)(rollup@4.53.2)(sass@1.93.3)
       '@sitchco/eslint-config':
         specifier: ^2.1.1
         version: 2.1.1(@babel/core@7.28.5)(eslint@9.39.1)
@@ -554,8 +554,32 @@ packages:
   '@borewit/text-codec@0.1.1':
     resolution: {integrity: sha512-5L/uBxmjaCIX5h8Z+uu+kA9BQLkc/Wl06UGR5ajNRxu+/XjonB5i8JpgFMrPj3LXTCPA0pv8yxUvbUi+QthGGA==}
 
-  '@bufbuild/protobuf@2.10.0':
-    resolution: {integrity: sha512-fdRs9PSrBF7QUntpZpq6BTw58fhgGJojgg39m9oFOJGZT+nip9b0so5cYY1oWl5pvemDLr0cPPsH46vwThEbpQ==}
+  '@bufbuild/protobuf@2.10.1':
+    resolution: {integrity: sha512-ckS3+vyJb5qGpEYv/s1OebUHDi/xSNtfgw1wqKZo7MR9F2z+qXr0q5XagafAG/9O0QPVIUfST0smluYSTpYFkg==}
+
+  '@csstools/cascade-layer-name-parser@2.0.5':
+    resolution: {integrity: sha512-p1ko5eHgV+MgXFVa4STPKpvPxr6ReS8oS2jzTukjR74i5zJNyWO1ZM1m8YKBXnzDKWfBN1ztLYlHxbVemDD88A==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@csstools/css-parser-algorithms': ^3.0.5
+      '@csstools/css-tokenizer': ^3.0.4
+
+  '@csstools/css-parser-algorithms@3.0.5':
+    resolution: {integrity: sha512-DaDeUkXZKjdGhgYaHNJTV9pV7Y9B3b644jCLs9Upc3VeNGg6LWARAT6O+Q+/COo+2gg/bM5rhpMAtf70WqfBdQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@csstools/css-tokenizer': ^3.0.4
+
+  '@csstools/css-tokenizer@3.0.4':
+    resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
+    engines: {node: '>=18'}
+
+  '@csstools/media-query-list-parser@4.0.3':
+    resolution: {integrity: sha512-HAYH7d3TLRHDOUQK4mZKf9k9Ph/m8Akstg66ywKR4SFAigjs3yBiUeZtFxywiTm5moZMAp/5W/ZuFnNXXYLuuQ==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@csstools/css-parser-algorithms': ^3.0.5
+      '@csstools/css-tokenizer': ^3.0.4
 
   '@esbuild/aix-ppc64@0.25.12':
     resolution: {integrity: sha512-Hhmwd6CInZ3dwpuGTF8fJG6yoWmsToE+vYgD4nytZVxcu1ulHpUQRAB1UJ8+N1Am3Mz4+xOByoQoSZf4D+CpkA==}
@@ -1042,8 +1066,8 @@ packages:
     resolution: {integrity: sha512-LtoMMhxAlorcGhmFYI+LhPgbPZCkgP6ra1YL604EeF6U98pLlQ3iWIGMdWSC+vWmPBWBNgmDBAhnAobLROJmwg==}
     engines: {node: '>=18'}
 
-  '@sitchco/cli@2.1.6':
-    resolution: {integrity: sha512-VxDVH37/Z59OyYZoWUTZCIKyyi1DW4l9TbhhEOIA3rIAJi4l9UQeJ6yFTFmcDExlJd3nteuQXga7CDLd5Wp6hg==}
+  '@sitchco/cli@2.1.7':
+    resolution: {integrity: sha512-gI6WpC039L4TdZb+t4cXi63xmHsf4mCtYFRTqxXMPVSTI4bavX1mpDWLhZe9996bMMCpr1eC/PPfqcS6xssm3A==}
     hasBin: true
 
   '@sitchco/eslint-config@2.1.1':
@@ -1057,8 +1081,8 @@ packages:
   '@sitchco/linter@2.1.10':
     resolution: {integrity: sha512-Lb9EcM9mjXlpY8dYZG+T6/JyTsFpymUMHCBtPqUFZjITNPQNaYMnLDfUcsKLJabJtbX/VzwnvqxFzpuLD9+LTA==}
 
-  '@sitchco/module-builder@2.1.3':
-    resolution: {integrity: sha512-QWC0Ua+Ah40Rb4mde7QtU1o2djMhehYMVS5bPQ+K6LQeGkhwWJMqzDvhwNh1vCwKPBqsEXkBKeEEWO/53y5abQ==}
+  '@sitchco/module-builder@2.1.4':
+    resolution: {integrity: sha512-/+rGXcQ1AH7iO62YqeYJ+z9ZRkziVvOKSTeJmD86nr+FoIp4R4sWchzOQFuIHlR1sJF8K6sNNEb2e9J9K1dehg==}
     engines: {node: '>=18.0.0'}
 
   '@sitchco/prettier-config@2.1.1':
@@ -1104,8 +1128,8 @@ packages:
   '@types/ms@2.1.0':
     resolution: {integrity: sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==}
 
-  '@types/node@24.10.0':
-    resolution: {integrity: sha512-qzQZRBqkFsYyaSWXuEHc2WR9c0a0CXwiE5FWUvn7ZM+vdy1uZLfCunD38UzhuB7YN/J11ndbDBcTmOdxJo9Q7A==}
+  '@types/node@24.10.1':
+    resolution: {integrity: sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==}
 
   '@typescript-eslint/types@8.46.4':
     resolution: {integrity: sha512-USjyxm3gQEePdUwJBFjjGNG18xY9A2grDVGuk7/9AkjIF1L+ZrVnwR5VAU5JXtUnBL/Nwt3H31KlRDaksnM7/w==}
@@ -1208,8 +1232,8 @@ packages:
   base-log-factory@2.1.4:
     resolution: {integrity: sha512-FK1tHOB+rXvlBcGYYhSNR2QS2juEG4SZ1ekXQRQ2XscYNtDxllzqkzfgBFr12EVrKb2/07NLdbr0cSwVoc378A==}
 
-  baseline-browser-mapping@2.8.25:
-    resolution: {integrity: sha512-2NovHVesVF5TXefsGX1yzx1xgr7+m9JQenvz6FQY3qd+YXkKkYiv+vTCc7OriP9mcDZpTC5mAOYN4ocd29+erA==}
+  baseline-browser-mapping@2.8.27:
+    resolution: {integrity: sha512-2CXFpkjVnY2FT+B6GrSYxzYf65BJWEqz5tIRHCvNsZZ2F3CmsCB37h8SpYgKG7y9C4YAeTipIPWG7EmFmhAeXA==}
     hasBin: true
 
   binary-extensions@2.3.0:
@@ -1350,6 +1374,11 @@ packages:
   css-what@6.2.2:
     resolution: {integrity: sha512-u/O3vwbptzhMs3L1fQE82ZSLHQQfto5gyZzwteVIEyeaY5Fc7R4dapF/BvRoSYFeqfBk4m0V1Vafq5Pjv25wvA==}
     engines: {node: '>= 6'}
+
+  cssesc@3.0.0:
+    resolution: {integrity: sha512-/Tb/JcjK111nNScGob5MNtsntNM1aCNUDipB/TkwZFhyDrrE47SOx/18wF2bbjgc3ZzCSKW1T5nt5EbFoAz/Vg==}
+    engines: {node: '>=4'}
+    hasBin: true
 
   csso@5.0.5:
     resolution: {integrity: sha512-0LrrStPOdJj+SPCCrGhzryycLjwcgUSHBtxNA8aIDxf0GLsRh1cKYhB00Gd1lDOS4yGH69+SNn13+TWbVHETFQ==}
@@ -1615,8 +1644,8 @@ packages:
   fast-deep-equal@3.1.3:
     resolution: {integrity: sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==}
 
-  fast-equals@5.3.2:
-    resolution: {integrity: sha512-6rxyATwPCkaFIL3JLqw8qXqMpIZ942pTX/tbQFkRsDGblS8tNGtlUauA/+mt6RUfqn/4MoEr+WDkYoIQbibWuQ==}
+  fast-equals@5.3.3:
+    resolution: {integrity: sha512-/boTcHZeIAQ2r/tL11voclBHDeP9WPxLt+tyAbVSyyXuUFyh0Tne7gJZTqGbxnvj79TjLdCXLOY7UIPhyG5MTw==}
     engines: {node: '>=6.0.0'}
 
   fast-glob@3.3.3:
@@ -1985,8 +2014,8 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  js-yaml@4.1.0:
-    resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
+  js-yaml@4.1.1:
+    resolution: {integrity: sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA==}
     hasBin: true
 
   jsesc@3.1.0:
@@ -2248,6 +2277,22 @@ packages:
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
+
+  postcss-custom-media@11.0.6:
+    resolution: {integrity: sha512-C4lD4b7mUIw+RZhtY7qUbf4eADmb7Ey8BFA2px9jUbwg7pjTZDl4KY4bvlUV+/vXQvzQRfiGEVJyAbtOsCMInw==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      postcss: ^8.4
+
+  postcss-nested@7.0.2:
+    resolution: {integrity: sha512-5osppouFc0VR9/VYzYxO03VaDa3e8F23Kfd6/9qcZTUI8P58GIYlArOET2Wq0ywSl2o2PjELhYOFI4W7l5QHKw==}
+    engines: {node: '>=18.0'}
+    peerDependencies:
+      postcss: ^8.2.14
+
+  postcss-selector-parser@7.1.0:
+    resolution: {integrity: sha512-8sLjZwK0R+JlxlYcTuVnyT2v+htpdrjDOKuMcOVdYjt52Lh8hWRYpxBPoKx/Zg+bcjc3wx6fmQevMmUztS/ccA==}
+    engines: {node: '>=4'}
 
   postcss@8.5.6:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
@@ -2712,6 +2757,9 @@ packages:
 
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
+
+  util-deprecate@1.0.2:
+    resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
   varint@6.0.0:
     resolution: {integrity: sha512-cXEIW6cfr15lFv563k4GuVuW/fiwjknytD37jIOLSdSWuOI6WnO/oKwmP2FQTU2l01LP8/M5TSAJpzUaGe3uWg==}
@@ -3526,7 +3574,23 @@ snapshots:
 
   '@borewit/text-codec@0.1.1': {}
 
-  '@bufbuild/protobuf@2.10.0': {}
+  '@bufbuild/protobuf@2.10.1': {}
+
+  '@csstools/cascade-layer-name-parser@2.0.5(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
+    dependencies:
+      '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-tokenizer': 3.0.4
+
+  '@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4)':
+    dependencies:
+      '@csstools/css-tokenizer': 3.0.4
+
+  '@csstools/css-tokenizer@3.0.4': {}
+
+  '@csstools/media-query-list-parser@4.0.3(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)':
+    dependencies:
+      '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-tokenizer': 3.0.4
 
   '@esbuild/aix-ppc64@0.25.12':
     optional: true
@@ -3637,7 +3701,7 @@ snapshots:
       globals: 14.0.0
       ignore: 5.3.2
       import-fresh: 3.3.1
-      js-yaml: 4.1.0
+      js-yaml: 4.1.1
       minimatch: 3.1.2
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
@@ -3697,9 +3761,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kucrut/vite-for-wp@0.12.0(rollup-plugin-external-globals@0.13.0(rollup@4.53.2))(vite-plugin-external@6.2.2)(vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3))':
+  '@kucrut/vite-for-wp@0.12.0(rollup-plugin-external-globals@0.13.0(rollup@4.53.2))(vite-plugin-external@6.2.2)(vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3))':
     dependencies:
-      vite: 7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3)
+      vite: 7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3)
     optionalDependencies:
       rollup-plugin-external-globals: 0.13.0(rollup@4.53.2)
       vite-plugin-external: 6.2.2
@@ -3869,11 +3933,11 @@ snapshots:
 
   '@sindresorhus/merge-streams@2.3.0': {}
 
-  '@sitchco/cli@2.1.6(@babel/core@7.28.5)(@types/node@24.10.0)(eslint@9.39.1)(rollup@4.53.2)(sass@1.93.3)':
+  '@sitchco/cli@2.1.7(@babel/core@7.28.5)(@types/node@24.10.1)(eslint@9.39.1)(postcss@8.5.6)(rollup@4.53.2)(sass@1.93.3)':
     dependencies:
       '@sitchco/formatter': 2.1.3(@babel/core@7.28.5)(eslint@9.39.1)
       '@sitchco/linter': 2.1.10(@babel/core@7.28.5)
-      '@sitchco/module-builder': 2.1.3(@types/node@24.10.0)(rollup@4.53.2)(sass@1.93.3)
+      '@sitchco/module-builder': 2.1.4(@types/node@24.10.1)(postcss@8.5.6)(rollup@4.53.2)(sass@1.93.3)
       chalk: 5.6.2
       commander: 14.0.2
       husky: 9.1.7
@@ -3887,6 +3951,7 @@ snapshots:
       - jiti
       - less
       - lightningcss
+      - postcss
       - rollup
       - sass
       - stylus
@@ -3947,26 +4012,29 @@ snapshots:
       - jiti
       - supports-color
 
-  '@sitchco/module-builder@2.1.3(@types/node@24.10.0)(rollup@4.53.2)(sass@1.93.3)':
+  '@sitchco/module-builder@2.1.4(@types/node@24.10.1)(postcss@8.5.6)(rollup@4.53.2)(sass@1.93.3)':
     dependencies:
-      '@kucrut/vite-for-wp': 0.12.0(rollup-plugin-external-globals@0.13.0(rollup@4.53.2))(vite-plugin-external@6.2.2)(vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3))
+      '@kucrut/vite-for-wp': 0.12.0(rollup-plugin-external-globals@0.13.0(rollup@4.53.2))(vite-plugin-external@6.2.2)(vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3))
       '@sitchco/project-scanner': 2.1.1
       chalk: 5.6.2
       glob: 11.0.3
       imagemin: 9.0.1
       imagemin-svgo: 11.0.1
-      laravel-vite-plugin: 2.0.1(vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3))
+      laravel-vite-plugin: 2.0.1(vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3))
+      postcss-custom-media: 11.0.6(postcss@8.5.6)
+      postcss-nested: 7.0.2(postcss@8.5.6)
       rollup-plugin-external-globals: 0.13.0(rollup@4.53.2)
       sass-embedded: 1.93.3
       svgstore: 3.0.1
-      vite: 7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3)
+      vite: 7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3)
       vite-plugin-external: 6.2.2
-      vite-plugin-static-copy: 3.1.4(vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3))
+      vite-plugin-static-copy: 3.1.4(vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3))
     transitivePeerDependencies:
       - '@types/node'
       - jiti
       - less
       - lightningcss
+      - postcss
       - rollup
       - sass
       - stylus
@@ -4008,7 +4076,7 @@ snapshots:
   '@types/fs-extra@11.0.4':
     dependencies:
       '@types/jsonfile': 6.1.4
-      '@types/node': 24.10.0
+      '@types/node': 24.10.1
 
   '@types/json-schema@7.0.15': {}
 
@@ -4016,11 +4084,11 @@ snapshots:
 
   '@types/jsonfile@6.1.4':
     dependencies:
-      '@types/node': 24.10.0
+      '@types/node': 24.10.1
 
   '@types/ms@2.1.0': {}
 
-  '@types/node@24.10.0':
+  '@types/node@24.10.1':
     dependencies:
       undici-types: 7.16.0
 
@@ -4160,7 +4228,7 @@ snapshots:
       date-manip: 2.0.6
       is-what-type: 1.1.4
 
-  baseline-browser-mapping@2.8.25: {}
+  baseline-browser-mapping@2.8.27: {}
 
   binary-extensions@2.3.0: {}
 
@@ -4192,7 +4260,7 @@ snapshots:
 
   browserslist@4.28.0:
     dependencies:
-      baseline-browser-mapping: 2.8.25
+      baseline-browser-mapping: 2.8.27
       caniuse-lite: 1.0.30001754
       electron-to-chromium: 1.5.250
       node-releases: 2.0.27
@@ -4329,6 +4397,8 @@ snapshots:
       source-map-js: 1.2.1
 
   css-what@6.2.2: {}
+
+  cssesc@3.0.0: {}
 
   csso@5.0.5:
     dependencies:
@@ -4728,7 +4798,7 @@ snapshots:
 
   fast-deep-equal@3.1.3: {}
 
-  fast-equals@5.3.2: {}
+  fast-equals@5.3.3: {}
 
   fast-glob@3.3.3:
     dependencies:
@@ -5116,7 +5186,7 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  js-yaml@4.1.0:
+  js-yaml@4.1.1:
     dependencies:
       argparse: 2.0.1
 
@@ -5153,10 +5223,10 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  laravel-vite-plugin@2.0.1(vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3)):
+  laravel-vite-plugin@2.0.1(vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3)):
     dependencies:
       picocolors: 1.1.1
-      vite: 7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3)
+      vite: 7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3)
       vite-plugin-full-reload: 1.2.0
 
   levn@0.4.1:
@@ -5295,7 +5365,7 @@ snapshots:
       callsites: 4.2.0
       dot-prop: 8.0.2
       environment: 1.1.0
-      fast-equals: 5.3.2
+      fast-equals: 5.3.3
       is-identifier: 1.0.1
 
   own-keys@1.0.1:
@@ -5358,6 +5428,24 @@ snapshots:
   picomatch@4.0.3: {}
 
   possible-typed-array-names@1.1.0: {}
+
+  postcss-custom-media@11.0.6(postcss@8.5.6):
+    dependencies:
+      '@csstools/cascade-layer-name-parser': 2.0.5(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-parser-algorithms': 3.0.5(@csstools/css-tokenizer@3.0.4)
+      '@csstools/css-tokenizer': 3.0.4
+      '@csstools/media-query-list-parser': 4.0.3(@csstools/css-parser-algorithms@3.0.5(@csstools/css-tokenizer@3.0.4))(@csstools/css-tokenizer@3.0.4)
+      postcss: 8.5.6
+
+  postcss-nested@7.0.2(postcss@8.5.6):
+    dependencies:
+      postcss: 8.5.6
+      postcss-selector-parser: 7.1.0
+
+  postcss-selector-parser@7.1.0:
+    dependencies:
+      cssesc: 3.0.0
+      util-deprecate: 1.0.2
 
   postcss@8.5.6:
     dependencies:
@@ -5570,7 +5658,7 @@ snapshots:
 
   sass-embedded@1.93.3:
     dependencies:
-      '@bufbuild/protobuf': 2.10.0
+      '@bufbuild/protobuf': 2.10.1
       buffer-builder: 0.2.0
       colorjs.io: 0.5.2
       immutable: 5.1.4
@@ -5904,6 +5992,8 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
+  util-deprecate@1.0.2: {}
+
   varint@6.0.0: {}
 
   vite-plugin-external@6.2.2:
@@ -5920,15 +6010,15 @@ snapshots:
       picocolors: 1.1.1
       picomatch: 2.3.1
 
-  vite-plugin-static-copy@3.1.4(vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3)):
+  vite-plugin-static-copy@3.1.4(vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3)):
     dependencies:
       chokidar: 3.6.0
       p-map: 7.0.4
       picocolors: 1.1.1
       tinyglobby: 0.2.15
-      vite: 7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3)
+      vite: 7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3)
 
-  vite@7.2.2(@types/node@24.10.0)(sass-embedded@1.93.3)(sass@1.93.3):
+  vite@7.2.2(@types/node@24.10.1)(sass-embedded@1.93.3)(sass@1.93.3):
     dependencies:
       esbuild: 0.25.12
       fdir: 6.5.0(picomatch@4.0.3)
@@ -5937,7 +6027,7 @@ snapshots:
       rollup: 4.53.2
       tinyglobby: 0.2.15
     optionalDependencies:
-      '@types/node': 24.10.0
+      '@types/node': 24.10.1
       fsevents: 2.3.3
       sass: 1.93.3
       sass-embedded: 1.93.3
