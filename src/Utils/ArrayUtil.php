@@ -2,6 +2,8 @@
 
 namespace Sitchco\Utils;
 
+use Traversable;
+
 /**
  * Class ArrayUtil
  * @package Sitchco\Utils
@@ -175,5 +177,19 @@ class ArrayUtil
             fn($value) => is_array($value) ? self::numerify($value) : (is_numeric($value) ? $value + 0 : $value),
             $array,
         );
+    }
+
+    public static function normalizeIterable(mixed $value, bool $preserveKeys = true): ?array
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_array($value)) {
+            return $preserveKeys ? $value : array_values($value);
+        }
+        if ($value instanceof Traversable) {
+            return iterator_to_array($value, $preserveKeys);
+        }
+        return null;
     }
 }

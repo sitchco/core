@@ -5,6 +5,7 @@ namespace Sitchco\ModuleExtension;
 use Sitchco\Framework\BlockManifestRegistry;
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
+use Sitchco\Utils\Block;
 
 /**
  * Class BlockRegistrationModuleExtension
@@ -104,14 +105,14 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     public function addModuleBlocksPaths(array $paths): array
     {
         foreach ($this->moduleBlocksPaths as $blocksPath) {
-            $pathParts = explode('/modules/', $blocksPath->value());
-            if (!isset($pathParts[1])) {
+            $relative = Block::relativeBlockPath($blocksPath);
+            if (empty($relative)) {
                 continue;
             }
             $paths[] = array_filter(
                 [
                     // child theme override for block template path
-                    get_stylesheet_directory() . '/modules/' . $pathParts[1],
+                    get_stylesheet_directory() . '/modules/' . $relative,
                     // default block template path
                     $blocksPath->value(),
                 ],

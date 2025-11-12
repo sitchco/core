@@ -1,5 +1,7 @@
 {
     "version": "1.0",
     "hash": "",
-    "blocks": []
+    "blocks": {
+        "sitchco/test-block": "Fakes/ModuleTester/blocks/test-block"
+    }
 }

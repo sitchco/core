@@ -7,5 +7,17 @@
     "viewScript": "",
     "style": ["file:./test.css"],
     "editorStyle": "",
-    "viewStyle": "file:./test-view.css"
+    "viewStyle": "file:./test-view.css",
+    "allowedBlocks": ["core\/paragraph", "core\/heading"],
+    "innerBlocksConfig": {
+        "template": [
+            [
+                "core\/paragraph",
+                {
+                    "placeholder": "Enter text..."
+                }
+            ]
+        ],
+        "templateLock": "all"
+    }
 }
