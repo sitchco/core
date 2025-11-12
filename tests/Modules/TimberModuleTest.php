@@ -15,7 +15,6 @@ class TimberModuleTest extends TestCase
         // Load and register the ACF field group
         $field_group = include SITCHCO_CORE_FIXTURES_DIR . '/acf-field-group.php';
         acf_add_local_field_group($field_group);
-        TimberModule::resetBlockMetadataCache();
     }
 
     /**

@@ -5,6 +5,7 @@ namespace Sitchco\ModuleExtension;
 use Sitchco\Framework\BlockManifestRegistry;
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
+use Sitchco\Utils\Block;
 
 /**
  * Class BlockRegistrationModuleExtension
@@ -104,9 +105,7 @@ class BlockRegistrationModuleExtension implements ModuleExtension
     public function addModuleBlocksPaths(array $paths): array
     {
         foreach ($this->moduleBlocksPaths as $blocksPath) {
-            $pathParts = explode(DIRECTORY_SEPARATOR, $blocksPath->value());
-            $relativeParts = array_splice($pathParts, -3);
-            $relative = implode(DIRECTORY_SEPARATOR, $relativeParts);
+            $relative = Block::relativeBlockPath($blocksPath);
             if (empty($relative)) {
                 continue;
             }
