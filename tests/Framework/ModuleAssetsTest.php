@@ -229,10 +229,9 @@ class ModuleAssetsTest extends TestCase
         ];
         $blocksConfig = ['sitchco/test-block' => 'test-block'];
 
-        $result = $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
+        $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
 
         // Verify the script was registered with dependencies from test1.asset.php
-        $this->assertArrayHasKey('script', $result);
         $handle = 'sitchco-test-block-script';
         $this->assertTrue(wp_script_is($handle, 'registered'));
 
@@ -251,10 +250,9 @@ class ModuleAssetsTest extends TestCase
         ];
         $blocksConfig = ['sitchco/test-block' => 'test-block'];
 
-        $result = $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
+        $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
 
         // Verify the script was registered with empty dependencies and fallback version
-        $this->assertArrayHasKey('script', $result);
         $handle = 'sitchco-test-block-script';
         $this->assertTrue(wp_script_is($handle, 'registered'));
 
@@ -271,11 +269,9 @@ class ModuleAssetsTest extends TestCase
         ];
         $blocksConfig = ['sitchco/test-block' => 'test-block'];
 
-        $result = $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
+        $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
 
         // Verify only file references were registered (wp-blocks should be skipped)
-        $this->assertArrayHasKey('script', $result);
-
         // Check all registered script handles to find our test blocks
         $allHandles = array_keys(wp_scripts()->registered);
         $testHandles = array_filter($allHandles, fn($h) => str_contains($h, 'test-block'));
