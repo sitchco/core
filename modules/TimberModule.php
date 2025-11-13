@@ -108,7 +108,7 @@ class TimberModule extends Module
         $context['inner_blocks'] = $block['innerBlocks'] ?? [];
         $context['wrapper_attributes'] = $block['wrapper_attributes'] ?? [];
 
-        if ($render) {
+        if (!is_null($render)) {
             echo $render;
             return;
         }
@@ -118,7 +118,12 @@ class TimberModule extends Module
         $output = TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
 
         echo is_array($wrapper) && !$is_preview
-            ? Block::wrapperElement($output, $wrapper['attributes'], $wrapper['link'], $wrapper['tag'])
+            ? Block::wrapperElement(
+                $output,
+                $wrapper['attributes'] ?? [],
+                $wrapper['link'] ?? null,
+                $wrapper['tag'] ?? 'div',
+            )
             : $output;
     }
 
