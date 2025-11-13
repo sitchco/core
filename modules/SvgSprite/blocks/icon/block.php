@@ -3,7 +3,6 @@
  * Expected:
  * @var array $context
  * @var ContainerInterface $container
- * @var array $wrapper
  */
 
 use Psr\Container\ContainerInterface;
@@ -15,6 +14,9 @@ $name = $context['fields']['icon_name'] ?? 'unknown';
 
 $rotation = $context['fields']['icon_rotation'] ?? 0;
 
-$wrapper['link'] = $context['fields']['icon_link'] ?: [];
-
-return $container->get(SvgSprite::class)->renderIcon($name, Rotation::tryFrom($rotation));
+return Block::wrapperElement(
+    $container->get(SvgSprite::class)->renderIcon($name, Rotation::tryFrom($rotation)),
+    [],
+    $context['fields']['icon_link'] ?: [],
+    'span',
+);
