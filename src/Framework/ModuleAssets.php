@@ -185,6 +185,10 @@ class ModuleAssets
         $assetPaths = is_array($metadata[$fieldName]) ? $metadata[$fieldName] : [$metadata[$fieldName]];
         $assetPaths = array_filter($assetPaths);
         foreach ($assetPaths as $index => $assetPath) {
+            if (!str_contains($assetPath, 'file:') && !str_contains($assetPath, '.')) {
+                continue;
+            }
+
             $fullPath = $this->blockAssetPath($blockPath, $assetPath);
             $assetUrl = $this->assetUrl($fullPath);
             if (!$assetUrl) {
