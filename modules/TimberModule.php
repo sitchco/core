@@ -72,7 +72,7 @@ class TimberModule extends Module
      * @param string $content
      * @param bool $is_preview
      * @param int $post_id
-     * @param null $wp_block
+     * @param WP_Block|null $wp_block
      * @return void
      */
     public static function blockRenderCallback(
@@ -82,15 +82,23 @@ class TimberModule extends Module
         int $post_id = 0,
         WP_Block $wp_block = null,
     ): void {
-        $context = static::setupContext(...func_get_args());
+        $scope = [
+            'context' => static::setupContext(...func_get_args()),
+            'wrapper' => [
+                'tag' => 'div',
+                'attributes' => [],
+                'link' => null,
+            ],
+        ];
 
         // Parent theme context inclusion
-        $context = static::loadBlockContext($context, $block['path']);
+        $scope = static::loadBlockScope($scope, $block['path']);
 
         // Child theme context inclusion
         $relative = Block::relativeBlockPath($block['path']);
         $child_path = get_stylesheet_directory() . '/modules/' . $relative;
-        $context = static::loadBlockContext($context, $child_path);
+        $scope = static::loadBlockScope($scope, $child_path);
+        extract($scope);
 
         $metadata = Block::getBlockMetadata($block['path'] ?? '');
         $context = static::mergeMetadataContext($context, $metadata);
@@ -100,14 +108,23 @@ class TimberModule extends Module
         $context['inner_blocks'] = $block['innerBlocks'] ?? [];
         $context['wrapper_attributes'] = $block['wrapper_attributes'] ?? [];
 
-        if ($context['render'] ?? false) {
-            echo $context['render'];
+        if (!is_null($render)) {
+            echo $render;
             return;
         }
         $template_path = trailingslashit(basename($block['path'])) . 'block.twig';
         $blockNameParts = explode('/', $block['name']);
         $blockName = array_pop($blockNameParts);
-        echo TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
+        $output = TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
+
+        echo is_array($wrapper) && !$is_preview
+            ? Block::wrapperElement(
+                $output,
+                $wrapper['attributes'] ?? [],
+                $wrapper['link'] ?? null,
+                $wrapper['tag'] ?? 'div',
+            )
+            : $output;
     }
 
     protected static function setupContext(
@@ -156,14 +173,24 @@ class TimberModule extends Module
         return $context;
     }
 
-    protected static function loadBlockContext(array $context, $path): array
+    /**
+     * @param array $scope {
+     * * @type array $context array of template context
+     * * @type array $wrapper wrapper element config
+     * }
+     * @param $path
+     * @return array
+     */
+    protected static function loadBlockScope(array $scope, $path): array
     {
         $context_file = trailingslashit($path) . 'block.php';
-        $container = $GLOBALS['SitchcoContainer'];
+        extract($scope);
         if (file_exists($context_file)) {
-            include $context_file;
+            $container = $GLOBALS['SitchcoContainer'];
+            $return = include $context_file;
+            $render = is_string($return) ? $return : null;
         }
-        return $context;
+        return compact('context', 'wrapper', 'render');
     }
 
     protected static function normalizeInnerBlocksContext(array $context): array

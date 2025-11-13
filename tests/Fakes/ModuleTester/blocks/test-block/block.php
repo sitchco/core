@@ -4,5 +4,5 @@
  */
 
 if (!empty($context['block']['return_context'])) {
-    $context['render'] = serialize($context);
+    return serialize($context);
 }

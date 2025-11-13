@@ -5,6 +5,8 @@ namespace Sitchco\Tests\Modules;
 use Sitchco\Support\DateTime;
 use Sitchco\Tests\TestCase;
 use Sitchco\Modules\TimberModule;
+use WP_Block;
+use WP_Block_Supports;
 
 class TimberModuleTest extends TestCase
 {
@@ -24,7 +26,7 @@ class TimberModuleTest extends TestCase
      * @param int $postId Post ID
      * @param string $content Block content
      * @param bool $isPreview Is preview mode
-     * @param \WP_Block|null $wpBlock WP_Block instance
+     * @param WP_Block|null $wpBlock WP_Block instance
      * @return array|string The context array after blockRenderCallback processing, or a rendered template string
      */
     private function renderBlockWithContext(
@@ -32,7 +34,7 @@ class TimberModuleTest extends TestCase
         int $postId = 0,
         string $content = '',
         bool $isPreview = false,
-        ?\WP_Block $wpBlock = null,
+        ?WP_Block $wpBlock = null,
         bool $return_context = false,
     ): array|string {
         $block = array_merge(
@@ -125,8 +127,8 @@ class TimberModuleTest extends TestCase
             'innerContent' => ['<p>Inner paragraph</p>'],
         ];
 
-        $wp_block = new \WP_Block([
-            'blockName' => 'acf/test-block',
+        $wp_block = new WP_Block([
+            'blockName' => 'sitchco/test-block',
             'attrs' => [],
             'innerBlocks' => [$innerBlockData],
         ]);
@@ -142,12 +144,23 @@ class TimberModuleTest extends TestCase
     {
         $post_id = $this->factory()->post->create(['post_title' => 'Test Post']);
 
-        $output = $this->renderBlockWithContext(postId: $post_id);
+        $output = $this->renderBlockWithContext(postId: $post_id, isPreview: true);
         $decoded = json_decode($output, true);
         $this->assertIsArray($decoded, 'Expected innerBlocksConfig to be output as JSON');
         $this->assertArrayHasKey('allowedBlocks', $decoded);
         $this->assertEquals(['core/paragraph', 'core/heading'], $decoded['allowedBlocks']);
         $this->assertArrayHasKey('template', $decoded);
         $this->assertArrayHasKey('templateLock', $decoded);
+    }
+
+    public function test_blockRenderCallback_wrapper_element()
+    {
+        $post_id = $this->factory()->post->create(['post_title' => 'Test Post']);
+        WP_Block_Supports::$block_to_render = [
+            'blockName' => 'sitchco/test-block',
+            'attrs' => [],
+        ];
+        $output = $this->renderBlockWithContext(postId: $post_id);
+        $this->assertStringContainsString('<div class="wp-block-sitchco-test-block">', $output);
     }
 }

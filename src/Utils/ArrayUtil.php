@@ -192,4 +192,9 @@ class ArrayUtil
         }
         return null;
     }
+
+    public static function pick(array $array, array $keys): array
+    {
+        return array_filter($array, fn($key) => in_array($key, $keys, true), ARRAY_FILTER_USE_KEY);
+    }
 }
