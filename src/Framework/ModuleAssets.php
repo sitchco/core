@@ -4,6 +4,7 @@ namespace Sitchco\Framework;
 
 use Sitchco\Support\FilePath;
 use Sitchco\Support\HookName;
+use Sitchco\Utils\Cache;
 use Sitchco\Utils\Hooks;
 
 class ModuleAssets
@@ -196,12 +197,22 @@ class ModuleAssets
             }
             $handle = generate_block_asset_handle($metadata['name'], $fieldName, $index);
 
-            // For dev server mode, unhook from metadata and manually register as module script
+            // Load dependencies and version from .asset.php file if it exists
+            $dependencies = [];
+            $version = $metadata['version'] ?? null;
+            $assetPhpPath = $fullPath->parent()->append(sprintf('%s.asset.php', $fullPath->name()));
+            $assetData = Cache::remember(
+                'asset_php:' . md5($assetPhpPath->value()),
+                fn() => $assetPhpPath->exists() ? require $assetPhpPath->value() : [],
+            );
+            $dependencies = $assetData['dependencies'] ?? [];
+            $version = $assetData['version'] ?? $version;
+
             if ($isScript) {
                 $args = 'viewScript' === $fieldName ? ['strategy' => 'defer'] : [];
-                wp_register_script($handle, $assetUrl, [], $metadata['version'] ?? null, $args);
+                wp_register_script($handle, $assetUrl, $dependencies, $version, $args);
             } else {
-                wp_register_style($handle, $assetUrl, [], $metadata['version'] ?? null);
+                wp_register_style($handle, $assetUrl, $dependencies, $version);
             }
         }
     }

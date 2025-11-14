@@ -2,7 +2,7 @@
     "name": "sitchco/test-block",
     "apiVersion": 3,
     "title": "Test Block",
-    "script": ["file:./test1.js", "file:./test2.js"],
+    "script": ["file:./test1.js", "file:./test2.js", "wp-blocks"],
     "editorScript": "file:./test-editor.js",
     "viewScript": "",
     "style": ["file:./test.css"],

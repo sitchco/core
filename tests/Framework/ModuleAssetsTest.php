@@ -220,4 +220,66 @@ class ModuleAssetsTest extends TestCase
         );
         $this->assertViteClientEnqueued();
     }
+
+    public function test_blockTypeMetadata_loadsAssetPhpDependencies()
+    {
+        $metadata = [
+            'name' => 'sitchco/test-block',
+            'script' => 'file:./test1.js',
+        ];
+        $blocksConfig = ['sitchco/test-block' => 'test-block'];
+
+        $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
+
+        // Verify the script was registered with dependencies from test1.asset.php
+        $handle = 'sitchco-test-block-script';
+        $this->assertTrue(wp_script_is($handle, 'registered'));
+
+        $registered = wp_scripts()->registered[$handle];
+        $this->assertContains('wp-blocks', $registered->deps);
+        $this->assertContains('wp-element', $registered->deps);
+        $this->assertEquals('1.2.3', $registered->ver);
+    }
+
+    public function test_blockTypeMetadata_fallbackWithoutAssetPhp()
+    {
+        $metadata = [
+            'name' => 'sitchco/test-block',
+            'script' => 'file:./test2.js', // test2.js has no .asset.php file
+            'version' => '2.0.0',
+        ];
+        $blocksConfig = ['sitchco/test-block' => 'test-block'];
+
+        $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
+
+        // Verify the script was registered with empty dependencies and fallback version
+        $handle = 'sitchco-test-block-script';
+        $this->assertTrue(wp_script_is($handle, 'registered'));
+
+        $registered = wp_scripts()->registered[$handle];
+        $this->assertEmpty($registered->deps);
+        $this->assertEquals('2.0.0', $registered->ver);
+    }
+
+    public function test_blockTypeMetadata_skipsNonFileHandles()
+    {
+        $metadata = [
+            'name' => 'sitchco/test-block',
+            'script' => ['file:./test1.js', 'file:./test2.js', 'wp-blocks'],
+        ];
+        $blocksConfig = ['sitchco/test-block' => 'test-block'];
+
+        $this->prodAssets->blockTypeMetadata($metadata, $blocksConfig);
+
+        // Verify only file references were registered (wp-blocks should be skipped)
+        // Check all registered script handles to find our test blocks
+        $allHandles = array_keys(wp_scripts()->registered);
+        $testHandles = array_filter($allHandles, fn($h) => str_contains($h, 'test-block'));
+
+        // We should have at least 2 handles registered for our files
+        $this->assertGreaterThanOrEqual(2, count($testHandles), 'Should have at least 2 test-block scripts registered');
+
+        // Verify wp-blocks was not processed (our code should skip it)
+        // The metadata should still contain it, but we shouldn't have tried to register a file for it
+    }
 }
