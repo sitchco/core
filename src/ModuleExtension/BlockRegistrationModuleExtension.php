@@ -51,9 +51,8 @@ class BlockRegistrationModuleExtension implements ModuleExtension
 
     public function init(): void
     {
-        // Load the merged block manifest
-        $manifest = $this->manifestRegistry->load();
-        $manifestBlocks = $manifest['blocks'] ?? [];
+        // Load the 'blocks' section from the merged manifest
+        $manifestBlocks = $this->manifestRegistry->load('blocks');
 
         // Get base paths to resolve relative paths in manifest
         $basePaths = $this->manifestRegistry->getBasePaths();

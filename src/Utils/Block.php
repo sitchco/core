@@ -61,28 +61,16 @@ class Block
             return null;
         }
 
-        switch ($strategy) {
-            case 'json':
-                $encoded = wp_json_encode($value);
-                if ($encoded === false) {
-                    return null;
-                }
-                return $encoded;
-            case 'bool':
-                return $value ? 'true' : 'false';
-            case 'string':
-                return (string) $value;
-            case 'auto':
-            default:
-                if (is_bool($value)) {
-                    return $value ? 'true' : 'false';
-                }
-                if (is_array($value) || is_object($value)) {
-                    $encoded = wp_json_encode($value);
-                    return $encoded === false ? null : $encoded;
-                }
-                return (string) $value;
-        }
+        return match ($strategy) {
+            'json' => wp_json_encode($value) ?: null,
+            'bool' => $value ? 'true' : 'false',
+            'string' => (string) $value,
+            default => match (true) {
+                is_bool($value) => $value ? 'true' : 'false',
+                is_array($value) || is_object($value) => wp_json_encode($value) ?: null,
+                default => (string) $value,
+            },
+        };
     }
 
     public static function getBlockMetadata(string $path): array

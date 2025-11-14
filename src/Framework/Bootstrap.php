@@ -6,6 +6,7 @@ use DI\ContainerBuilder;
 use DI\DependencyException;
 use DI\NotFoundException;
 use Exception;
+use Sitchco\Tests\Fakes\TestFileRegistry;
 use Sitchco\Utils\Hooks;
 use Timber\Loader;
 
@@ -26,6 +27,11 @@ class Bootstrap
             add_filter(
                 Hooks::name(BlockManifestRegistry::PATH_FILTER_HOOK),
                 fn($paths) => [...$paths, SITCHCO_CORE_TESTS_DIR],
+            );
+            // Add fixtures directory for TestFileRegistry
+            add_filter(
+                Hooks::name(TestFileRegistry::PATH_FILTER_HOOK),
+                fn($paths) => [...$paths, SITCHCO_CORE_FIXTURES_DIR],
             );
         }
     }

@@ -42,7 +42,7 @@ class BlockManifestGenerator
      */
     public function shouldRegenerate(FilePath $basePath): bool
     {
-        $manifestPath = $basePath->append(BlockManifestRegistry::MANIFEST_FILENAME);
+        $manifestPath = $basePath->append(BlockManifestRegistry::FILENAME);
 
         if (!$manifestPath->exists()) {
             return true;
@@ -211,7 +211,7 @@ class BlockManifestGenerator
      */
     private function writeManifest(FilePath $basePath, array $manifest): void
     {
-        $manifestPath = $basePath->append(BlockManifestRegistry::MANIFEST_FILENAME);
+        $manifestPath = $basePath->append(BlockManifestRegistry::FILENAME);
 
         try {
             $jsonContent = json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
