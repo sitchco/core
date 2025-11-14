@@ -208,7 +208,6 @@ class ModuleAssets
             $dependencies = $assetData['dependencies'] ?? [];
             $version = $assetData['version'] ?? $version;
 
-            // For dev server mode, unhook from metadata and manually register as module script
             if ($isScript) {
                 $args = 'viewScript' === $fieldName ? ['strategy' => 'defer'] : [];
                 wp_register_script($handle, $assetUrl, $dependencies, $version, $args);
