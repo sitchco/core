@@ -39,7 +39,7 @@ export function registerLayoutActions() {
         throttleLayout,
         {
             leading: true,
-            trailing: false,
+            trailing: true,
         }
     );
 

@@ -253,7 +253,7 @@ class Cleanup extends Module
      */
     public function disableJpegCompression(): void
     {
-        add_filter('jpeg_quality', '__return_true');
+        add_filter('jpeg_quality', fn() => 100);
     }
 
     /**

@@ -1,5 +1,5 @@
 import { addAction, addFilter, applyFilters } from './hooks.mjs';
-import { LAYOUT, READY, SCROLL } from './constants.mjs';
+import { LAYOUT, LAYOUTEND, READY, SCROLL } from './constants.mjs';
 import { scrollPosition } from './viewport.mjs';
 
 export class DynamicStylesheet {
@@ -41,6 +41,7 @@ export function registerCssVarsActions() {
     );
 
     addAction(LAYOUT, () => layoutStyles.update(), 10);
+    addAction(LAYOUTEND, () => layoutStyles.update(), 10);
     addAction('css-vars.refresh', () => layoutStyles.update(), 10);
     addFilter('css-vars.register-scroll', function (styles) {
         styles['scroll-direction'] = function () {
