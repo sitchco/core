@@ -17,8 +17,8 @@
         "test": "pnpm -r test"
     },
     "devDependencies": {
-        "@sitchco/cli": "2.1.7",
-        "@sitchco/eslint-config": "^2.1.1"
+        "@sitchco/cli": "2.1.8",
+        "@sitchco/eslint-config": "^2.1.2"
     },
     "pnpm": {
         "onlyBuiltDependencies": [
