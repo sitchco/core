@@ -1,5 +1,12 @@
 .wp-block-sitchco-icon {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &.has-background {
+        padding: var(--wp--preset--spacing--20);
+        border-radius: 50%;
+    }
 }
 
 .sitchco-icon {
