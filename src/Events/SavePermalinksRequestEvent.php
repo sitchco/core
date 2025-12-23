@@ -6,15 +6,15 @@ use Sitchco\BackgroundProcessing\BackgroundRequestEvent;
 use Sitchco\Utils\Hooks;
 
 /**
- * Class SavePermalinksAsyncHook
+ * Class SavePermalinksRequestEvent
  * This class provides an asynchronous hook for handling permalink saves in WordPress. It extends the
  * WP_Async_Request class to perform a background task after permalinks are saved, triggering the
  * 'sitchco/event/after_save_permalinks' action. This can be useful when specific actions need to be taken
  * after updating permalink settings without blocking the main thread.
  * Usage Example:
  * ```php
- * use Sitchco\Events\SavePermalinksAsyncHook;
- * add_action(SavePermalinksAsyncHook::hookName(), function() {
+ * use Sitchco\Events\SavePermalinksRequestEvent;
+ * add_action(SavePermalinksRequestEvent::hookName(), function() {
  *     // Code to run after permalinks are saved
  * });
  * ```

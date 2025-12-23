@@ -8,6 +8,7 @@ use DI\NotFoundException;
 use Sitchco\BackgroundProcessing\BackgroundActionQueue;
 use Sitchco\BackgroundProcessing\BackgroundQueueEvent;
 use Sitchco\BackgroundProcessing\BackgroundRequestEvent;
+use Sitchco\Events\PreloadCacheRequestEvent;
 use Sitchco\Events\SavePermalinksRequestEvent;
 use Sitchco\Events\SavePostQueueEvent;
 use Sitchco\Framework\Module;
@@ -75,5 +76,19 @@ class BackgroundProcessing extends Module
         $event = $this->Container->get(SavePostQueueEvent::class);
         $event->init();
         $this->queue_events[$event::class] = $event;
+    }
+
+    public function preloadCacheRequestEvent(): void
+    {
+        $event = $this->Container->get(PreloadCacheRequestEvent::class);
+        $event->init();
+        $this->request_events[$event::class] = $event;
+        add_action(PreloadCacheRequestEvent::hookName(), function (string $callback) {
+            if (!is_callable($callback)) {
+                error_log('Cache Preload is not callable: ' . $callback, E_USER_WARNING);
+                return;
+            }
+            $callback();
+        });
     }
 }
