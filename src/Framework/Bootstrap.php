@@ -19,7 +19,7 @@ class Bootstrap
             add_filter('timber/cache/mode', fn() => Loader::CACHE_NONE);
         }
 
-        if (defined('WP_TESTS_CONFIG_FILE_PATH') || getenv('WP_PHPUNIT__DIR')) {
+        if (defined('WP_TESTS_CONFIG_FILE_PATH')) {
             add_filter(
                 Hooks::name(ConfigRegistry::PATH_FILTER_HOOK),
                 fn($paths) => [...$paths, SITCHCO_CORE_TESTS_DIR],
