@@ -10,7 +10,10 @@ import { registerHeaderHeightActions } from './lib/header-height.mjs';
 import { registerCssVarsActions } from './lib/css-vars.mjs';
 import { registerExitIntentActions } from './lib/exit-intent.mjs';
 
-const register = (cb) => hooks.addAction(constants.REGISTER, cb, 100);
+const init = (cb, priority = 100) => hooks.addAction(constants.INIT, cb, priority);
+const register = (cb, priority = 100) => hooks.addAction(constants.REGISTER, cb, priority);
+const ready = (cb, priority = 100) => hooks.addAction(constants.READY, cb, priority);
+
 window.sitchco = Object.assign(window.sitchco || {}, {
     constants,
     hooks,
@@ -19,9 +22,11 @@ window.sitchco = Object.assign(window.sitchco || {}, {
     loadScript,
     registerScript,
     hashState,
-    register,
     updateLayout,
     scrollWatch,
+    init,
+    register,
+    ready,
 });
 
 // Init listeners
