@@ -12,7 +12,8 @@
     },
     "supports": {
         "color": {
-            "text": true
+            "text": true,
+            "background": true
         },
         "spacing": {
             "margin": true,

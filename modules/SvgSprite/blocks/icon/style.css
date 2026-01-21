@@ -4,8 +4,7 @@
     justify-content: center;
 
     &.has-background {
-        padding: var(--wp--preset--spacing--20);
-        border-radius: 50%;
+        background: transparent !important;
     }
 }
 
@@ -17,9 +16,29 @@
     display: inline-block;
     vertical-align: middle;
     transform: var(--sitchco-icon-transform);
+    position: relative;
+    z-index: 0;
+
     svg {
         display: block;
         width: var(--sitchco-icon-svg-width);
         height: var(--sitchco-icon-svg-height);
     }
+}
+
+/* Background pseudo element - only when has background */
+.wp-block-sitchco-icon.has-background .sitchco-icon {
+    padding: var(--wp--preset--spacing--20);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: var(--sitchco-icon-background);
+        z-index: -1;
+    }
+}
+
+.wp-block-sitchco-icon.is-round-background .sitchco-icon::before {
+    border-radius: 100%;
 }
