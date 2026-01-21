@@ -5,13 +5,14 @@
     align-items: center;
     justify-content: center;
 
-    &.has-background {
-        background: transparent !important;
-    }
-
     &.is-round-background {
         --sitchco-icon-background-radius: 100%;
     }
+}
+
+/* Higher specificity needed to override WordPress color classes */
+.wp-block-sitchco-icon.has-background {
+    background: transparent !important;
 }
 
 :where(.sitchco-icon) {
