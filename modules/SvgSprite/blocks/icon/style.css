@@ -1,15 +1,21 @@
-.wp-block-sitchco-icon {
+:where(.wp-block-sitchco-icon) {
+    --sitchco-icon-background-padding: var(--wp--preset--spacing--40);
+    --sitchco-icon-background-radius: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 
-    &.has-background {
-        padding: var(--wp--preset--spacing--20);
-        border-radius: 50%;
+    &.is-round-background {
+        --sitchco-icon-background-radius: 100%;
     }
 }
 
-.sitchco-icon {
+/* Higher specificity needed to override WordPress color classes */
+.wp-block-sitchco-icon.has-background {
+    background: transparent !important;
+}
+
+:where(.sitchco-icon) {
     --sitchco-icon-svg-size: 1.25em;
     --sitchco-icon-svg-width: var(--sitchco-icon-svg-size);
     --sitchco-icon-svg-height: var(--sitchco-icon-svg-size);
@@ -17,9 +23,26 @@
     display: inline-block;
     vertical-align: middle;
     transform: var(--sitchco-icon-transform);
+    position: relative;
+    z-index: 0;
+
     svg {
         display: block;
         width: var(--sitchco-icon-svg-width);
         height: var(--sitchco-icon-svg-height);
+    }
+}
+
+/* Background pseudo element - only when has background */
+:where(.wp-block-sitchco-icon.has-background .sitchco-icon) {
+    padding: var(--sitchco-icon-background-padding);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-color: var(--sitchco-icon-background);
+        border-radius: var(--sitchco-icon-background-radius);
+        z-index: -1;
     }
 }

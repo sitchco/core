@@ -12,11 +12,12 @@
     },
     "supports": {
         "color": {
-            "text": true
+            "text": true,
+            "background": true
         },
         "spacing": {
             "margin": true,
-            "padding": true
+            "padding": false
         },
         "typography": {
             "fontSize": true
