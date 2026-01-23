@@ -210,13 +210,13 @@ class Str
 
             if (strlen($hex) == 3) {
                 // 3-digit hex: #RGB
-                sscanf($hex, "%1x%1x%1x", $r, $g, $b);
+                sscanf($hex, '%1x%1x%1x', $r, $g, $b);
                 $r = $r * 17; // Convert to 0-255 range (e.g., F -> FF)
                 $g = $g * 17;
                 $b = $b * 17;
             } else {
                 // 6-digit hex: #RRGGBB
-                sscanf($hex, "%02x%02x%02x", $r, $g, $b);
+                sscanf($hex, '%02x%02x%02x', $r, $g, $b);
             }
 
             return "$r, $g, $b";
