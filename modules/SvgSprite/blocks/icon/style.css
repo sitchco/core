@@ -1,5 +1,5 @@
 :where(.wp-block-sitchco-icon) {
-    --sitchco-icon-background-padding: var(--wp--preset--spacing--40);
+    --sitchco-icon-background-padding: 1em;
     --sitchco-icon-background-radius: 0;
     display: inline-flex;
     align-items: center;
