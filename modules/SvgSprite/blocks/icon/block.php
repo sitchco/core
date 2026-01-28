@@ -55,4 +55,5 @@ return Block::wrapperElement(
     $attributes,
     $context['fields']['icon_link'] ?: [],
     'span',
+    true,
 );

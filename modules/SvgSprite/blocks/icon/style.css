@@ -8,10 +8,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
 
-    &.is-round-background {
-        --sitchco-icon-background-radius: 100%;
-    }
+/* Frontend: class on outer wrapper.  Editor preview: class on inner wrapper element*/
+:where(.wp-block-sitchco-icon.is-round-background, .wp-block-sitchco-icon > .is-round-background) {
+    --sitchco-icon-background-radius: 100%;
 }
 
 /* Higher specificity needed to override WordPress color classes */

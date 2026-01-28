@@ -35,9 +35,14 @@ class Block
         array $attributes,
         ?array $link = null,
         string $tag = 'div',
+        bool $applyInPreview = false,
     ): string {
         if (static::isPreview()) {
-            return $content;
+            if (!$applyInPreview) {
+                return $content;
+            }
+            $attributes = static::wrapperAttributes($attributes);
+            return Str::wrapElement($content, $tag, $attributes);
         }
         if ($link) {
             $linkParts = Acf::linkToElParts($link, $attributes, $content);
