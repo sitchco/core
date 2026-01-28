@@ -98,6 +98,20 @@ class Block
         return $blockMetadataCache[$path];
     }
 
+    /**
+     * Converts WordPress internal CSS variable references to actual CSS variable syntax.
+     *
+     * @param string $value A value that may contain WordPress var: syntax (e.g., "var:preset|spacing|40")
+     * @return string The CSS variable syntax (e.g., "var(--wp--preset--spacing--40)") or the original value
+     */
+    public static function cssVarValue(string $value): string
+    {
+        if (str_starts_with($value, 'var:')) {
+            return 'var(--wp--' . str_replace('|', '--', substr($value, 4)) . ')';
+        }
+        return $value;
+    }
+
     public static function renderInnerBlocksTag(array $config = []): string
     {
         if (isset($config['allowed']) && !isset($config['allowedBlocks'])) {

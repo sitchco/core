@@ -24,10 +24,26 @@ if (!empty($block['backgroundColor'])) {
     $background_color = $block['style']['color']['background'];
 }
 
-$attributes = [];
+// Extract padding from block style
+$padding = $block['style']['spacing']['padding'] ?? [];
+
+$style_parts = [];
 
 if ($background_color) {
-    $attributes['style'] = '--sitchco-icon-background: ' . $background_color . ';';
+    $style_parts[] = '--sitchco-icon-background: ' . $background_color;
+}
+
+// Convert padding to CSS variables
+foreach (['top', 'right', 'bottom', 'left'] as $side) {
+    if (!empty($padding[$side])) {
+        $style_parts[] = '--sitchco-icon-padding-' . $side . ': ' . Block::cssVarValue($padding[$side]);
+    }
+}
+
+$attributes = [];
+
+if ($style_parts) {
+    $attributes['style'] = implode('; ', $style_parts) . ';';
 }
 
 if ($round_background) {

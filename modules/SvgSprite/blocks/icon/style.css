@@ -1,6 +1,10 @@
 :where(.wp-block-sitchco-icon) {
-    --sitchco-icon-background-padding: 1em;
+    --sitchco-icon-background-padding: 0.8em;
     --sitchco-icon-background-radius: 0;
+    --sitchco-icon-padding-top: var(--sitchco-icon-background-padding);
+    --sitchco-icon-padding-right: var(--sitchco-icon-background-padding);
+    --sitchco-icon-padding-bottom: var(--sitchco-icon-background-padding);
+    --sitchco-icon-padding-left: var(--sitchco-icon-background-padding);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -35,7 +39,10 @@
 
 /* Background pseudo element - only when has background */
 :where(.wp-block-sitchco-icon.has-background .sitchco-icon) {
-    padding: var(--sitchco-icon-background-padding);
+    padding-top: var(--sitchco-icon-padding-top);
+    padding-right: var(--sitchco-icon-padding-right);
+    padding-bottom: var(--sitchco-icon-padding-bottom);
+    padding-left: var(--sitchco-icon-padding-left);
 
     &::before {
         content: '';
