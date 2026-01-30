@@ -30,19 +30,11 @@ class Block
         return false;
     }
 
-    public static function wrapperElement(
-        string $content,
-        array $attributes,
-        ?array $link = null,
-        string $tag = 'div',
-        bool $applyInPreview = false,
-    ): string {
+    public static function wrapperElement(string $content, ?array $link = null, string $tag = 'div'): string
+    {
+        $attributes = [];
         if (static::isPreview()) {
-            if (!$applyInPreview) {
-                return $content;
-            }
-            $attributes = static::wrapperAttributes($attributes);
-            return Str::wrapElement($content, $tag, $attributes);
+            return $content;
         }
         if ($link) {
             $linkParts = Acf::linkToElParts($link, $attributes, $content);

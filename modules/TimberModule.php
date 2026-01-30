@@ -107,7 +107,6 @@ class TimberModule extends Module
         // Auto-inject helper variables for templates
         // Use $context['block'] which has innerBlocks parsed in setupContext, not the original $block parameter
         $context['inner_blocks'] = $context['block']['innerBlocks'] ?? [];
-        $context['wrapper_attributes'] = $context['block']['wrapper_attributes'] ?? [];
 
         if (!is_null($render)) {
             echo $render;
@@ -121,7 +120,6 @@ class TimberModule extends Module
         echo is_array($wrapper)
             ? Block::wrapperElement(
                 $output,
-                $wrapper['attributes'] ?? [],
                 $wrapper['link'] ?? null,
                 $wrapper['tag'] ?? 'div',
                 $wrapper['applyInPreview'] ?? false,

@@ -107,6 +107,7 @@ class ArrayUtil
             array_map(
                 function ($key, $value) use ($glue) {
                     if (is_array($value)) {
+                        $value = array_filter((array) $value);
                         $value = $key == 'style' ? static::toCSSProperties($value) : implode($glue, $value);
                     }
                     return sprintf('%s="%s"', $key, $value);
