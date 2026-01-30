@@ -31,7 +31,7 @@ class ModuleAssets
         $this->blocksPath = $module->blocksPath();
         $this->namespace = $module::hookName();
         $this->productionBuildPath = $this->moduleAssetsPath->findAncestor(SITCHCO_CONFIG_FILENAME);
-        if (wp_get_environment_type() !== 'local') {
+        if (wp_get_environment_type() !== 'local' || is_admin()) {
             $this->isDevServer = false;
             return;
         }
