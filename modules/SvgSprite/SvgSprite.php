@@ -88,6 +88,13 @@ class SvgSprite extends Module
         }
     }
 
+    /**
+     * @param string $name - Icon key / filename
+     * @param Rotation|null $rotation - Icon rotation
+     * @param array $cssClasses - Additional css classes on icon wrapper
+     * @param array $style - Additional style properties on icon wrapper
+     * @return string
+     */
     public function renderIcon(string $name, ?Rotation $rotation, array $cssClasses = [], array $style = []): string
     {
         $transform = $rotation && $rotation !== Rotation::NONE ? "rotate({$rotation->value}deg)" : null;

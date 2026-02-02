@@ -84,11 +84,7 @@ class TimberModule extends Module
     ): void {
         $scope = [
             'context' => static::setupContext(...func_get_args()),
-            'wrapper' => [
-                'tag' => 'div',
-                'attributes' => [],
-                'link' => null,
-            ],
+            'wrapper' => ['tag' => 'div', 'link' => null],
         ];
 
         // Parent theme context inclusion
