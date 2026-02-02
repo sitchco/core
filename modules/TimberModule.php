@@ -118,12 +118,7 @@ class TimberModule extends Module
         $output = TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
 
         echo is_array($wrapper)
-            ? Block::wrapperElement(
-                $output,
-                $wrapper['link'] ?? null,
-                $wrapper['tag'] ?? 'div',
-                $wrapper['applyInPreview'] ?? false,
-            )
+            ? Block::wrapperElement($output, $wrapper['link'] ?? null, $wrapper['tag'] ?? 'div')
             : $output;
     }
 

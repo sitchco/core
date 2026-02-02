@@ -42,4 +42,4 @@ if ($background_size) {
 
 $content = $container->get(SvgSprite::class)->renderIcon($name, Rotation::tryFrom($rotation), $classes, $style);
 
-return Block::wrapperElement($content, $context['fields']['icon_link'] ?: [], 'span', true);
+return Block::wrapperElement($content, $context['fields']['icon_link'] ?: [], 'span');

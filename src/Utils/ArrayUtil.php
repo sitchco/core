@@ -104,16 +104,27 @@ class ArrayUtil
     {
         return implode(
             ' ',
-            array_map(
-                function ($key, $value) use ($glue) {
-                    if (is_array($value)) {
-                        $value = array_filter((array) $value);
-                        $value = $key == 'style' ? static::toCSSProperties($value) : implode($glue, $value);
-                    }
-                    return sprintf('%s="%s"', $key, $value);
-                },
-                array_keys($arr),
-                $arr,
+            array_filter(
+                array_map(
+                    function ($key, $value) use ($glue) {
+                        if ($value === true) {
+                            return $key;
+                        }
+                        if ($value === false || $value === null) {
+                            return '';
+                        }
+                        if (is_array($value)) {
+                            $filtered = array_filter((array) $value, fn($v) => !ValueUtil::isEmptyValue($v));
+                            $value = $key == 'style' ? static::toCSSProperties($filtered) : implode($glue, $filtered);
+                        }
+                        if ($value === '') {
+                            return '';
+                        }
+                        return sprintf('%s="%s"', $key, $value);
+                    },
+                    array_keys($arr),
+                    $arr,
+                ),
             ),
         );
     }
@@ -125,11 +136,12 @@ class ArrayUtil
             array_filter(
                 array_map(
                     function ($value, $key) {
-                        if (empty($value)) {
-                            return '';
-                        }
                         if (is_array($value)) {
+                            $value = array_filter($value, fn($v) => !ValueUtil::isEmptyValue($v));
                             $value = implode(' ', $value);
+                        }
+                        if (ValueUtil::isEmptyValue($value)) {
+                            return '';
                         }
                         return "$key: $value;";
                     },
