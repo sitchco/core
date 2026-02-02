@@ -30,12 +30,9 @@ class Block
         return false;
     }
 
-    public static function wrapperElement(
-        string $content,
-        array $attributes,
-        ?array $link = null,
-        string $tag = 'div',
-    ): string {
+    public static function wrapperElement(string $content, ?array $link = null, string $tag = 'div'): string
+    {
+        $attributes = [];
         if (static::isPreview()) {
             return $content;
         }

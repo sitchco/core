@@ -17,8 +17,7 @@
         },
         "spacing": {
             "margin": true,
-            "padding": true,
-            "__experimentalSkipSerialization": ["padding"]
+            "padding": false
         },
         "typography": {
             "fontSize": true

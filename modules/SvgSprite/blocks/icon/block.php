@@ -13,6 +13,7 @@ use Sitchco\Utils\Block;
 $name = $context['fields']['icon_name'] ?? 'unknown';
 $rotation = $context['fields']['icon_rotation'] ?? 0;
 $round_background = $context['fields']['round_background'] ?? false;
+$background_size = $context['fields']['background_size'] ?? '';
 
 // Get background color from block attributes
 $block = $context['block'] ?? [];
@@ -24,35 +25,21 @@ if (!empty($block['backgroundColor'])) {
     $background_color = $block['style']['color']['background'];
 }
 
-// Extract padding from block style
-$padding = $block['style']['spacing']['padding'] ?? [];
-
-$style_parts = [];
+$style = [];
 
 if ($background_color) {
-    $style_parts[] = '--sitchco-icon-background: ' . $background_color;
+    $style['--sitchco-icon-background'] = $background_color;
 }
 
-// Convert padding to CSS variables
-foreach (['top', 'right', 'bottom', 'left'] as $side) {
-    if (!empty($padding[$side])) {
-        $style_parts[] = '--sitchco-icon-padding-' . $side . ': ' . Block::cssVarValue($padding[$side]);
-    }
-}
-
-$attributes = [];
-
-if ($style_parts) {
-    $attributes['style'] = implode('; ', $style_parts) . ';';
-}
+$classes = [];
 
 if ($round_background) {
-    $attributes['class'] = 'is-round-background';
+    $classes[] = 'is-round-background';
+}
+if ($background_size) {
+    $classes[] = 'background-size-' . $background_size;
 }
 
-return Block::wrapperElement(
-    $container->get(SvgSprite::class)->renderIcon($name, Rotation::tryFrom($rotation)),
-    $attributes,
-    $context['fields']['icon_link'] ?: [],
-    'span',
-);
+$content = $container->get(SvgSprite::class)->renderIcon($name, Rotation::tryFrom($rotation), $classes, $style);
+
+return Block::wrapperElement($content, $context['fields']['icon_link'] ?: [], 'span');

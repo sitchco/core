@@ -88,13 +88,21 @@ class SvgSprite extends Module
         }
     }
 
-    public function renderIcon(string $name, ?Rotation $rotation): string
+    /**
+     * @param string $name - Icon key / filename
+     * @param Rotation|null $rotation - Icon rotation
+     * @param array $cssClasses - Additional css classes on icon wrapper
+     * @param array $style - Additional style properties on icon wrapper
+     * @return string
+     */
+    public function renderIcon(string $name, ?Rotation $rotation, array $cssClasses = [], array $style = []): string
     {
         $transform = $rotation && $rotation !== Rotation::NONE ? "rotate({$rotation->value}deg)" : null;
         $svg = $this->renderIconSvg($name);
+        $classes = array_filter(array_merge(['sitchco-icon', "sitchco-icon--{$name}"], $cssClasses));
         return Str::wrapElement($svg, 'span', [
-            'class' => "sitchco-icon sitchco-icon--{$name}",
-            'style' => ['--sitchco-icon-transform' => $transform],
+            'class' => $classes,
+            'style' => array_merge(['--sitchco-icon-transform' => $transform], $style),
         ]);
     }
 

@@ -84,11 +84,7 @@ class TimberModule extends Module
     ): void {
         $scope = [
             'context' => static::setupContext(...func_get_args()),
-            'wrapper' => [
-                'tag' => 'div',
-                'attributes' => [],
-                'link' => null,
-            ],
+            'wrapper' => ['tag' => 'div', 'link' => null],
         ];
 
         // Parent theme context inclusion
@@ -107,7 +103,6 @@ class TimberModule extends Module
         // Auto-inject helper variables for templates
         // Use $context['block'] which has innerBlocks parsed in setupContext, not the original $block parameter
         $context['inner_blocks'] = $context['block']['innerBlocks'] ?? [];
-        $context['wrapper_attributes'] = $context['block']['wrapper_attributes'] ?? [];
 
         if (!is_null($render)) {
             echo $render;
@@ -118,13 +113,8 @@ class TimberModule extends Module
         $blockName = array_pop($blockNameParts);
         $output = TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
 
-        echo is_array($wrapper) && !$is_preview
-            ? Block::wrapperElement(
-                $output,
-                $wrapper['attributes'] ?? [],
-                $wrapper['link'] ?? null,
-                $wrapper['tag'] ?? 'div',
-            )
+        echo is_array($wrapper)
+            ? Block::wrapperElement($output, $wrapper['link'] ?? null, $wrapper['tag'] ?? 'div')
             : $output;
     }
 
