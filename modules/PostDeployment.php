@@ -1,0 +1,68 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Sitchco\Modules;
+
+use Sitchco\Framework\Module;
+use Sitchco\Support\FilePath;
+use Sitchco\Utils\Debug;
+use Sitchco\Utils\Hooks;
+
+/**
+ * Detects deployment completion via trigger file and fires an action.
+ *
+ * This module listens to the minutely cron and checks for a `.clear-cache` file
+ * in the uploads directory. When found (and successfully deleted), it fires the
+ * `sitchco/deploy/complete` action for other modules to hook into.
+ *
+ * Usage:
+ * ```php
+ * add_action('sitchco/deploy/complete', function () {
+ *     // Run post-deployment tasks (cache invalidation, etc.)
+ * });
+ * ```
+ */
+class PostDeployment extends Module
+{
+    public const HOOK_SUFFIX = 'deploy';
+
+    private const TRIGGER_FILENAME = '.clear-cache';
+
+    public function init(): void
+    {
+        add_action(Hooks::name('cron', 'minutely'), [$this, 'checkTrigger']);
+    }
+
+    /**
+     * Check for trigger file and fire deployment complete action if found.
+     */
+    public function checkTrigger(): void
+    {
+        $triggerPath = $this->getTriggerPath();
+
+        if (!$triggerPath->exists()) {
+            return;
+        }
+
+        // Delete first, only fire action if deletion succeeds
+        // This prevents infinite loops if deletion fails (e.g., permissions)
+        $deleted = @unlink($triggerPath->value());
+        $triggerPath->reset();
+
+        if ($deleted || !$triggerPath->exists()) {
+            do_action(self::hookName('complete'));
+        } else {
+            Debug::log('Failed to delete trigger file: ' . $triggerPath->value());
+        }
+    }
+
+    /**
+     * Get the path to the trigger file in the uploads directory.
+     */
+    protected function getTriggerPath(): FilePath
+    {
+        $uploadDir = wp_upload_dir();
+        return FilePath::create($uploadDir['basedir'] . '/' . self::TRIGGER_FILENAME);
+    }
+}

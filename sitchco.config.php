@@ -8,12 +8,14 @@ use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Modules\AmazonCloudfront;
 use Sitchco\Modules\BackgroundProcessing;
+use Sitchco\Modules\Cron;
 use Sitchco\Modules\Flash;
 use Sitchco\Modules\Imagify;
 use Sitchco\Modules\Model\ImageModel;
 use Sitchco\Modules\Model\PostModel;
 use Sitchco\Modules\Model\TermModel;
 use Sitchco\Modules\PageOrder;
+use Sitchco\Modules\PostDeployment;
 use Sitchco\Modules\Stream;
 use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIFramework\UIFramework;
@@ -30,6 +32,7 @@ return [
         Cleanup::class,
         SearchRewrite::class,
         BackgroundProcessing::class,
+        Cron::class,
         PostModel::class,
         TermModel::class,
         ImageModel::class,
@@ -50,6 +53,7 @@ return [
         PageOrder::class,
         AdminTools::class,
         SvgSprite::class,
+        PostDeployment::class,
     ],
     'disallowedBlocks' => [],
 ];
