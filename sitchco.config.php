@@ -8,6 +8,7 @@ use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Modules\AmazonCloudfront;
 use Sitchco\Modules\BackgroundProcessing;
+use Sitchco\Modules\CacheInvalidation\CacheInvalidation;
 use Sitchco\Modules\Cron;
 use Sitchco\Modules\Flash;
 use Sitchco\Modules\Imagify;
@@ -54,6 +55,7 @@ return [
         AdminTools::class,
         SvgSprite::class,
         PostDeployment::class,
+        CacheInvalidation::class,
     ],
     'disallowedBlocks' => [],
 ];
