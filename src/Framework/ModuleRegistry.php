@@ -9,6 +9,7 @@ use Sitchco\ModuleExtension\AcfPathsModuleExtension;
 use Sitchco\ModuleExtension\BlockRegistrationModuleExtension;
 use Sitchco\ModuleExtension\TimberPostModuleExtension;
 use Sitchco\Utils\ArrayUtil;
+use Sitchco\Utils\Logger;
 
 /**
  * Class ModuleRegistry
@@ -80,8 +81,7 @@ class ModuleRegistry
             /* @var Module $instance */
             $this->activeModuleInstances[$module] = $instance;
         } catch (DependencyException | NotFoundException $e) {
-            // Optionally log the error, e.g.:
-            // error_log("Failed to instantiate module {$module}: " . $e->getMessage());
+            Logger::error("Failed to instantiate module {$module}: " . $e->getMessage());
         } finally {
             // Remove the module from the in-progress stack.
             array_pop($this->inProgress);

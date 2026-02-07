@@ -5,7 +5,7 @@ namespace Sitchco\Tests\Utils;
 use Sitchco\Tests\TestCase;
 use Sitchco\Utils\LogLevel;
 
-class DebugTest extends TestCase
+class LoggerTest extends TestCase
 {
     public function test_level_meets_threshold_at_same_severity(): void
     {

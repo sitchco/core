@@ -7,21 +7,21 @@ use Sitchco\Support\DateTime;
 
 /**
  * Usage:
- *   Debug::log('user synced'); // Default LogLevel INFO
- *   Debug::error(['action' => 'cron', 'status' => 'failed']);
+ *   Logger::log('user synced'); // Default LogLevel INFO
+ *   Logger::error(['action' => 'cron', 'status' => 'failed']);
  *
  * All calls write to error_log by default. For WP-Cron and CLI commands, error_log output
  * goes to stdout instead of the Apache error log, making it hard to find. Enable
  * SITCHCO_LOG_FILE to write to a persistent log file for these cases.
  *
  * Configuration (local-config.php or wp-config.php):
- *   const SITCHCO_LOG_LEVEL = 'DEBUG';   // DEBUG, INFO (default), WARNING, ERROR
+ *   const SITCHCO_LOG_LEVEL = 'DEBUG';   // DEBUG (default for local), INFO (default), WARNING, ERROR
  *   const SITCHCO_LOG_FILE  = true;      // Also write to wp-content/uploads/logs/{date}.log
  *
  * Cleanup: Log files are not removed automatically. After disabling SITCHCO_LOG_FILE,
  * delete the uploads/logs/ directory from the server.
  */
-class Debug
+class Logger
 {
     private static ?LogLevel $resolvedLevel = null;
 
@@ -79,7 +79,8 @@ class Debug
     private static function getMinimumLevel(): LogLevel
     {
         return self::$resolvedLevel ??=
-            (defined('SITCHCO_LOG_LEVEL') ? LogLevel::tryFrom(SITCHCO_LOG_LEVEL) : null) ?? LogLevel::INFO;
+            (defined('SITCHCO_LOG_LEVEL') ? LogLevel::tryFrom(SITCHCO_LOG_LEVEL) : null) ??
+            (wp_get_environment_type() === 'local' ? LogLevel::DEBUG : LogLevel::INFO);
     }
 
     private static function writeToFile(LogLevel $level, string $message): void

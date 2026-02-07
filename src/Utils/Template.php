@@ -43,7 +43,7 @@ class Template
     {
         $realFile = realpath($file);
         if (!$realFile || !is_file($realFile)) {
-            error_log('Template file not found: ' . $file);
+            Logger::warning('Template file not found: ' . $file);
             return null;
         }
 

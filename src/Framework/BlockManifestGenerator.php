@@ -3,6 +3,7 @@
 namespace Sitchco\Framework;
 
 use Sitchco\Support\FilePath;
+use Sitchco\Utils\Logger;
 
 /**
  * Block Manifest Generator.
@@ -64,7 +65,7 @@ class BlockManifestGenerator
 
             return $existingHash !== $currentHash;
         } catch (\Throwable $e) {
-            error_log(
+            Logger::error(
                 sprintf(
                     'Sitchco Blocks Error: Failed to check manifest staleness at "%s". Error: %s',
                     $manifestPath->value(),
@@ -170,7 +171,7 @@ class BlockManifestGenerator
                 return [$blockJson['name'] => $relativePath];
             }
         } catch (\Throwable $e) {
-            error_log(
+            Logger::warning(
                 sprintf(
                     'Sitchco Blocks Warning: Failed to parse block.json at "%s". Error: %s',
                     $blockJsonPath->value(),
@@ -224,7 +225,7 @@ class BlockManifestGenerator
                 throw new \Exception('Failed to write file');
             }
         } catch (\Throwable $e) {
-            error_log(
+            Logger::error(
                 sprintf(
                     'Sitchco Blocks Error: Failed to write manifest file "%s". Error: %s',
                     $manifestPath->value(),
