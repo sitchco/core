@@ -29,12 +29,12 @@ class CacheInvalidationTest extends TestCase
 
     // --- Group 1: Invalidator Flagging ---
 
-    public function test_zero_delay_invalidator_is_not_flagged_after_trigger(): void
+    public function test_zero_delay_invalidator_is_flagged_after_trigger(): void
     {
         do_action('sitchco/cache/clear_all');
-        $this->assertFalse(
+        $this->assertTrue(
             $this->invalidator->isFlagged(),
-            'Zero-delay invalidator should flush inline, not flag for later scheduling',
+            'Zero-delay invalidator should be flagged for shutdown flush',
         );
     }
 
@@ -48,7 +48,7 @@ class CacheInvalidationTest extends TestCase
         );
     }
 
-    public function test_zero_delay_invalidator_flushes_inline_on_trigger(): void
+    public function test_zero_delay_invalidator_defers_flush_to_shutdown(): void
     {
         // Set a known cache value
         wp_cache_set('test_key', 'test_value');
@@ -56,10 +56,11 @@ class CacheInvalidationTest extends TestCase
         // Fire a trigger that ObjectCacheInvalidator listens to
         do_action('sitchco/cache/clear_all');
 
-        // Object cache should already be flushed — no need to wait for cron
-        $this->assertFalse(
+        // Cache should still exist — flush is deferred to shutdown, not inline
+        $this->assertSame(
+            'test_value',
             wp_cache_get('test_key'),
-            'Zero-delay invalidator should flush inline when triggered, not wait for cron',
+            'Zero-delay invalidator should defer flush to shutdown, not flush inline',
         );
     }
 
@@ -85,8 +86,7 @@ class CacheInvalidationTest extends TestCase
 
     public function test_schedule_flagged_invalidators_creates_queue(): void
     {
-        $this->invalidator->flag();
-        $this->module->scheduleFlaggedInvalidators();
+        $this->scheduler->schedule([$this->invalidator]);
 
         $queue = get_option(CacheScheduler::OPTION_NAME);
         $this->assertIsArray($queue);
