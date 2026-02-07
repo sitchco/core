@@ -24,6 +24,7 @@ class PostLifecycle extends Module
     public function init(): void
     {
         add_action('transition_post_status', [$this, 'onTransitionPostStatus'], 10, 3);
+        add_action('wp_after_insert_post', [$this, 'onAfterInsertPost'], 10, 4);
     }
 
     /**
@@ -40,5 +41,25 @@ class PostLifecycle extends Module
         }
 
         do_action(self::hookName('visibility_changed'), $new_status, $old_status, $post);
+    }
+
+    /**
+     * Fire content_updated for published post saves, filtering out revisions and autosaves.
+     */
+    public function onAfterInsertPost(int $post_id, \WP_Post $post, bool $update, ?\WP_Post $post_before): void
+    {
+        if ($post->post_type === 'revision') {
+            return;
+        }
+
+        if (wp_is_post_autosave($post_id)) {
+            return;
+        }
+
+        if ($post->post_status !== 'publish') {
+            return;
+        }
+
+        do_action(self::hookName('content_updated'), $post_id, $post, $update, $post_before);
     }
 }

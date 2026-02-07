@@ -28,7 +28,7 @@ enum CacheTrigger: string
         return match ($this) {
             self::PostDeployment => [PostDeployment::hookName('complete')],
             self::ContentChange => [
-                'wp_after_insert_post',
+                PostLifecycle::hookName('content_updated'),
                 PostLifecycle::hookName('visibility_changed'),
                 'acf/save_post',
                 'wpsdb_migration_complete',
