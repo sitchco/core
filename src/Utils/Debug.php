@@ -3,51 +3,67 @@
 namespace Sitchco\Utils;
 
 use Kint\Kint;
+use Sitchco\Support\DateTime;
 
 /**
- * Class Debug
- * @package Sitchco\Utils
+ * Usage:
+ *   Debug::log('user synced'); // Default LogLevel INFO
+ *   Debug::error(['action' => 'cron', 'status' => 'failed']);
+ *
+ * All calls write to error_log by default. For WP-Cron and CLI commands, error_log output
+ * goes to stdout instead of the Apache error log, making it hard to find. Enable
+ * SITCHCO_LOG_FILE to write to a persistent log file for these cases.
+ *
+ * Configuration (local-config.php or wp-config.php):
+ *   const SITCHCO_LOG_LEVEL = 'DEBUG';   // DEBUG, INFO (default), WARNING, ERROR
+ *   const SITCHCO_LOG_FILE  = true;      // Also write to wp-content/uploads/logs/{date}.log
+ *
+ * Cleanup: Log files are not removed automatically. After disabling SITCHCO_LOG_FILE,
+ * delete the uploads/logs/ directory from the server.
  */
 class Debug
 {
-    /**
-     * Log a value to error log if not in production or if forced.
-     *
-     * @param mixed $value The value to log.
-     * @param bool $force Whether to force the logging regardless of environment.
-     * @return void
-     */
-    public static function log(mixed $value, bool $force = false): void
+    private static ?LogLevel $resolvedLevel = null;
+
+    public static function log(mixed $value, LogLevel $level = LogLevel::INFO): void
     {
-        if ($force || wp_get_environment_type() !== 'production') {
-            error_log(stripcslashes(json_encode($value, JSON_PRETTY_PRINT)));
+        if (!$level->meetsThreshold(self::getMinimumLevel())) {
+            return;
+        }
+        $message = stripcslashes(json_encode($value, JSON_PRETTY_PRINT));
+        error_log("[{$level->value}] {$message}");
+        if (defined('SITCHCO_LOG_FILE') && SITCHCO_LOG_FILE) {
+            self::writeToFile($level, $message);
         }
     }
 
-    /**
-     * Dump a value in a readable format.
-     * It uses Kint if available, otherwise defaults to print_r.
-     *
-     * @param mixed $d The value to dump.
-     * @param bool $return Whether to return the output or echo it.
-     * @return string|null
-     */
+    public static function debug(mixed $value): void
+    {
+        self::log($value, LogLevel::DEBUG);
+    }
+
+    public static function warning(mixed $value): void
+    {
+        self::log($value, LogLevel::WARNING);
+    }
+
+    public static function error(mixed $value): void
+    {
+        self::log($value, LogLevel::ERROR);
+    }
+
     public static function dump(mixed $d, bool $return = false): ?string
     {
-        // Early return if in production environment.
-        if (wp_get_environment_type() === 'production') {
+        if (wp_get_environment_type() !== 'local') {
             return null;
         }
 
-        // Log the value
-        self::log($d);
+        self::log($d, LogLevel::DEBUG);
 
-        // If wp_body_open action has not been triggered, return early.
         if (!did_action('wp_body_open')) {
             return null;
         }
 
-        // Use Kint for dumping if available
         if (class_exists(Kint::class)) {
             Kint::$display_called_from = false;
             Kint::$expanded = true;
@@ -56,8 +72,27 @@ class Debug
             return Kint::dump($d);
         }
 
-        // Fallback to print_r if Kint is not available
         $output = '<pre>' . print_r($d, true) . '</pre>';
         return $return ? $output : print $output;
+    }
+
+    private static function getMinimumLevel(): LogLevel
+    {
+        return self::$resolvedLevel ??=
+            (defined('SITCHCO_LOG_LEVEL') ? LogLevel::tryFrom(SITCHCO_LOG_LEVEL) : null) ?? LogLevel::INFO;
+    }
+
+    private static function writeToFile(LogLevel $level, string $message): void
+    {
+        $now = new DateTime();
+        $logDir = wp_upload_dir()['basedir'] . '/logs';
+        if (!is_dir($logDir)) {
+            wp_mkdir_p($logDir);
+            file_put_contents($logDir . '/.htaccess', "Options -Indexes\nDeny from all\n");
+            file_put_contents($logDir . '/index.php', "<?php\n// Silence is golden.\n");
+        }
+        $filename = $logDir . '/' . $now->format('Y-m-d') . '.log';
+        $entry = "[{$now->format('Y-m-d H:i:s')}] [{$level->value}] {$message}\n";
+        file_put_contents($filename, $entry, FILE_APPEND | LOCK_EX);
     }
 }
