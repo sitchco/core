@@ -6,7 +6,7 @@ namespace Sitchco\Modules;
 
 use Sitchco\Framework\Module;
 use Sitchco\Support\FilePath;
-use Sitchco\Utils\Debug;
+use Sitchco\Utils\Logger;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -53,7 +53,7 @@ class PostDeployment extends Module
         if ($deleted || !$triggerPath->exists()) {
             do_action(self::hookName('complete'));
         } else {
-            Debug::log('Failed to delete trigger file: ' . $triggerPath->value());
+            Logger::log('Failed to delete trigger file: ' . $triggerPath->value());
         }
     }
 

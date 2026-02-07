@@ -290,16 +290,8 @@ class Cleanup extends Module
             return;
         }
 
-        add_action('init', function () {
-            // Remove 95% of patterns (everything but posts)
-            add_filter('should_load_remote_block_patterns', '__return_false');
-
-            // Remove remaining 5% (posts)
-            $registry = \WP_Block_Patterns_Registry::get_instance();
-            foreach ($registry->get_all_registered() as $pattern) {
-                unregister_block_pattern($pattern['name']);
-            }
-        });
+        remove_theme_support('core-block-patterns');
+        add_filter('should_load_remote_block_patterns', '__return_false');
     }
 
     /**

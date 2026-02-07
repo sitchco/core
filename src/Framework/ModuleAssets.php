@@ -5,6 +5,7 @@ namespace Sitchco\Framework;
 use Sitchco\Support\FilePath;
 use Sitchco\Support\HookName;
 use Sitchco\Utils\Cache;
+use Sitchco\Utils\Logger;
 use Sitchco\Utils\Hooks;
 
 class ModuleAssets
@@ -226,14 +227,14 @@ class ModuleAssets
         if ($buildAssetPath) {
             return $buildAssetPath->url();
         }
-        error_log('Production build path not found for asset: ' . $assetPath->value(), E_USER_WARNING);
+        Logger::warning('Production build path not found for asset: ' . $assetPath->value());
         return '';
     }
 
     private function assetUrlRelative(string $relativePath): string
     {
         if (empty($relativePath)) {
-            error_log('Empty Asset Relative Path: ', E_USER_WARNING);
+            Logger::warning('Empty Asset Relative Path');
             return '';
         }
         $assetPath = str_starts_with($relativePath, $this->moduleAssetsPath->value())

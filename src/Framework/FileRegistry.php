@@ -5,6 +5,7 @@ namespace Sitchco\Framework;
 use Sitchco\Support\FilePath;
 use Sitchco\Utils\ArrayUtil;
 use Sitchco\Utils\Cache;
+use Sitchco\Utils\Logger;
 use Sitchco\Utils\Hooks;
 
 /**
@@ -55,7 +56,7 @@ abstract class FileRegistry
         if ($key !== null) {
             $key = trim($key);
             if (empty($key)) {
-                error_log(sprintf('%s: Invalid key provided to load(). Key: %s', static::class, $key));
+                Logger::warning(sprintf('%s: Invalid key provided to load(). Key: %s', static::class, $key));
                 return $default;
             }
         }
@@ -92,7 +93,7 @@ abstract class FileRegistry
         try {
             $data = $this->parseFile($filePath);
         } catch (\Throwable $e) {
-            error_log(
+            Logger::error(
                 sprintf(
                     '%s: Failed to load/parse file "%s". Error: %s',
                     static::class,
@@ -105,7 +106,7 @@ abstract class FileRegistry
         }
 
         if (!is_array($data)) {
-            error_log(sprintf('%s: File did not return a valid array: %s', static::class, $filePath->value()));
+            Logger::error(sprintf('%s: File did not return a valid array: %s', static::class, $filePath->value()));
 
             return null;
         }
@@ -207,7 +208,7 @@ abstract class FileRegistry
     private function loadAndMergeFiles(): ?array
     {
         if (!isset($this->basePaths)) {
-            error_log(
+            Logger::error(
                 sprintf(
                     'Sitchco Registry Error: Base paths not initialized before loading files for %s.',
                     static::class,
@@ -229,7 +230,7 @@ abstract class FileRegistry
                 if (is_array($fileData)) {
                     $dataArrays[] = $fileData;
                 } else {
-                    error_log(
+                    Logger::warning(
                         sprintf('Sitchco Registry Warning: File did not return valid data: %s', $filePath->value()),
                     );
                 }
