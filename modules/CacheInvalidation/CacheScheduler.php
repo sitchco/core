@@ -10,6 +10,7 @@ use Sitchco\Modules\CacheInvalidation\Invalidators\CloudFrontInvalidator;
 use Sitchco\Modules\CacheInvalidation\Invalidators\ObjectCacheInvalidator;
 use Sitchco\Modules\CacheInvalidation\Invalidators\WPRocketInvalidator;
 use Sitchco\Utils\Hooks;
+use Sitchco\Utils\Logger;
 
 /**
  * Manages the cache invalidation queue and scheduled processing.
@@ -140,6 +141,7 @@ class CacheScheduler
         $invalidator = $this->getInvalidator($first['id']);
 
         if ($invalidator !== null) {
+            Logger::debug("[Cache] Processing {$first['id']}, " . count($queue) . ' remaining in queue');
             $this->processInvalidator($invalidator);
         }
 
@@ -151,8 +153,11 @@ class CacheScheduler
 
         if (empty($queue)) {
             delete_option(self::OPTION_NAME);
+            Logger::debug('[Cache] Queue complete, all invalidators processed');
             do_action(CacheInvalidation::hookName('complete'));
         } else {
+            $remaining = array_column($queue, 'id');
+            Logger::debug('[Cache] Queue updated, remaining: ' . implode(', ', $remaining));
             update_option(self::OPTION_NAME, $queue, false);
         }
     }
@@ -170,15 +175,16 @@ class CacheScheduler
      */
     private function processInvalidator(Invalidator $invalidator): void
     {
-        $name = (new \ReflectionClass($invalidator))->getShortName();
+        $name = substr(strrchr($invalidator::class, '\\'), 1);
         // Suppress flagging during the entire processing pipeline to prevent cascading
         // re-triggers (e.g. WP Rocket's rocket_clean_domain() firing before/after hooks)
         add_filter(CacheInvalidation::hookName('should_flag'), '__return_false');
         try {
             $invalidator->flush();
+            Logger::debug("[Cache] {$name} flushed successfully");
             do_action(CacheInvalidation::hookName('flushed'), $invalidator::class);
         } catch (\Throwable $e) {
-            error_log(sprintf('[CacheInvalidation] Flush failed for %s: %s', $name, $e->getMessage()));
+            Logger::error("[Cache] Flush failed for {$name}: {$e->getMessage()}");
         } finally {
             remove_filter(CacheInvalidation::hookName('should_flag'), '__return_false');
         }

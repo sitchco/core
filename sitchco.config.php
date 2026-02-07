@@ -17,6 +17,7 @@ use Sitchco\Modules\Model\PostModel;
 use Sitchco\Modules\Model\TermModel;
 use Sitchco\Modules\PageOrder;
 use Sitchco\Modules\PostDeployment;
+use Sitchco\Modules\PostLifecycle;
 use Sitchco\Modules\Stream;
 use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIFramework\UIFramework;
@@ -55,6 +56,7 @@ return [
         AdminTools::class,
         SvgSprite::class,
         PostDeployment::class,
+        PostLifecycle::class,
         CacheInvalidation::class,
     ],
     'disallowedBlocks' => [],

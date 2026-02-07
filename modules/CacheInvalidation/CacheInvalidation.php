@@ -6,6 +6,8 @@ namespace Sitchco\Modules\CacheInvalidation;
 
 use Sitchco\Framework\Module;
 use Sitchco\Modules\Cron;
+use Sitchco\Modules\PostLifecycle;
+use Sitchco\Utils\Logger;
 
 /**
  * Cache invalidation orchestration module.
@@ -21,7 +23,7 @@ use Sitchco\Modules\Cron;
  */
 class CacheInvalidation extends Module
 {
-    public const DEPENDENCIES = [Cron::class];
+    public const DEPENDENCIES = [Cron::class, PostLifecycle::class];
     public const HOOK_SUFFIX = 'cache';
 
     public function __construct(private CacheScheduler $scheduler) {}
@@ -49,9 +51,14 @@ class CacheInvalidation extends Module
      */
     public function scheduleFlaggedInvalidators(): void
     {
-        $flagged = array_filter($this->scheduler->getActiveInvalidators(), fn(Invalidator $i) => $i->isFlagged());
+        $flagged = array_filter(
+            $this->scheduler->getActiveInvalidators(),
+            fn(Invalidator $i) => $i->isFlagged() && $i->delay() > 0,
+        );
 
         if (!empty($flagged)) {
+            $names = array_map(fn(Invalidator $i) => substr(strrchr($i::class, '\\'), 1), $flagged);
+            Logger::debug('[Cache] Scheduling flagged invalidators at shutdown: ' . implode(', ', $names));
             $this->scheduler->schedule($flagged);
         }
     }

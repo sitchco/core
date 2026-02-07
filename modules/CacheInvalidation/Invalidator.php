@@ -44,7 +44,7 @@ interface Invalidator
     /**
      * Flag this invalidator for execution at shutdown.
      */
-    public function flag(): void;
+    public function flag(?string $hook = null): void;
 
     /**
      * Check if this invalidator has been flagged for execution.

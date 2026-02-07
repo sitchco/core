@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sitchco\Modules\CacheInvalidation;
 
 use Sitchco\Modules\PostDeployment;
+use Sitchco\Modules\PostLifecycle;
 
 /**
  * Defines the types of events that can trigger cache invalidation.
@@ -28,7 +29,7 @@ enum CacheTrigger: string
             self::PostDeployment => [PostDeployment::hookName('complete')],
             self::ContentChange => [
                 'wp_after_insert_post',
-                'transition_post_status',
+                PostLifecycle::hookName('visibility_changed'),
                 'acf/save_post',
                 'wpsdb_migration_complete',
             ],
