@@ -24,6 +24,12 @@ use Sitchco\Support\DateTime;
 class Logger
 {
     private static ?LogLevel $resolvedLevel = null;
+    private static ?string $requestId = null;
+
+    public static function getRequestId(): string
+    {
+        return self::$requestId ??= substr(uniqid(), -5);
+    }
 
     public static function log(mixed $value, LogLevel $level = LogLevel::INFO): void
     {
@@ -31,7 +37,8 @@ class Logger
             return;
         }
         $message = stripcslashes(json_encode($value, JSON_PRETTY_PRINT));
-        error_log("[{$level->value}] {$message}");
+        $rid = self::getRequestId();
+        error_log("[{$rid}] [{$level->value}] {$message}");
         if (defined('SITCHCO_LOG_FILE') && SITCHCO_LOG_FILE) {
             self::writeToFile($level, $message);
         }
@@ -93,7 +100,8 @@ class Logger
             file_put_contents($logDir . '/index.php', "<?php\n// Silence is golden.\n");
         }
         $filename = $logDir . '/' . $now->format('Y-m-d') . '.log';
-        $entry = "[{$now->format('Y-m-d H:i:s')}] [{$level->value}] {$message}\n";
+        $rid = self::getRequestId();
+        $entry = "[{$now->format('Y-m-d H:i:s')}] [{$rid}] [{$level->value}] {$message}\n";
         file_put_contents($filename, $entry, FILE_APPEND | LOCK_EX);
     }
 }
