@@ -10,11 +10,11 @@ use Sitchco\Utils\Logger;
 use Sitchco\Utils\Hooks;
 
 /**
- * Detects deployment completion via trigger file and fires an action.
+ * Detects deployment and migration completion events and fires a normalized action.
  *
- * This module listens to the minutely cron and checks for a `.clear-cache` file
- * in the uploads directory. When found (and successfully deleted), it fires the
- * `sitchco/deploy/complete` action for other modules to hook into.
+ * Fires `sitchco/deploy/complete` when:
+ * - A `.clear-cache` trigger file is found in the uploads directory (checked on minutely cron)
+ * - A WP Migrate DB Pro migration completes (`wpmdb_migration_complete`)
  *
  * Usage:
  * ```php
@@ -32,6 +32,15 @@ class PostDeployment extends Module
     public function init(): void
     {
         add_action(Hooks::name('cron', 'minutely'), [$this, 'checkTrigger']);
+        add_action('wpmdb_migration_complete', [$this, 'onMigrationComplete']);
+    }
+
+    /**
+     * Fire deployment complete action when a WP Migrate DB migration finishes.
+     */
+    public function onMigrationComplete(): void
+    {
+        do_action(self::hookName('complete'));
     }
 
     /**
