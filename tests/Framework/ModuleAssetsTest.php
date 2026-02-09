@@ -211,6 +211,7 @@ class ModuleAssetsTest extends TestCase
         $this->resetWPDependencies();
         $this->devAssets->enqueueScript('test', 'test.js');
         $this->devAssets->inlineScriptData('test', 'test', ['key' => 'value']);
+        remove_all_actions('wp_enqueue_scripts');
         ob_start();
         do_action('wp_head');
         $html_out = ob_get_clean();
