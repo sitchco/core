@@ -93,6 +93,8 @@ class BackgroundActionQueue extends \WP_Background_Process
             $query = wp_parse_args($query_args, [
                 'post_type' => 'post',
                 'posts_per_page' => -1,
+                'orderby' => 'ID',
+                'order' => 'ASC',
             ]);
             $posts = get_posts($query);
             $this->addTask($task_action, $task_callback, $priority);
