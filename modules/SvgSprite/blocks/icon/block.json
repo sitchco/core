@@ -1,6 +1,7 @@
 {
     "name": "sitchco/icon",
     "title": "Icon",
+    "apiVersion": 3,
     "description": "A Gutenberg block for displaying a registered SVG icon.",
     "category": "sitchco",
     "keywords": ["icon", "svg", "acf"],
