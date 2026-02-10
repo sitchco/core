@@ -40,11 +40,13 @@ class TimberModuleTest extends TestCase
         $block = array_merge(
             [
                 'name' => 'sitchco/test-block',
+                'blockName' => 'sitchco/test-block',
                 'path' => SITCHCO_CORE_TESTS_DIR . '/Fakes/ModuleTester/blocks/test-block',
                 'return_context' => $return_context,
             ],
             $blockData,
         );
+        WP_Block_Supports::$block_to_render = $block;
 
         ob_start();
         TimberModule::blockRenderCallback($block, $content, $isPreview, $postId, $wpBlock);

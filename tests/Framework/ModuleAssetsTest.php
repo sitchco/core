@@ -13,18 +13,32 @@ class ModuleAssetsTest extends TestCase
     protected ModuleAssets $prodAssets;
     protected ModuleAssets $devAssets;
 
+    protected array $globals = [];
+
     protected function setUp(): void
     {
         parent::setUp();
         add_theme_support('html5', ['script', 'style']);
-        $this->resetWPDependencies();
         $module = $this->container->get(ModuleTester::class);
         $this->prodAssets = new ModuleAssets($module, SITCHCO_DEV_HOT_FILE);
         $this->devAssets = new ModuleAssets($module, 'sitchco.config.php');
     }
 
+    protected function tearDown(): void
+    {
+        $this->restoreWPDependencies();
+        parent::tearDown();
+    }
+
     protected function resetWPDependencies(): void
     {
+        if (empty($this->globals['wp_scripts'])) {
+            $this->globals = [
+                'wp_scripts' => $GLOBALS['wp_scripts'],
+                'wp_styles' => $GLOBALS['wp_styles'],
+                'wp_script_modules' => $GLOBALS['wp_script_modules'],
+            ];
+        }
         unset($GLOBALS['wp_scripts'], $GLOBALS['wp_styles'], $GLOBALS['wp_script_modules']);
         remove_all_actions('wp_footer');
         /* @var WP_Hook $wp_hook */
@@ -44,6 +58,13 @@ class ModuleAssetsTest extends TestCase
         wp_styles();
         wp_script_modules();
         $GLOBALS['wp_current_filter'][] = 'enqueue_block_assets';
+    }
+
+    protected function restoreWPDependencies(): void
+    {
+        foreach ($this->globals as $key => $value) {
+            $GLOBALS[$key] = $value;
+        }
     }
 
     /**
@@ -121,6 +142,7 @@ class ModuleAssetsTest extends TestCase
 
     public function test_registerScript()
     {
+        $this->resetWPDependencies();
         $this->prodAssets->registerScript('test', 'test.js');
         $registered = wp_scripts()->registered['sitchco/test'];
         $this->assertStringEndsWith('dist/assets/test-abcde.js', $registered->src);
@@ -132,6 +154,7 @@ class ModuleAssetsTest extends TestCase
 
     public function test_enqueueScript()
     {
+        $this->resetWPDependencies();
         $this->prodAssets->enqueueScript('test', 'test.js');
         $this->assertAssetOutputs(
             wp_scripts(),
@@ -150,6 +173,7 @@ class ModuleAssetsTest extends TestCase
 
     public function test_registerStyle()
     {
+        $this->resetWPDependencies();
         $this->prodAssets->registerStyle('test', 'test.css');
         $registered = wp_styles()->registered['sitchco/test'];
         $this->assertStringEndsWith('dist/assets/test-abcde.css', $registered->src);
@@ -161,6 +185,7 @@ class ModuleAssetsTest extends TestCase
 
     public function test_enqueueStyle()
     {
+        $this->resetWPDependencies();
         $this->prodAssets->enqueueStyle('test', 'test.css');
         $this->assertTrue(wp_style_is('sitchco/test'));
         $this->resetWPDependencies();
@@ -170,6 +195,7 @@ class ModuleAssetsTest extends TestCase
 
     public function test_enqueueBlockStyle()
     {
+        $this->resetWPDependencies();
         $handle = 'sitchco/test-block';
         $GLOBALS['wp_current_filter'][] = 'init';
         add_filter('should_load_block_assets_on_demand', '__return_false');
@@ -201,14 +227,17 @@ class ModuleAssetsTest extends TestCase
         $this->assertViteClientEnqueued();
     }
 
-    public function test_inlineScript()
+    public function test_inlineScript_prod()
     {
         $inline_js = 'window.test = true';
         $this->prodAssets->enqueueScript('test', 'test.js');
         $this->prodAssets->inlineScript('test', $inline_js);
         $registered = wp_scripts()->registered['sitchco/test'];
         $this->assertEquals($inline_js, $registered->extra['before'][1]);
-        $this->resetWPDependencies();
+    }
+
+    public function test_inlineScript_dev()
+    {
         $this->devAssets->enqueueScript('test', 'test.js');
         $this->devAssets->inlineScriptData('test', 'test', ['key' => 'value']);
         remove_all_actions('wp_enqueue_scripts');
@@ -244,6 +273,7 @@ class ModuleAssetsTest extends TestCase
 
     public function test_blockTypeMetadata_fallbackWithoutAssetPhp()
     {
+        $this->resetWPDependencies();
         $metadata = [
             'name' => 'sitchco/test-block',
             'script' => 'file:./test2.js', // test2.js has no .asset.php file

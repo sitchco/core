@@ -112,8 +112,7 @@ class TimberModule extends Module
         $blockNameParts = explode('/', $block['name']);
         $blockName = array_pop($blockNameParts);
         $output = TimberUtil::compileWithContext($template_path, $context, "block/$blockName");
-
-        echo is_array($wrapper)
+        echo is_array($wrapper) && !$is_preview
             ? Block::wrapperElement($output, $wrapper['link'] ?? null, $wrapper['tag'] ?? 'div')
             : $output;
     }
