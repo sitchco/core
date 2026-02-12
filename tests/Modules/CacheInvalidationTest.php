@@ -40,9 +40,9 @@ class CacheInvalidationTest extends TestCase
         foreach (self::SIGNAL_HOOKS as $hook) {
             remove_all_actions($hook);
         }
-        remove_all_filters('sitchco/cache/condition/rocket_active');
-        remove_all_filters('sitchco/cache/condition/cloudflare_installed');
-        remove_all_filters('sitchco/cache/condition/cloudfront_installed');
+        remove_all_filters('sitchco/cache/condition/wp_rocket');
+        remove_all_filters('sitchco/cache/condition/cloudflare');
+        remove_all_filters('sitchco/cache/condition/cloudfront');
         parent::tearDown();
     }
 
@@ -50,10 +50,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_content_updated_does_not_create_queue(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/content_updated');
@@ -65,10 +65,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_visibility_changed_queues_rocket_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/visibility_changed');
@@ -80,10 +80,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_deploy_complete_queues_rocket_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/deploy/complete');
@@ -95,10 +95,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_clear_all_queues_rocket_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/cache/clear_all');
@@ -110,10 +110,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_after_rocket_clean_queues_cdns_only(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('after_rocket_clean_domain');
@@ -126,10 +126,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_queue_excludes_unavailable_invalidators(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/visibility_changed');
@@ -144,9 +144,9 @@ class CacheInvalidationTest extends TestCase
 
     public function test_standalone_content_signal_queues_object_cache_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
 
         $expected = ['object_cache', 'cloudfront', 'cloudflare'];
 
@@ -161,7 +161,7 @@ class CacheInvalidationTest extends TestCase
         foreach ($signals as $signal) {
             delete_option(CacheQueue::OPTION_NAME);
             $queue = $this->container->get(CacheQueue::class);
-            $module = new CacheInvalidation($queue);
+            $module = new CacheInvalidation($queue, $this->container);
             $module->init();
 
             do_action($signal);
@@ -177,10 +177,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_standalone_queue_excludes_rocket(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/content_updated');
@@ -192,10 +192,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_standalone_queue_excludes_unavailable_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_false');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/content_updated');
@@ -209,13 +209,13 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_sync_flushes_object_cache_on_before_rocket_clean(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_false');
 
         wp_cache_set('_sitchco_test_key', 'test_value');
 
-        $module = new CacheInvalidation($this->queue);
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
         $module->syncObjectCacheFlush();
 
@@ -224,10 +224,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_sync_flush_executes_only_once_per_request(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_false');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         wp_cache_set('_sitchco_test_key', 'value1');
@@ -345,14 +345,35 @@ class CacheInvalidationTest extends TestCase
         );
     }
 
+    public function test_queue_option_stores_arrays_not_objects(): void
+    {
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
+        $module->init();
+
+        do_action('sitchco/post/content_updated');
+
+        $this->queue->flushWriteBuffer();
+        $stored = get_option(CacheQueue::OPTION_NAME, []);
+
+        foreach ($stored as $item) {
+            $this->assertIsArray($item, 'Queue items must be stored as arrays, not objects');
+            $this->assertArrayHasKey('slug', $item);
+            $this->assertArrayHasKey('expires', $item);
+            $this->assertArrayHasKey('delay', $item);
+        }
+    }
+
     // ─── Group 5: Debounce ───
 
     public function test_new_event_overwrites_existing_queue(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
+        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
+        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         // Fire two signals before flushing — write buffer's last-write-wins handles debounce

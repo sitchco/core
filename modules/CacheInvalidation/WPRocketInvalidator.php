@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Sitchco\Modules\CacheInvalidation;
 
-class WPRocketInvalidator implements Invalidator
+class WPRocketInvalidator extends Invalidator
 {
     public function slug(): string
     {
         return 'wp_rocket';
     }
 
-    public function isAvailable(): bool
+    protected function checkAvailability(): bool
     {
-        return CacheCondition::RocketActive->check();
+        return function_exists('rocket_clean_domain');
     }
 
     public function priority(): int

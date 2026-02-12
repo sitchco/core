@@ -11,6 +11,7 @@ use Sitchco\Modules\PostDeployment;
 use Sitchco\Modules\PostLifecycle;
 use Sitchco\Utils\Hooks;
 use Sitchco\Utils\Logger;
+use DI\Container;
 
 /**
  * Cache invalidation orchestrator.
@@ -33,20 +34,26 @@ class CacheInvalidation extends Module
     public const DEPENDENCIES = [Cron::class, PostLifecycle::class, PostDeployment::class, AcfLifecycle::class];
     public const HOOK_SUFFIX = 'cache';
 
+    public const CDN_INVALIDATORS = [CloudFrontInvalidator::class, CloudflareInvalidator::class];
+
+    public const ALL_INVALIDATORS = [
+        ObjectCacheInvalidator::class,
+        WPRocketInvalidator::class,
+        CloudFrontInvalidator::class,
+        CloudflareInvalidator::class,
+    ];
+
     private bool $syncFlushed = false;
 
-    public function __construct(private CacheQueue $queue) {}
+    public function __construct(private CacheQueue $queue, private Container $container) {}
 
     public function init(): void
     {
-        $this->queue->registerInvalidators([
-            new ObjectCacheInvalidator(),
-            new WPRocketInvalidator(),
-            new CloudFrontInvalidator(),
-            new CloudflareInvalidator(),
-        ]);
+        $invalidators = array_map(fn(string $class) => $this->container->get($class), self::ALL_INVALIDATORS);
+        $this->queue->registerInvalidators($invalidators);
 
-        $isDelegated = CacheCondition::RocketActive->check();
+        $rocketInvalidator = $this->container->get(WPRocketInvalidator::class);
+        $isDelegated = $rocketInvalidator->isAvailable();
 
         $routes = $isDelegated ? $this->delegatedRoutes() : $this->standaloneRoutes();
 
@@ -59,15 +66,14 @@ class CacheInvalidation extends Module
             add_action('after_rocket_clean_domain', fn() => $this->queue->write($this->cdnInvalidators()));
         }
 
-        // Cloudflare filter registration
-        if (CacheCondition::CloudflareInstalled->check()) {
+        $cloudflareInvalidator = $this->container->get(CloudflareInvalidator::class);
+        if ($cloudflareInvalidator->isAvailable()) {
             add_filter(
                 'cloudflare_purge_everything_actions',
                 fn(array $actions) => [...$actions, CloudflareInvalidator::PURGE_ACTION],
             );
         }
 
-        // Hook queue processor to minutely cron
         add_action(Hooks::name('cron', 'minutely'), [$this->queue, 'process']);
     }
 
@@ -85,14 +91,9 @@ class CacheInvalidation extends Module
         wp_cache_flush();
     }
 
-    /**
-     * Delegated Mode route map.
-     *
-     * @return array<string, Invalidator[]> hook name => invalidator instances
-     */
     private function delegatedRoutes(): array
     {
-        $rocketAndCdns = [new WPRocketInvalidator(), new CloudFrontInvalidator(), new CloudflareInvalidator()];
+        $rocketAndCdns = [$this->container->get(WPRocketInvalidator::class), ...$this->cdnInvalidators()];
 
         return [
             PostLifecycle::hookName('visibility_changed') => $rocketAndCdns,
@@ -101,14 +102,9 @@ class CacheInvalidation extends Module
         ];
     }
 
-    /**
-     * Standalone Mode route map.
-     *
-     * @return array<string, Invalidator[]> hook name => invalidator instances
-     */
     private function standaloneRoutes(): array
     {
-        $objectCacheAndCdns = [new ObjectCacheInvalidator(), new CloudFrontInvalidator(), new CloudflareInvalidator()];
+        $objectCacheAndCdns = [$this->container->get(ObjectCacheInvalidator::class), ...$this->cdnInvalidators()];
 
         return [
             PostLifecycle::hookName('content_updated') => $objectCacheAndCdns,
@@ -119,13 +115,8 @@ class CacheInvalidation extends Module
         ];
     }
 
-    /**
-     * CDN-only invalidators for after_rocket_clean_domain in Delegated Mode.
-     *
-     * @return Invalidator[]
-     */
     private function cdnInvalidators(): array
     {
-        return [new CloudFrontInvalidator(), new CloudflareInvalidator()];
+        return array_map(fn(string $class) => $this->container->get($class), self::CDN_INVALIDATORS);
     }
 }
