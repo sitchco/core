@@ -34,16 +34,14 @@ class CacheInvalidation extends Module
     public const DEPENDENCIES = [Cron::class, PostLifecycle::class, PostDeployment::class, AcfLifecycle::class];
     public const HOOK_SUFFIX = 'cache';
 
+    public const LOCAL_INVALIDATORS = [ObjectCacheInvalidator::class, WPRocketInvalidator::class];
     public const CDN_INVALIDATORS = [CloudFrontInvalidator::class, CloudflareInvalidator::class];
-
-    public const ALL_INVALIDATORS = [
-        ObjectCacheInvalidator::class,
-        WPRocketInvalidator::class,
-        CloudFrontInvalidator::class,
-        CloudflareInvalidator::class,
-    ];
+    public const ALL_INVALIDATORS = [...self::LOCAL_INVALIDATORS, ...self::CDN_INVALIDATORS];
 
     private bool $syncFlushed = false;
+
+    /** @var array<class-string<Invalidator>, Invalidator> */
+    private array $resolved = [];
 
     public function __construct(private CacheQueue $queue, private Container $container) {}
 
@@ -51,8 +49,9 @@ class CacheInvalidation extends Module
     {
         $invalidators = array_map(fn(string $class) => $this->container->get($class), self::ALL_INVALIDATORS);
         $this->queue->registerInvalidators($invalidators);
+        $this->resolved = array_combine(self::ALL_INVALIDATORS, $invalidators);
 
-        $rocketInvalidator = $this->container->get(WPRocketInvalidator::class);
+        $rocketInvalidator = $this->resolved[WPRocketInvalidator::class];
         $isDelegated = $rocketInvalidator->isAvailable();
 
         $routes = $isDelegated ? $this->delegatedRoutes() : $this->standaloneRoutes();
@@ -63,10 +62,11 @@ class CacheInvalidation extends Module
 
         if ($isDelegated) {
             add_action('before_rocket_clean_domain', [$this, 'syncObjectCacheFlush']);
-            add_action('after_rocket_clean_domain', fn() => $this->queue->write($this->cdnInvalidators()));
+            $cdnInvalidators = $this->cdnInvalidators();
+            add_action('after_rocket_clean_domain', fn() => $this->queue->write($cdnInvalidators));
         }
 
-        $cloudflareInvalidator = $this->container->get(CloudflareInvalidator::class);
+        $cloudflareInvalidator = $this->resolved[CloudflareInvalidator::class];
         if ($cloudflareInvalidator->isAvailable()) {
             add_filter(
                 'cloudflare_purge_everything_actions',
@@ -93,7 +93,7 @@ class CacheInvalidation extends Module
 
     private function delegatedRoutes(): array
     {
-        $rocketAndCdns = [$this->container->get(WPRocketInvalidator::class), ...$this->cdnInvalidators()];
+        $rocketAndCdns = [$this->resolved[WPRocketInvalidator::class], ...$this->cdnInvalidators()];
 
         return [
             PostLifecycle::hookName('visibility_changed') => $rocketAndCdns,
@@ -104,7 +104,7 @@ class CacheInvalidation extends Module
 
     private function standaloneRoutes(): array
     {
-        $objectCacheAndCdns = [$this->container->get(ObjectCacheInvalidator::class), ...$this->cdnInvalidators()];
+        $objectCacheAndCdns = [$this->resolved[ObjectCacheInvalidator::class], ...$this->cdnInvalidators()];
 
         return [
             PostLifecycle::hookName('content_updated') => $objectCacheAndCdns,
@@ -117,6 +117,6 @@ class CacheInvalidation extends Module
 
     private function cdnInvalidators(): array
     {
-        return array_map(fn(string $class) => $this->container->get($class), self::CDN_INVALIDATORS);
+        return array_map(fn(string $class) => $this->resolved[$class], self::CDN_INVALIDATORS);
     }
 }

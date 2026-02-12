@@ -1,0 +1,825 @@
+diff --git a/modules/CacheInvalidation/CacheCondition.php b/modules/CacheInvalidation/CacheCondition.php
+deleted file mode 100644
+index b5778a4..0000000
+--- a/modules/CacheInvalidation/CacheCondition.php
++++ /dev/null
+@@ -1,25 +0,0 @@
+-<?php
+-
+-declare(strict_types=1);
+-
+-namespace Sitchco\Modules\CacheInvalidation;
+-
+-enum CacheCondition: string
+-{
+-    case RocketActive = 'rocket_active';
+-    case CloudflareInstalled = 'cloudflare_installed';
+-    case CloudFrontInstalled = 'cloudfront_installed';
+-
+-    public function check(): bool
+-    {
+-        $result = match ($this) {
+-            self::RocketActive => function_exists('rocket_clean_domain'),
+-            self::CloudflareInstalled => defined('CLOUDFLARE_PLUGIN_DIR'),
+-            self::CloudFrontInstalled => class_exists('CloudFront_Clear_Cache') &&
+-                method_exists('CloudFront_Clear_Cache', 'get_instance') &&
+-                method_exists('CloudFront_Clear_Cache', 'c3_invalidation'),
+-        };
+-
+-        return (bool) apply_filters('sitchco/cache/condition/' . $this->value, $result);
+-    }
+-}
+diff --git a/modules/CacheInvalidation/CacheInvalidation.php b/modules/CacheInvalidation/CacheInvalidation.php
+index 5a12e4a..433272a 100644
+--- a/modules/CacheInvalidation/CacheInvalidation.php
++++ b/modules/CacheInvalidation/CacheInvalidation.php
+@@ -11,6 +11,7 @@ use Sitchco\Modules\PostDeployment;
+ use Sitchco\Modules\PostLifecycle;
+ use Sitchco\Utils\Hooks;
+ use Sitchco\Utils\Logger;
++use DI\Container;
+ 
+ /**
+  * Cache invalidation orchestrator.
+@@ -33,20 +34,26 @@ class CacheInvalidation extends Module
+     public const DEPENDENCIES = [Cron::class, PostLifecycle::class, PostDeployment::class, AcfLifecycle::class];
+     public const HOOK_SUFFIX = 'cache';
+ 
++    public const CDN_INVALIDATORS = [CloudFrontInvalidator::class, CloudflareInvalidator::class];
++
++    public const ALL_INVALIDATORS = [
++        ObjectCacheInvalidator::class,
++        WPRocketInvalidator::class,
++        CloudFrontInvalidator::class,
++        CloudflareInvalidator::class,
++    ];
++
+     private bool $syncFlushed = false;
+ 
+-    public function __construct(private CacheQueue $queue) {}
++    public function __construct(private CacheQueue $queue, private Container $container) {}
+ 
+     public function init(): void
+     {
+-        $this->queue->registerInvalidators([
+-            new ObjectCacheInvalidator(),
+-            new WPRocketInvalidator(),
+-            new CloudFrontInvalidator(),
+-            new CloudflareInvalidator(),
+-        ]);
++        $invalidators = array_map(fn(string $class) => $this->container->get($class), self::ALL_INVALIDATORS);
++        $this->queue->registerInvalidators($invalidators);
+ 
+-        $isDelegated = CacheCondition::RocketActive->check();
++        $rocketInvalidator = $this->container->get(WPRocketInvalidator::class);
++        $isDelegated = $rocketInvalidator->isAvailable();
+ 
+         $routes = $isDelegated ? $this->delegatedRoutes() : $this->standaloneRoutes();
+ 
+@@ -59,15 +66,14 @@ class CacheInvalidation extends Module
+             add_action('after_rocket_clean_domain', fn() => $this->queue->write($this->cdnInvalidators()));
+         }
+ 
+-        // Cloudflare filter registration
+-        if (CacheCondition::CloudflareInstalled->check()) {
++        $cloudflareInvalidator = $this->container->get(CloudflareInvalidator::class);
++        if ($cloudflareInvalidator->isAvailable()) {
+             add_filter(
+                 'cloudflare_purge_everything_actions',
+                 fn(array $actions) => [...$actions, CloudflareInvalidator::PURGE_ACTION],
+             );
+         }
+ 
+-        // Hook queue processor to minutely cron
+         add_action(Hooks::name('cron', 'minutely'), [$this->queue, 'process']);
+     }
+ 
+@@ -85,14 +91,9 @@ class CacheInvalidation extends Module
+         wp_cache_flush();
+     }
+ 
+-    /**
+-     * Delegated Mode route map.
+-     *
+-     * @return array<string, Invalidator[]> hook name => invalidator instances
+-     */
+     private function delegatedRoutes(): array
+     {
+-        $rocketAndCdns = [new WPRocketInvalidator(), new CloudFrontInvalidator(), new CloudflareInvalidator()];
++        $rocketAndCdns = [$this->container->get(WPRocketInvalidator::class), ...$this->cdnInvalidators()];
+ 
+         return [
+             PostLifecycle::hookName('visibility_changed') => $rocketAndCdns,
+@@ -101,14 +102,9 @@ class CacheInvalidation extends Module
+         ];
+     }
+ 
+-    /**
+-     * Standalone Mode route map.
+-     *
+-     * @return array<string, Invalidator[]> hook name => invalidator instances
+-     */
+     private function standaloneRoutes(): array
+     {
+-        $objectCacheAndCdns = [new ObjectCacheInvalidator(), new CloudFrontInvalidator(), new CloudflareInvalidator()];
++        $objectCacheAndCdns = [$this->container->get(ObjectCacheInvalidator::class), ...$this->cdnInvalidators()];
+ 
+         return [
+             PostLifecycle::hookName('content_updated') => $objectCacheAndCdns,
+@@ -119,13 +115,8 @@ class CacheInvalidation extends Module
+         ];
+     }
+ 
+-    /**
+-     * CDN-only invalidators for after_rocket_clean_domain in Delegated Mode.
+-     *
+-     * @return Invalidator[]
+-     */
+     private function cdnInvalidators(): array
+     {
+-        return [new CloudFrontInvalidator(), new CloudflareInvalidator()];
++        return array_map(fn(string $class) => $this->container->get($class), self::CDN_INVALIDATORS);
+     }
+ }
+diff --git a/modules/CacheInvalidation/CacheQueue.php b/modules/CacheInvalidation/CacheQueue.php
+index e3ed14d..6013cc7 100644
+--- a/modules/CacheInvalidation/CacheQueue.php
++++ b/modules/CacheInvalidation/CacheQueue.php
+@@ -22,9 +22,10 @@ class CacheQueue
+ 
+     private bool $processing = false;
+ 
+-    /** @var array<string, class-string> slug → invalidator class */
++    /** @var array<string, Invalidator> slug -> invalidator instance */
+     private array $slugMap = [];
+ 
++    /** @var PendingInvalidation[]|null */
+     private ?array $pendingWrite = null;
+ 
+     private bool $shutdownRegistered = false;
+@@ -42,7 +43,7 @@ class CacheQueue
+     public function registerInvalidators(array $invalidators): void
+     {
+         foreach ($invalidators as $invalidator) {
+-            $this->slugMap[$invalidator->slug()] = $invalidator::class;
++            $this->slugMap[$invalidator->slug()] = $invalidator;
+         }
+     }
+ 
+@@ -70,17 +71,10 @@ class CacheQueue
+         usort($available, fn($a, $b) => $a->priority() <=> $b->priority());
+ 
+         $now = time();
+-        $queue = [];
+-
+-        foreach ($available as $invalidator) {
+-            $queue[] = [
+-                'slug' => $invalidator->slug(),
+-                'expires' => $now + $invalidator->delay(),
+-                'delay' => $invalidator->delay(),
+-            ];
+-        }
+-
+-        $this->pendingWrite = $queue;
++        $this->pendingWrite = array_map(
++            fn(Invalidator $invalidator) => PendingInvalidation::fromInvalidator($invalidator, $now),
++            $available,
++        );
+ 
+         if (!$this->shutdownRegistered) {
+             add_action('shutdown', [$this, 'flushWriteBuffer']);
+@@ -100,7 +94,11 @@ class CacheQueue
+ 
+         $slugs = array_column($this->pendingWrite, 'slug');
+         Logger::debug('[Cache] Queue written: ' . implode(', ', $slugs));
+-        update_option(self::OPTION_NAME, $this->pendingWrite, false);
++        update_option(
++            self::OPTION_NAME,
++            array_map(fn(PendingInvalidation $item) => $item->toArray(), $this->pendingWrite),
++            false,
++        );
+         $this->pendingWrite = null;
+     }
+ 
+@@ -110,42 +108,48 @@ class CacheQueue
+      */
+     public function process(): void
+     {
+-        $queue = get_option(self::OPTION_NAME, []);
++        $rawQueue = get_option(self::OPTION_NAME, []);
++
++        if (empty($rawQueue)) {
++            return;
++        }
++
++        $queue = array_values(
++            array_filter(array_map(fn(array $row) => PendingInvalidation::fromArray($row), $rawQueue)),
++        );
+ 
+         if (empty($queue)) {
++            delete_option(self::OPTION_NAME);
+             return;
+         }
+ 
+         $now = time();
+         $first = $queue[0];
+ 
+-        if ($first['expires'] > $now) {
++        if (!$first->isExpired($now)) {
+             return;
+         }
+ 
+         array_shift($queue);
+ 
+-        $invalidator = $this->resolveInvalidator($first['slug']);
++        $invalidator = $this->resolveInvalidator($first->slug);
+ 
+         if ($invalidator !== null) {
+-            Logger::debug("[Cache] Processing {$first['slug']}, " . count($queue) . ' remaining');
++            Logger::debug("[Cache] Processing {$first->slug}, " . count($queue) . ' remaining');
+             $this->processing = true;
+ 
+             try {
+                 $invalidator->flush();
+-                Logger::debug("[Cache] {$first['slug']} flushed successfully");
++                Logger::debug("[Cache] {$first->slug} flushed successfully");
+             } catch (\Throwable $e) {
+-                Logger::error("[Cache] Flush failed for {$first['slug']}: {$e->getMessage()}");
++                Logger::error("[Cache] Flush failed for {$first->slug}: {$e->getMessage()}");
+             } finally {
+                 $this->processing = false;
+             }
+ 
+-            foreach ($queue as &$item) {
+-                $item['expires'] = $now + $item['delay'];
+-            }
+-            unset($item);
++            $queue = array_map(fn(PendingInvalidation $item) => $item->refresh($now), $queue);
+         } else {
+-            Logger::warning("[Cache] Unknown invalidator slug '{$first['slug']}', removing from queue");
++            Logger::warning("[Cache] Unknown invalidator slug '{$first->slug}', removing from queue");
+         }
+ 
+         if (empty($queue)) {
+@@ -153,7 +157,11 @@ class CacheQueue
+             Logger::debug('[Cache] Cascade complete');
+             do_action(Hooks::name('cache', 'complete'));
+         } else {
+-            update_option(self::OPTION_NAME, $queue, false);
++            update_option(
++                self::OPTION_NAME,
++                array_map(fn(PendingInvalidation $item) => $item->toArray(), $queue),
++                false,
++            );
+         }
+     }
+ 
+@@ -162,8 +170,6 @@ class CacheQueue
+      */
+     private function resolveInvalidator(string $slug): ?Invalidator
+     {
+-        $class = $this->slugMap[$slug] ?? null;
+-
+-        return $class ? new $class() : null;
++        return $this->slugMap[$slug] ?? null;
+     }
+ }
+diff --git a/modules/CacheInvalidation/CloudFrontInvalidator.php b/modules/CacheInvalidation/CloudFrontInvalidator.php
+index ed5d599..b026882 100644
+--- a/modules/CacheInvalidation/CloudFrontInvalidator.php
++++ b/modules/CacheInvalidation/CloudFrontInvalidator.php
+@@ -4,16 +4,18 @@ declare(strict_types=1);
+ 
+ namespace Sitchco\Modules\CacheInvalidation;
+ 
+-class CloudFrontInvalidator implements Invalidator
++class CloudFrontInvalidator extends Invalidator
+ {
+     public function slug(): string
+     {
+         return 'cloudfront';
+     }
+ 
+-    public function isAvailable(): bool
++    protected function checkAvailability(): bool
+     {
+-        return CacheCondition::CloudFrontInstalled->check();
++        return class_exists('CloudFront_Clear_Cache') &&
++            method_exists('CloudFront_Clear_Cache', 'get_instance') &&
++            method_exists('CloudFront_Clear_Cache', 'c3_invalidation');
+     }
+ 
+     public function priority(): int
+diff --git a/modules/CacheInvalidation/CloudflareInvalidator.php b/modules/CacheInvalidation/CloudflareInvalidator.php
+index 2f281e3..695ec46 100644
+--- a/modules/CacheInvalidation/CloudflareInvalidator.php
++++ b/modules/CacheInvalidation/CloudflareInvalidator.php
+@@ -4,7 +4,7 @@ declare(strict_types=1);
+ 
+ namespace Sitchco\Modules\CacheInvalidation;
+ 
+-class CloudflareInvalidator implements Invalidator
++class CloudflareInvalidator extends Invalidator
+ {
+     public const PURGE_ACTION = 'sitchco/cloudflare_purge_cache';
+ 
+@@ -13,9 +13,9 @@ class CloudflareInvalidator implements Invalidator
+         return 'cloudflare';
+     }
+ 
+-    public function isAvailable(): bool
++    protected function checkAvailability(): bool
+     {
+-        return CacheCondition::CloudflareInstalled->check();
++        return defined('CLOUDFLARE_PLUGIN_DIR');
+     }
+ 
+     public function priority(): int
+diff --git a/modules/CacheInvalidation/Invalidator.php b/modules/CacheInvalidation/Invalidator.php
+index bd0bf60..d1c6987 100644
+--- a/modules/CacheInvalidation/Invalidator.php
++++ b/modules/CacheInvalidation/Invalidator.php
+@@ -4,15 +4,20 @@ declare(strict_types=1);
+ 
+ namespace Sitchco\Modules\CacheInvalidation;
+ 
+-interface Invalidator
++abstract class Invalidator
+ {
+-    public function slug(): string;
++    abstract public function slug(): string;
+ 
+-    public function isAvailable(): bool;
++    abstract protected function checkAvailability(): bool;
+ 
+-    public function priority(): int;
++    abstract public function priority(): int;
+ 
+-    public function delay(): int;
++    abstract public function delay(): int;
+ 
+-    public function flush(): void;
++    abstract public function flush(): void;
++
++    public function isAvailable(): bool
++    {
++        return (bool) apply_filters('sitchco/cache/condition/' . $this->slug(), $this->checkAvailability());
++    }
+ }
+diff --git a/modules/CacheInvalidation/ObjectCacheInvalidator.php b/modules/CacheInvalidation/ObjectCacheInvalidator.php
+index 1d6aaa2..f7586bc 100644
+--- a/modules/CacheInvalidation/ObjectCacheInvalidator.php
++++ b/modules/CacheInvalidation/ObjectCacheInvalidator.php
+@@ -4,14 +4,14 @@ declare(strict_types=1);
+ 
+ namespace Sitchco\Modules\CacheInvalidation;
+ 
+-class ObjectCacheInvalidator implements Invalidator
++class ObjectCacheInvalidator extends Invalidator
+ {
+     public function slug(): string
+     {
+         return 'object_cache';
+     }
+ 
+-    public function isAvailable(): bool
++    protected function checkAvailability(): bool
+     {
+         return true;
+     }
+diff --git a/modules/CacheInvalidation/PendingInvalidation.php b/modules/CacheInvalidation/PendingInvalidation.php
+new file mode 100644
+index 0000000..c59e38e
+--- /dev/null
++++ b/modules/CacheInvalidation/PendingInvalidation.php
+@@ -0,0 +1,51 @@
++<?php
++
++declare(strict_types=1);
++
++namespace Sitchco\Modules\CacheInvalidation;
++
++use Sitchco\Utils\Logger;
++
++final readonly class PendingInvalidation
++{
++    public function __construct(public string $slug, public int $expires, public int $delay) {}
++
++    public static function fromInvalidator(Invalidator $invalidator, ?int $now = null): self
++    {
++        $now ??= time();
++
++        return new self(
++            slug: $invalidator->slug(),
++            expires: $now + $invalidator->delay(),
++            delay: $invalidator->delay(),
++        );
++    }
++
++    public static function fromArray(array $row): ?self
++    {
++        if (!isset($row['slug'], $row['expires'], $row['delay'])) {
++            Logger::warning('[Cache] Dropping malformed queue row');
++
++            return null;
++        }
++
++        return new self(slug: (string) $row['slug'], expires: (int) $row['expires'], delay: (int) $row['delay']);
++    }
++
++    public function isExpired(?int $now = null): bool
++    {
++        return ($now ?? time()) >= $this->expires;
++    }
++
++    public function refresh(?int $now = null): self
++    {
++        $now ??= time();
++
++        return new self($this->slug, $now + $this->delay, $this->delay);
++    }
++
++    public function toArray(): array
++    {
++        return ['slug' => $this->slug, 'expires' => $this->expires, 'delay' => $this->delay];
++    }
++}
+diff --git a/modules/CacheInvalidation/SPEC.md b/modules/CacheInvalidation/SPEC.md
+index 0f8a556..ccf8af2 100644
+--- a/modules/CacheInvalidation/SPEC.md
++++ b/modules/CacheInvalidation/SPEC.md
+@@ -70,7 +70,7 @@ CDN means whichever CDN invalidators pass their condition checks, processed in p
+ 
+ ### 1. Mode determination happens once, at the orchestration level
+ 
+-The orchestrator (CacheInvalidation module) checks `CacheCondition::RocketActive` at initialization and configures the system accordingly. Individual invalidators do not branch on mode. They declare their capabilities (condition, delay, flush method) and the orchestrator decides when to invoke them.
++The orchestrator (CacheInvalidation module) checks the WP Rocket invalidator's `isAvailable()` at initialization and configures the system accordingly. Individual invalidators do not branch on mode. They declare their capabilities (condition, delay, flush method) and the orchestrator decides when to invoke them.
+ 
+ **Why:** Distributing mode logic across every invalidator created branching complexity that was hard to reason about and test. Centralizing it means each invalidator is simple and stateless.
+ 
+@@ -108,6 +108,8 @@ An invalidator does NOT declare what triggers it. The orchestrator decides what
+ 
+ **Why:** Triggers are a property of the operating mode, not of the invalidator. CloudFront doesn't "know" it should listen to `AfterRocketClean` in Delegated Mode but `ContentChange` in Standalone Mode. That's an orchestration concern.
+ 
++Each invalidator's `isAvailable()` applies a WordPress filter `sitchco/cache/condition/{slug}` where `{slug}` is the invalidator's slug (`object_cache`, `wp_rocket`, `cloudfront`, `cloudflare`). This provides a uniform extension point for enabling or disabling any invalidator at runtime. The default value is the result of the invalidator's own availability check. Object cache defaults to `true` (always available) but is filterable like the rest.
++
+ ### 6. Request-local write buffer eliminates redundant DB writes
+ 
+ When multiple signals fire in the same request (e.g., draft→publish fires both `visibility_changed` and `content_updated`), the queue writer buffers writes in memory and flushes once at shutdown via a `register_shutdown_function` hook. Each signal handler still calls the writer normally — the writer just defers the `update_option` call. Since last-writer-wins is the queue's debounce mechanism, only the final write matters anyway.
+@@ -142,9 +144,10 @@ The orchestrator also handles Cloudflare's setup requirement: the Cloudflare plu
+ 
+ ### Invalidators
+ 
+-Each invalidator is a value object with four properties:
++Each invalidator is a value object with five properties:
+ 
+-- **`isAvailable(): bool`** — Is the backing service present?
++- **`slug(): string`** — Unique identifier used for queue storage and filter keys
++- **`isAvailable(): bool`** — Is the backing service present? (Template method: calls `checkAvailability()` then applies `sitchco/cache/condition/{slug}` filter)
+ - **`priority(): int`** — Processing order (lower = earlier)
+ - **`delay(): int`** — Settling time in seconds (relative to previous item)
+ - **`flush(): void`** — The actual invalidation action
+diff --git a/modules/CacheInvalidation/WPRocketInvalidator.php b/modules/CacheInvalidation/WPRocketInvalidator.php
+index 0184998..1fa5e3a 100644
+--- a/modules/CacheInvalidation/WPRocketInvalidator.php
++++ b/modules/CacheInvalidation/WPRocketInvalidator.php
+@@ -4,16 +4,16 @@ declare(strict_types=1);
+ 
+ namespace Sitchco\Modules\CacheInvalidation;
+ 
+-class WPRocketInvalidator implements Invalidator
++class WPRocketInvalidator extends Invalidator
+ {
+     public function slug(): string
+     {
+         return 'wp_rocket';
+     }
+ 
+-    public function isAvailable(): bool
++    protected function checkAvailability(): bool
+     {
+-        return CacheCondition::RocketActive->check();
++        return function_exists('rocket_clean_domain');
+     }
+ 
+     public function priority(): int
+diff --git a/tests/Modules/CacheInvalidationTest.php b/tests/Modules/CacheInvalidationTest.php
+index 9c06259..d0934ba 100644
+--- a/tests/Modules/CacheInvalidationTest.php
++++ b/tests/Modules/CacheInvalidationTest.php
+@@ -40,9 +40,9 @@ class CacheInvalidationTest extends TestCase
+         foreach (self::SIGNAL_HOOKS as $hook) {
+             remove_all_actions($hook);
+         }
+-        remove_all_filters('sitchco/cache/condition/rocket_active');
+-        remove_all_filters('sitchco/cache/condition/cloudflare_installed');
+-        remove_all_filters('sitchco/cache/condition/cloudfront_installed');
++        remove_all_filters('sitchco/cache/condition/wp_rocket');
++        remove_all_filters('sitchco/cache/condition/cloudflare');
++        remove_all_filters('sitchco/cache/condition/cloudfront');
+         parent::tearDown();
+     }
+ 
+@@ -50,10 +50,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_content_updated_does_not_create_queue(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/post/content_updated');
+@@ -65,10 +65,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_visibility_changed_queues_rocket_and_cdns(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/post/visibility_changed');
+@@ -80,10 +80,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_deploy_complete_queues_rocket_and_cdns(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/deploy/complete');
+@@ -95,10 +95,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_clear_all_queues_rocket_and_cdns(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/cache/clear_all');
+@@ -110,10 +110,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_after_rocket_clean_queues_cdns_only(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('after_rocket_clean_domain');
+@@ -126,10 +126,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_queue_excludes_unavailable_invalidators(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/post/visibility_changed');
+@@ -144,9 +144,9 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_standalone_content_signal_queues_object_cache_and_cdns(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
+ 
+         $expected = ['object_cache', 'cloudfront', 'cloudflare'];
+ 
+@@ -161,7 +161,7 @@ class CacheInvalidationTest extends TestCase
+         foreach ($signals as $signal) {
+             delete_option(CacheQueue::OPTION_NAME);
+             $queue = $this->container->get(CacheQueue::class);
+-            $module = new CacheInvalidation($queue);
++            $module = new CacheInvalidation($queue, $this->container);
+             $module->init();
+ 
+             do_action($signal);
+@@ -177,10 +177,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_standalone_queue_excludes_rocket(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/post/content_updated');
+@@ -192,10 +192,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_standalone_queue_excludes_unavailable_cdns(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_false');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         do_action('sitchco/post/content_updated');
+@@ -209,13 +209,13 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_sync_flushes_object_cache_on_before_rocket_clean(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_false');
+ 
+         wp_cache_set('_sitchco_test_key', 'test_value');
+ 
+-        $module = new CacheInvalidation($this->queue);
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+         $module->syncObjectCacheFlush();
+ 
+@@ -224,10 +224,10 @@ class CacheInvalidationTest extends TestCase
+ 
+     public function test_delegated_sync_flush_executes_only_once_per_request(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_true');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_false');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_false');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         wp_cache_set('_sitchco_test_key', 'value1');
+@@ -345,14 +345,35 @@ class CacheInvalidationTest extends TestCase
+         );
+     }
+ 
++    public function test_queue_option_stores_arrays_not_objects(): void
++    {
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
++        $module->init();
++
++        do_action('sitchco/post/content_updated');
++
++        $this->queue->flushWriteBuffer();
++        $stored = get_option(CacheQueue::OPTION_NAME, []);
++
++        foreach ($stored as $item) {
++            $this->assertIsArray($item, 'Queue items must be stored as arrays, not objects');
++            $this->assertArrayHasKey('slug', $item);
++            $this->assertArrayHasKey('expires', $item);
++            $this->assertArrayHasKey('delay', $item);
++        }
++    }
++
+     // ─── Group 5: Debounce ───
+ 
+     public function test_new_event_overwrites_existing_queue(): void
+     {
+-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
+-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
+-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
+-        $module = new CacheInvalidation($this->queue);
++        add_filter('sitchco/cache/condition/wp_rocket', '__return_false');
++        add_filter('sitchco/cache/condition/cloudflare', '__return_true');
++        add_filter('sitchco/cache/condition/cloudfront', '__return_true');
++        $module = new CacheInvalidation($this->queue, $this->container);
+         $module->init();
+ 
+         // Fire two signals before flushing — write buffer's last-write-wins handles debounce
+diff --git a/tests/Modules/PendingInvalidationTest.php b/tests/Modules/PendingInvalidationTest.php
+new file mode 100644
+index 0000000..c36216a
+--- /dev/null
++++ b/tests/Modules/PendingInvalidationTest.php
+@@ -0,0 +1,82 @@
++<?php
++
++namespace Sitchco\Tests\Modules;
++
++use Sitchco\Modules\CacheInvalidation\ObjectCacheInvalidator;
++use Sitchco\Modules\CacheInvalidation\PendingInvalidation;
++use Sitchco\Tests\TestCase;
++
++class PendingInvalidationTest extends TestCase
++{
++    public function test_fromInvalidator_creates_with_correct_values(): void
++    {
++        $invalidator = $this->container->get(ObjectCacheInvalidator::class);
++        $now = 1000000;
++        $item = PendingInvalidation::fromInvalidator($invalidator, $now);
++
++        $this->assertSame('object_cache', $item->slug);
++        $this->assertSame($now + 10, $item->expires);
++        $this->assertSame(10, $item->delay);
++    }
++
++    public function test_fromArray_hydrates_valid_row(): void
++    {
++        $item = PendingInvalidation::fromArray([
++            'slug' => 'cloudfront',
++            'expires' => 1000100,
++            'delay' => 100,
++        ]);
++
++        $this->assertNotNull($item);
++        $this->assertSame('cloudfront', $item->slug);
++        $this->assertSame(1000100, $item->expires);
++        $this->assertSame(100, $item->delay);
++    }
++
++    public function test_fromArray_returns_null_for_malformed_row(): void
++    {
++        $this->assertNull(PendingInvalidation::fromArray(['slug' => 'test']));
++        $this->assertNull(PendingInvalidation::fromArray([]));
++    }
++
++    public function test_isExpired_returns_true_when_time_equals_or_exceeds_expires(): void
++    {
++        $item = new PendingInvalidation('test', 1000, 10);
++        $this->assertTrue($item->isExpired(1000));
++        $this->assertTrue($item->isExpired(1001));
++    }
++
++    public function test_isExpired_returns_false_when_not_expired(): void
++    {
++        $item = new PendingInvalidation('test', 1000, 10);
++        $this->assertFalse($item->isExpired(999));
++    }
++
++    public function test_refresh_returns_new_instance_with_reset_expiration(): void
++    {
++        $item = new PendingInvalidation('cloudfront', 1000, 100);
++        $now = 2000;
++        $refreshed = $item->refresh($now);
++
++        $this->assertNotSame($item, $refreshed);
++        $this->assertSame('cloudfront', $refreshed->slug);
++        $this->assertSame($now + 100, $refreshed->expires);
++        $this->assertSame(100, $refreshed->delay);
++    }
++
++    public function test_toArray_returns_associative_array(): void
++    {
++        $item = new PendingInvalidation('object_cache', 1010, 10);
++        $this->assertSame(['slug' => 'object_cache', 'expires' => 1010, 'delay' => 10], $item->toArray());
++    }
++
++    public function test_toArray_roundtrips_through_fromArray(): void
++    {
++        $original = new PendingInvalidation('cloudflare', 2000, 100);
++        $restored = PendingInvalidation::fromArray($original->toArray());
++
++        $this->assertSame($original->slug, $restored->slug);
++        $this->assertSame($original->expires, $restored->expires);
++        $this->assertSame($original->delay, $restored->delay);
++    }
++}

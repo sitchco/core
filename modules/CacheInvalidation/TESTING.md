@@ -24,8 +24,7 @@ This plan is organized to match the [SPEC](SPEC.md) user stories.
 |------|---------|
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CacheInvalidation.php` | Orchestrator — mode determination, signal routing, sync hooks |
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CacheQueue.php` | Queue writer (with write buffer) and processor (cron-driven) |
-| `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/Invalidator.php` | Interface — `isAvailable()`, `priority()`, `delay()`, `flush()` |
-| `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CacheCondition.php` | Enum — condition checks for each backing service |
+| `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/Invalidator.php` | Abstract base class — `slug()`, `isAvailable()`, `checkAvailability()`, `priority()`, `delay()`, `flush()` |
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/ObjectCacheInvalidator.php` | `wp_cache_flush()` |
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/WPRocketInvalidator.php` | `rocket_clean_domain()` |
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CloudFrontInvalidator.php` | CloudFront Clear Cache plugin |

@@ -166,7 +166,7 @@ class CacheQueue
     }
 
     /**
-     * Resolve a slug to a fresh invalidator instance for flush execution.
+     * Resolve a slug to a registered invalidator instance for flush execution.
      */
     private function resolveInvalidator(string $slug): ?Invalidator
     {
