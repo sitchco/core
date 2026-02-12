@@ -1,0 +1,131 @@
+/* Modal */
+
+.modal {
+    --modal-bg-color: rgb(0 0 0 / 0.7);
+    --modal-max-width: 980px;
+    --modal-text-align: center;
+    --modal-container-bg: #fff;
+    --modal-container-color: #000;
+    --modal-container-padding: 3rem;
+    --modal-container-mobile-padding: 1rem;
+    --modal-z-index: 9999;
+    --modal-box-container-bg: var(--modal-container-bg);
+    --modal-box-border-radius: 0;
+    --modal-box-size: 80%;
+    --modal-box-padding: calc((100 - 80) * 0.5vh);
+    --modal-close-size: 2rem;
+    --modal-close-color: var(--modal-container-color);
+    --modal-close-color-hover: var(--modal-close-color);
+    --modal-close-top: calc(var(--modal-container-padding) - var(--modal-close-size));
+    --modal-close-right: calc(var(--modal-container-padding) - var(--modal-close-size));
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    z-index: var(--modal-z-index);
+    backface-visibility: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    opacity: 0;
+    transform: translateY(-100vh);
+    visibility: hidden;
+    transition:
+        opacity var(--transition-duration) var(--transition-timing-out),
+        transform var(--transition-duration) var(--transition-timing-out),
+        visibility 0s linear var(--transition-duration);
+
+    &--open {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+        visibility: visible;
+        transition:
+            opacity var(--transition-duration) var(--transition-timing-in),
+            transform var(--transition-duration) var(--transition-timing-in);
+    }
+
+    &--box {
+        background: var(--modal-bg-color);
+
+        @media (min-width: 576px) {
+            padding: var(--modal-box-padding) 0;
+        }
+    }
+
+    &__container {
+        position: relative;
+        display: flex;
+        flex-flow: column wrap;
+        width: 100%;
+        padding: var(--modal-container-mobile-padding);
+        align-items: center;
+        pointer-events: auto;
+        overflow-y: auto;
+        background: var(--modal-container-bg);
+        color: var(--modal-container-color);
+
+        @media (min-width: 576px) {
+            padding: var(--modal-container-padding);
+        }
+
+        .modal--box & {
+            background-color: var(--modal-box-container-bg);
+            border-radius: var(--modal-box-border-radius);
+
+            @media (min-width: 992px) {
+                width: var(--modal-box-size);
+                max-width: var(--modal-max-width);
+                height: auto;
+                margin: auto;
+            }
+        }
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+
+    &__content {
+        width: 100%;
+        max-width: var(--modal-max-width);
+        text-align: var(--modal-text-align);
+        margin: auto;
+    }
+
+    &__close {
+        appearance: none;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        position: absolute;
+        z-index: 1;
+        top: var(--modal-close-top);
+        right: var(--modal-close-right);
+        height: var(--modal-close-size);
+        width: var(--modal-close-size);
+        line-height: var(--modal-close-size);
+        font-size: var(--modal-close-size);
+        color: var(--modal-close-color);
+        text-align: center;
+        overflow: hidden;
+        transition: all var(--transition-duration) var(--transition-timing);
+
+        &:hover,
+        &:active,
+        &:focus {
+            color: var(--modal-close-color-hover);
+        }
+    }
+
+    &--blockdismiss {
+        .modal__close {
+            opacity: 0;
+            pointer-events: none;
+        }
+    }
+}

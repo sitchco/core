@@ -1,3 +1,10 @@
+:root {
+    --transition-duration: 0.25s;
+    --transition-timing: ease-in-out;
+    --transition-timing-in: ease-in;
+    --transition-timing-out: ease-out;
+}
+
 html {
     &.js {
         opacity: 0;
