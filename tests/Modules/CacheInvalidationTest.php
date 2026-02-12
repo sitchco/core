@@ -4,6 +4,11 @@ namespace Sitchco\Tests\Modules;
 
 use Sitchco\Modules\CacheInvalidation\CacheInvalidation;
 use Sitchco\Modules\CacheInvalidation\CacheQueue;
+use Sitchco\Modules\CacheInvalidation\CloudflareInvalidator;
+use Sitchco\Modules\CacheInvalidation\CloudFrontInvalidator;
+use Sitchco\Modules\CacheInvalidation\Invalidator;
+use Sitchco\Modules\CacheInvalidation\ObjectCacheInvalidator;
+use Sitchco\Modules\CacheInvalidation\WPRocketInvalidator;
 use Sitchco\Tests\TestCase;
 use Sitchco\Utils\Hooks;
 
@@ -40,20 +45,42 @@ class CacheInvalidationTest extends TestCase
         foreach (self::SIGNAL_HOOKS as $hook) {
             remove_all_actions($hook);
         }
-        remove_all_filters('sitchco/cache/condition/rocket_active');
-        remove_all_filters('sitchco/cache/condition/cloudflare_installed');
-        remove_all_filters('sitchco/cache/condition/cloudfront_installed');
+        $this->container->set(WPRocketInvalidator::class, new WPRocketInvalidator());
+        $this->container->set(CloudFrontInvalidator::class, new CloudFrontInvalidator());
+        $this->container->set(CloudflareInvalidator::class, new CloudflareInvalidator());
+        $this->container->set(ObjectCacheInvalidator::class, new ObjectCacheInvalidator());
+        $this->queue->registerInvalidators([
+            $this->container->get(WPRocketInvalidator::class),
+            $this->container->get(CloudFrontInvalidator::class),
+            $this->container->get(CloudflareInvalidator::class),
+            $this->container->get(ObjectCacheInvalidator::class),
+        ]);
         parent::tearDown();
+    }
+
+    private function createMockInvalidator(
+        string $slug,
+        bool $available,
+        int $priority = 0,
+        int $delay = 10,
+    ): Invalidator {
+        $mock = $this->createMock(Invalidator::class);
+        $mock->method('slug')->willReturn($slug);
+        $mock->method('isAvailable')->willReturn($available);
+        $mock->method('priority')->willReturn($priority);
+        $mock->method('delay')->willReturn($delay);
+        return $mock;
     }
 
     // ─── Group 1: Delegated Mode — Signal → Queue Routing ───
 
     public function test_delegated_content_updated_does_not_create_queue(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/content_updated');
@@ -65,10 +92,11 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_visibility_changed_queues_rocket_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/visibility_changed');
@@ -80,10 +108,11 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_deploy_complete_queues_rocket_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/deploy/complete');
@@ -95,10 +124,11 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_clear_all_queues_rocket_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/cache/clear_all');
@@ -110,10 +140,11 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_after_rocket_clean_queues_cdns_only(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('after_rocket_clean_domain');
@@ -126,10 +157,14 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_queue_excludes_unavailable_invalidators(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(
+            CloudflareInvalidator::class,
+            $this->createMockInvalidator('cloudflare', false, 100, 100),
+        );
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/visibility_changed');
@@ -144,10 +179,6 @@ class CacheInvalidationTest extends TestCase
 
     public function test_standalone_content_signal_queues_object_cache_and_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-
         $expected = ['object_cache', 'cloudfront', 'cloudflare'];
 
         $signals = [
@@ -160,8 +191,21 @@ class CacheInvalidationTest extends TestCase
 
         foreach ($signals as $signal) {
             delete_option(CacheQueue::OPTION_NAME);
+            $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', false, 10, 50));
+            $this->container->set(
+                CloudFrontInvalidator::class,
+                $this->createMockInvalidator('cloudfront', true, 50, 100),
+            );
+            $this->container->set(
+                CloudflareInvalidator::class,
+                $this->createMockInvalidator('cloudflare', true, 100, 100),
+            );
+            $this->container->set(
+                ObjectCacheInvalidator::class,
+                $this->createMockInvalidator('object_cache', true, 0, 10),
+            );
             $queue = $this->container->get(CacheQueue::class);
-            $module = new CacheInvalidation($queue);
+            $module = new CacheInvalidation($queue, $this->container);
             $module->init();
 
             do_action($signal);
@@ -177,10 +221,11 @@ class CacheInvalidationTest extends TestCase
 
     public function test_standalone_queue_excludes_rocket(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', false, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/content_updated');
@@ -192,10 +237,14 @@ class CacheInvalidationTest extends TestCase
 
     public function test_standalone_queue_excludes_unavailable_cdns(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', false, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', false, 50, 100));
+        $this->container->set(
+            CloudflareInvalidator::class,
+            $this->createMockInvalidator('cloudflare', false, 100, 100),
+        );
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         do_action('sitchco/post/content_updated');
@@ -209,13 +258,17 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_sync_flushes_object_cache_on_before_rocket_clean(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', false, 50, 100));
+        $this->container->set(
+            CloudflareInvalidator::class,
+            $this->createMockInvalidator('cloudflare', false, 100, 100),
+        );
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
 
         wp_cache_set('_sitchco_test_key', 'test_value');
 
-        $module = new CacheInvalidation($this->queue);
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
         $module->syncObjectCacheFlush();
 
@@ -224,10 +277,14 @@ class CacheInvalidationTest extends TestCase
 
     public function test_delegated_sync_flush_executes_only_once_per_request(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_true');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_false');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_false');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', true, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', false, 50, 100));
+        $this->container->set(
+            CloudflareInvalidator::class,
+            $this->createMockInvalidator('cloudflare', false, 100, 100),
+        );
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         wp_cache_set('_sitchco_test_key', 'value1');
@@ -246,6 +303,11 @@ class CacheInvalidationTest extends TestCase
 
     public function test_processor_flushes_expired_item_and_removes_from_queue(): void
     {
+        $mockObjectCache = $this->createMockInvalidator('object_cache', true, 0, 10);
+        $mockObjectCache->expects($this->once())->method('flush');
+        $mockCloudfront = $this->createMockInvalidator('cloudfront', true, 50, 100);
+        $this->queue->registerInvalidators([$mockObjectCache, $mockCloudfront]);
+
         update_option(
             CacheQueue::OPTION_NAME,
             [
@@ -255,11 +317,7 @@ class CacheInvalidationTest extends TestCase
             false,
         );
 
-        wp_cache_set('_sitchco_test_flush', 'exists');
-
         $this->queue->process();
-
-        $this->assertFalse(wp_cache_get('_sitchco_test_flush'), 'Object cache should have been flushed');
 
         $remaining = get_option(CacheQueue::OPTION_NAME, []);
         $this->assertCount(1, $remaining);
@@ -268,6 +326,10 @@ class CacheInvalidationTest extends TestCase
 
     public function test_processor_skips_unexpired_item(): void
     {
+        $mockObjectCache = $this->createMockInvalidator('object_cache', true, 0, 10);
+        $mockObjectCache->expects($this->never())->method('flush');
+        $this->queue->registerInvalidators([$mockObjectCache]);
+
         $futureTime = time() + 300;
         update_option(
             CacheQueue::OPTION_NAME,
@@ -275,15 +337,7 @@ class CacheInvalidationTest extends TestCase
             false,
         );
 
-        wp_cache_set('_sitchco_test_skip', 'should_survive');
-
         $this->queue->process();
-
-        $this->assertSame(
-            'should_survive',
-            wp_cache_get('_sitchco_test_skip'),
-            'Object cache should NOT have been flushed',
-        );
 
         $remaining = get_option(CacheQueue::OPTION_NAME, []);
         $this->assertCount(1, $remaining);
@@ -292,6 +346,12 @@ class CacheInvalidationTest extends TestCase
 
     public function test_processor_resets_remaining_timestamps_after_processing(): void
     {
+        $mockObjectCache = $this->createMockInvalidator('object_cache', true, 0, 10);
+        $mockObjectCache->expects($this->once())->method('flush');
+        $mockCloudfront = $this->createMockInvalidator('cloudfront', true, 50, 100);
+        $mockCloudflare = $this->createMockInvalidator('cloudflare', true, 100, 100);
+        $this->queue->registerInvalidators([$mockObjectCache, $mockCloudfront, $mockCloudflare]);
+
         update_option(
             CacheQueue::OPTION_NAME,
             [
@@ -313,6 +373,9 @@ class CacheInvalidationTest extends TestCase
 
     public function test_processor_fires_completion_hook_when_queue_empty(): void
     {
+        $mockObjectCache = $this->createMockInvalidator('object_cache', true, 0, 10);
+        $this->queue->registerInvalidators([$mockObjectCache]);
+
         update_option(
             CacheQueue::OPTION_NAME,
             [['slug' => 'object_cache', 'expires' => time() - 10, 'delay' => 10]],
@@ -331,6 +394,9 @@ class CacheInvalidationTest extends TestCase
 
     public function test_processor_deletes_option_when_queue_empty(): void
     {
+        $mockObjectCache = $this->createMockInvalidator('object_cache', true, 0, 10);
+        $this->queue->registerInvalidators([$mockObjectCache]);
+
         update_option(
             CacheQueue::OPTION_NAME,
             [['slug' => 'object_cache', 'expires' => time() - 10, 'delay' => 10]],
@@ -345,14 +411,64 @@ class CacheInvalidationTest extends TestCase
         );
     }
 
+    public function test_processor_drops_non_array_rows_and_processes_valid_ones(): void
+    {
+        $mockObjectCache = $this->createMockInvalidator('object_cache', true, 0, 10);
+        $mockObjectCache->expects($this->once())->method('flush');
+        $mockCloudfront = $this->createMockInvalidator('cloudfront', true, 50, 100);
+        $this->queue->registerInvalidators([$mockObjectCache, $mockCloudfront]);
+
+        update_option(
+            CacheQueue::OPTION_NAME,
+            [
+                ['slug' => 'object_cache', 'expires' => time() - 10, 'delay' => 10],
+                'not-an-array',
+                42,
+                null,
+                ['slug' => 'cloudfront', 'expires' => time() + 100, 'delay' => 100],
+            ],
+            false,
+        );
+
+        $this->queue->process();
+
+        $remaining = get_option(CacheQueue::OPTION_NAME, []);
+        $this->assertCount(1, $remaining);
+        $this->assertSame('cloudfront', $remaining[0]['slug']);
+    }
+
+    public function test_queue_option_stores_arrays_not_objects(): void
+    {
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', false, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
+        $module->init();
+
+        do_action('sitchco/post/content_updated');
+
+        $this->queue->flushWriteBuffer();
+        $stored = get_option(CacheQueue::OPTION_NAME, []);
+        $this->assertNotEmpty($stored);
+
+        foreach ($stored as $item) {
+            $this->assertIsArray($item, 'Queue items must be stored as arrays, not objects');
+            $this->assertArrayHasKey('slug', $item);
+            $this->assertArrayHasKey('expires', $item);
+            $this->assertArrayHasKey('delay', $item);
+        }
+    }
+
     // ─── Group 5: Debounce ───
 
     public function test_new_event_overwrites_existing_queue(): void
     {
-        add_filter('sitchco/cache/condition/rocket_active', '__return_false');
-        add_filter('sitchco/cache/condition/cloudflare_installed', '__return_true');
-        add_filter('sitchco/cache/condition/cloudfront_installed', '__return_true');
-        $module = new CacheInvalidation($this->queue);
+        $this->container->set(WPRocketInvalidator::class, $this->createMockInvalidator('wp_rocket', false, 10, 50));
+        $this->container->set(CloudFrontInvalidator::class, $this->createMockInvalidator('cloudfront', true, 50, 100));
+        $this->container->set(CloudflareInvalidator::class, $this->createMockInvalidator('cloudflare', true, 100, 100));
+        $this->container->set(ObjectCacheInvalidator::class, $this->createMockInvalidator('object_cache', true, 0, 10));
+        $module = new CacheInvalidation($this->queue, $this->container);
         $module->init();
 
         // Fire two signals before flushing — write buffer's last-write-wins handles debounce

@@ -22,9 +22,10 @@ class CacheQueue
 
     private bool $processing = false;
 
-    /** @var array<string, class-string> slug → invalidator class */
+    /** @var array<string, Invalidator> slug -> invalidator instance */
     private array $slugMap = [];
 
+    /** @var PendingInvalidation[]|null */
     private ?array $pendingWrite = null;
 
     private bool $shutdownRegistered = false;
@@ -42,7 +43,7 @@ class CacheQueue
     public function registerInvalidators(array $invalidators): void
     {
         foreach ($invalidators as $invalidator) {
-            $this->slugMap[$invalidator->slug()] = $invalidator::class;
+            $this->slugMap[$invalidator->slug()] = $invalidator;
         }
     }
 
@@ -70,17 +71,10 @@ class CacheQueue
         usort($available, fn($a, $b) => $a->priority() <=> $b->priority());
 
         $now = time();
-        $queue = [];
-
-        foreach ($available as $invalidator) {
-            $queue[] = [
-                'slug' => $invalidator->slug(),
-                'expires' => $now + $invalidator->delay(),
-                'delay' => $invalidator->delay(),
-            ];
-        }
-
-        $this->pendingWrite = $queue;
+        $this->pendingWrite = array_map(
+            fn(Invalidator $invalidator) => PendingInvalidation::fromInvalidator($invalidator, $now),
+            $available,
+        );
 
         if (!$this->shutdownRegistered) {
             add_action('shutdown', [$this, 'flushWriteBuffer']);
@@ -100,7 +94,11 @@ class CacheQueue
 
         $slugs = array_column($this->pendingWrite, 'slug');
         Logger::debug('[Cache] Queue written: ' . implode(', ', $slugs));
-        update_option(self::OPTION_NAME, $this->pendingWrite, false);
+        update_option(
+            self::OPTION_NAME,
+            array_map(fn(PendingInvalidation $item) => $item->toArray(), $this->pendingWrite),
+            false,
+        );
         $this->pendingWrite = null;
     }
 
@@ -110,42 +108,56 @@ class CacheQueue
      */
     public function process(): void
     {
-        $queue = get_option(self::OPTION_NAME, []);
+        $rawQueue = get_option(self::OPTION_NAME, []);
+
+        if (empty($rawQueue)) {
+            return;
+        }
+
+        $queue = array_values(
+            array_filter(
+                array_map(function (mixed $row) {
+                    if (!is_array($row)) {
+                        Logger::warning('[Cache] Dropping non-array queue entry');
+                        return null;
+                    }
+                    return PendingInvalidation::fromArray($row);
+                }, $rawQueue),
+            ),
+        );
 
         if (empty($queue)) {
+            delete_option(self::OPTION_NAME);
             return;
         }
 
         $now = time();
         $first = $queue[0];
 
-        if ($first['expires'] > $now) {
+        if (!$first->isExpired($now)) {
             return;
         }
 
         array_shift($queue);
 
-        $invalidator = $this->resolveInvalidator($first['slug']);
+        $invalidator = $this->resolveInvalidator($first->slug);
 
         if ($invalidator !== null) {
-            Logger::debug("[Cache] Processing {$first['slug']}, " . count($queue) . ' remaining');
+            Logger::debug("[Cache] Processing {$first->slug}, " . count($queue) . ' remaining');
             $this->processing = true;
 
             try {
                 $invalidator->flush();
-                Logger::debug("[Cache] {$first['slug']} flushed successfully");
+                Logger::debug("[Cache] {$first->slug} flushed successfully");
             } catch (\Throwable $e) {
-                Logger::error("[Cache] Flush failed for {$first['slug']}: {$e->getMessage()}");
+                Logger::error("[Cache] Flush failed for {$first->slug}: {$e->getMessage()}");
             } finally {
                 $this->processing = false;
             }
 
-            foreach ($queue as &$item) {
-                $item['expires'] = $now + $item['delay'];
-            }
-            unset($item);
+            $queue = array_map(fn(PendingInvalidation $item) => $item->refresh($now), $queue);
         } else {
-            Logger::warning("[Cache] Unknown invalidator slug '{$first['slug']}', removing from queue");
+            Logger::warning("[Cache] Unknown invalidator slug '{$first->slug}', removing from queue");
         }
 
         if (empty($queue)) {
@@ -153,17 +165,19 @@ class CacheQueue
             Logger::debug('[Cache] Cascade complete');
             do_action(Hooks::name('cache', 'complete'));
         } else {
-            update_option(self::OPTION_NAME, $queue, false);
+            update_option(
+                self::OPTION_NAME,
+                array_map(fn(PendingInvalidation $item) => $item->toArray(), $queue),
+                false,
+            );
         }
     }
 
     /**
-     * Resolve a slug to a fresh invalidator instance for flush execution.
+     * Resolve a slug to a registered invalidator instance for flush execution.
      */
     private function resolveInvalidator(string $slug): ?Invalidator
     {
-        $class = $this->slugMap[$slug] ?? null;
-
-        return $class ? new $class() : null;
+        return $this->slugMap[$slug] ?? null;
     }
 }

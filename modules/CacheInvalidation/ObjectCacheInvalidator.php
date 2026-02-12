@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Sitchco\Modules\CacheInvalidation;
 
-class ObjectCacheInvalidator implements Invalidator
+class ObjectCacheInvalidator extends Invalidator
 {
     public function slug(): string
     {
         return 'object_cache';
     }
 
-    public function isAvailable(): bool
+    protected function checkAvailability(): bool
     {
         return true;
     }

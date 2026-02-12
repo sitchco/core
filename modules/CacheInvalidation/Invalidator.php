@@ -4,15 +4,20 @@ declare(strict_types=1);
 
 namespace Sitchco\Modules\CacheInvalidation;
 
-interface Invalidator
+abstract class Invalidator
 {
-    public function slug(): string;
+    abstract public function slug(): string;
 
-    public function isAvailable(): bool;
+    abstract protected function checkAvailability(): bool;
 
-    public function priority(): int;
+    abstract public function priority(): int;
 
-    public function delay(): int;
+    abstract public function delay(): int;
 
-    public function flush(): void;
+    abstract public function flush(): void;
+
+    public function isAvailable(): bool
+    {
+        return (bool) apply_filters('sitchco/cache/condition/' . $this->slug(), $this->checkAvailability());
+    }
 }

@@ -70,7 +70,7 @@ CDN means whichever CDN invalidators pass their condition checks, processed in p
 
 ### 1. Mode determination happens once, at the orchestration level
 
-The orchestrator (CacheInvalidation module) checks `CacheCondition::RocketActive` at initialization and configures the system accordingly. Individual invalidators do not branch on mode. They declare their capabilities (condition, delay, flush method) and the orchestrator decides when to invoke them.
+The orchestrator (CacheInvalidation module) checks the WP Rocket invalidator's `isAvailable()` at initialization and configures the system accordingly. Individual invalidators do not branch on mode. They declare their capabilities (condition, delay, flush method) and the orchestrator decides when to invoke them.
 
 **Why:** Distributing mode logic across every invalidator created branching complexity that was hard to reason about and test. Centralizing it means each invalidator is simple and stateless.
 
@@ -108,6 +108,8 @@ An invalidator does NOT declare what triggers it. The orchestrator decides what 
 
 **Why:** Triggers are a property of the operating mode, not of the invalidator. CloudFront doesn't "know" it should listen to `AfterRocketClean` in Delegated Mode but `ContentChange` in Standalone Mode. That's an orchestration concern.
 
+Each invalidator's `isAvailable()` applies a WordPress filter `sitchco/cache/condition/{slug}` where `{slug}` is the invalidator's slug (`object_cache`, `wp_rocket`, `cloudfront`, `cloudflare`). This provides a uniform extension point for enabling or disabling any invalidator at runtime. The default value is the result of the invalidator's own availability check. Object cache defaults to `true` (always available) but is filterable like the rest.
+
 ### 6. Request-local write buffer eliminates redundant DB writes
 
 When multiple signals fire in the same request (e.g., draft→publish fires both `visibility_changed` and `content_updated`), the queue writer buffers writes in memory and flushes once at shutdown via a `register_shutdown_function` hook. Each signal handler still calls the writer normally — the writer just defers the `update_option` call. Since last-writer-wins is the queue's debounce mechanism, only the final write matters anyway.
@@ -142,9 +144,10 @@ The orchestrator also handles Cloudflare's setup requirement: the Cloudflare plu
 
 ### Invalidators
 
-Each invalidator is a value object with four properties:
+Each invalidator is a value object with five properties:
 
-- **`isAvailable(): bool`** — Is the backing service present?
+- **`slug(): string`** — Unique identifier used for queue storage and filter keys
+- **`isAvailable(): bool`** — Is the backing service present? (Template method: calls `checkAvailability()` then applies `sitchco/cache/condition/{slug}` filter)
 - **`priority(): int`** — Processing order (lower = earlier)
 - **`delay(): int`** — Settling time in seconds (relative to previous item)
 - **`flush(): void`** — The actual invalidation action

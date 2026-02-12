@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Sitchco\Modules\CacheInvalidation;
 
-class CloudflareInvalidator implements Invalidator
+class CloudflareInvalidator extends Invalidator
 {
     public const PURGE_ACTION = 'sitchco/cloudflare_purge_cache';
 
@@ -13,9 +13,9 @@ class CloudflareInvalidator implements Invalidator
         return 'cloudflare';
     }
 
-    public function isAvailable(): bool
+    protected function checkAvailability(): bool
     {
-        return CacheCondition::CloudflareInstalled->check();
+        return defined('CLOUDFLARE_PLUGIN_DIR');
     }
 
     public function priority(): int
