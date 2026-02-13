@@ -1,7 +1,8 @@
 {
     "version": "1.0",
-    "hash": "24d05ef42652c8d444911952004a4cf4",
+    "hash": "d76898fda85a62436351f3efe03cc53b",
     "blocks": {
-        "sitchco/icon": "modules/SvgSprite/blocks/icon"
+        "sitchco/icon": "modules/SvgSprite/blocks/icon",
+        "sitchco/modal": "modules/UIModal/blocks/modal"
     }
 }

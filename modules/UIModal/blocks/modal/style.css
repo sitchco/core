@@ -1,0 +1,12 @@
+.wp-block-sitchco-modal .sitchco-modal__container {
+    --modal-container-padding: 1rem;
+    --modal-close-top: 0;
+    --modal-close-right: 0;
+    --modal-close-size: 1em;
+    border: 1px dashed;
+    opacity: 0.5;
+
+    .sitchco-modal__close {
+        pointer-events: none;
+    }
+}

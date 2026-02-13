@@ -1,6 +1,6 @@
 /* Modal */
 
-.modal {
+.sitchco-modal {
     --modal-bg-color: rgb(0 0 0 / 0.7);
     --modal-max-width: 980px;
     --modal-text-align: center;
@@ -72,7 +72,7 @@
             padding: var(--modal-container-padding);
         }
 
-        .modal--box & {
+        .sitchco-modal--box & {
             background-color: var(--modal-box-container-bg);
             border-radius: var(--modal-box-border-radius);
 
@@ -123,7 +123,7 @@
     }
 
     &--blockdismiss {
-        .modal__close {
+        .sitchco-modal__close {
             opacity: 0;
             pointer-events: none;
         }
