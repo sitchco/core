@@ -16,8 +16,6 @@ class UIModal extends Module
 
     const HOOK_SUFFIX = 'ui-modal';
 
-    const ASSET_HANDLE = 'ui-modal';
-
     /**
      * @var array<string, ModalData>
      */
@@ -31,8 +29,8 @@ class UIModal extends Module
             return $paths;
         });
         $this->registerAssets(function (ModuleAssets $assets) {
-            $assets->registerScript(static::ASSET_HANDLE, 'main.js', ['sitchco/ui-framework']);
-            $assets->registerStyle(static::ASSET_HANDLE, 'main.css');
+            $assets->registerScript(static::HOOK_SUFFIX, 'main.js', ['sitchco/ui-framework']);
+            $assets->registerStyle(static::HOOK_SUFFIX, 'main.css');
         });
     }
 
@@ -64,8 +62,8 @@ class UIModal extends Module
     public function unloadModals(): void
     {
         if (count($this->modalsLoaded)) {
-            $this->assets()->enqueueScript(static::ASSET_HANDLE);
-            $this->assets()->enqueueStyle(static::ASSET_HANDLE);
+            $this->assets()->enqueueScript(static::HOOK_SUFFIX);
+            $this->assets()->enqueueStyle(static::HOOK_SUFFIX);
         }
         foreach ($this->modalsLoaded as $modal) {
             $attributes = apply_filters(

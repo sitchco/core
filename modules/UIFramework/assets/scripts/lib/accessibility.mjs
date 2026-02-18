@@ -46,7 +46,7 @@ function registerFocusStateDetection() {
 class FocusTrap {
     constructor(el) {
         this.el = el;
-        this.previouslyFocused = null;
+        this.previouslyFocused = document.activeElement;
         this._onKeyDown = this._onKeyDown.bind(this);
 
         if (!el.hasAttribute('tabindex')) {
@@ -59,7 +59,6 @@ class FocusTrap {
     }
 
     activate({ focusFirst = true } = {}) {
-        this.previouslyFocused = document.activeElement;
         document.addEventListener('keydown', this._onKeyDown);
 
         if (focusFirst) {
