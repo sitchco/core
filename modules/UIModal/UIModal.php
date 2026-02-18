@@ -14,6 +14,8 @@ class UIModal extends Module
 {
     public const DEPENDENCIES = [TimberModule::class, UIFramework::class];
 
+    const HOOK_SUFFIX = 'ui-modal';
+
     const ASSET_HANDLE = 'ui-modal';
 
     /**
@@ -25,7 +27,7 @@ class UIModal extends Module
     {
         add_action('wp_footer', [$this, 'unloadModals']);
         add_filter('timber/locations', function ($paths) {
-            $paths[] = __DIR__ . '/templates';
+            $paths[] = [__DIR__ . '/templates'];
             return $paths;
         });
         $this->registerAssets(function (ModuleAssets $assets) {
@@ -43,7 +45,7 @@ class UIModal extends Module
 
     public function loadModal(Post $post, ModalType $type = ModalType::BOX): ModalData
     {
-        if (!in_array($post->slug, $this->modalsLoaded)) {
+        if (!isset($this->modalsLoaded[$post->slug])) {
             $this->modalsLoaded[$post->slug] = new ModalData($post, $type);
         }
         return $this->modalsLoaded[$post->slug];

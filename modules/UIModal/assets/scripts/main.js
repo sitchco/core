@@ -6,13 +6,15 @@ const HIDE_MODAL_HOOK = `${COMPONENT}-hide`;
 const ENABLE_DISMISS_HOOK = `${COMPONENT}-enableDismiss`;
 
 let previouslyFocusedElement = null;
+let scrollLockTimeout = null;
+let openAnimationTimeout = null;
 
 const showModal = (modal) => doAction(SHOW_MODAL_HOOK, modal);
 const hideModal = (modal) => doAction(HIDE_MODAL_HOOK, modal);
 
 const escHandler = () => {
     const modal = document.querySelector('.sitchco-modal--open');
-    if (modal && !modal.classList.contains('.sitchco-modal--blockdismiss')) {
+    if (modal && !modal.classList.contains('sitchco-modal--blockdismiss')) {
         hideModal(modal);
     }
 };
@@ -28,6 +30,35 @@ const setModalLabel = (modal) => {
     modal.setAttribute('aria-labelledby', heading.id);
 };
 
+const getFocusableElements = (modal) => {
+    return modal.querySelectorAll(
+        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    );
+};
+
+const trapFocus = (e) => {
+    const modal = document.querySelector('.sitchco-modal--open');
+    if (!modal || e.key !== 'Tab') {
+        return;
+    }
+
+    const focusable = getFocusableElements(modal);
+    if (!focusable.length) {
+        e.preventDefault();
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+    }
+};
+
 const getTriggerTarget = (trigger) => {
     const href = trigger.getAttribute('href');
     const dataTarget = trigger.dataset.target;
@@ -39,37 +70,63 @@ const onKeyDown = (e) => {
     if (e.key === 'Escape') {
         escHandler();
     }
+
+    trapFocus(e);
 };
 
-// Open modal from URL hash on load
-const openFromHash = () => {
+// Open modal from URL hash, close modal on hash-away
+const syncModalWithHash = () => {
     const hash = window.location.hash;
+    const openModal = document.querySelector('.sitchco-modal--open');
+    if (openModal && (!hash || `#${openModal.id}` !== hash)) {
+        hideModal(openModal);
+    }
     if (!hash) {
         return;
     }
 
-    const modal = document.querySelector(`.sitchco-modal${hash}`);
-    if (modal) {
-        showModal(modal);
+    try {
+        const modal = document.querySelector(`.sitchco-modal${hash}`);
+        if (modal && !modal.classList.contains('sitchco-modal--open')) {
+            showModal(modal);
+        }
+    } catch {
+        // CSS-invalid hash characters — ignore
     }
 };
 
 addAction(
     SHOW_MODAL_HOOK,
     (modal) => {
+        // Close any already-open modal before opening a new one
+        const currentModal = document.querySelector('.sitchco-modal--open');
+        if (currentModal && currentModal !== modal) {
+            hideModal(currentModal);
+        }
+
         previouslyFocusedElement = document.activeElement;
         setModalLabel(modal);
 
-        if (applyFilters('sitcho/ui-modal/lockScroll', true, modal)) {
-            setTimeout(() => document.body.classList.add('lock-scroll'), 700);
+        if (applyFilters('sitchco/ui-modal/lockScroll', true, modal)) {
+            scrollLockTimeout = setTimeout(() => document.body.classList.add('lock-scroll'), 700);
         }
         if (modal.id && window.location.hash !== `#${modal.id}`) {
             history.replaceState(null, '', `#${modal.id}`);
         }
 
-        setTimeout(() => {
+        // Set inert on background content
+        document.querySelectorAll('body > *:not(.sitchco-modal)').forEach((el) => {
+            el.setAttribute('inert', '');
+        });
+
+        openAnimationTimeout = setTimeout(() => {
             modal.classList.add('sitchco-modal--open');
-            modal.focus();
+            const focusable = getFocusableElements(modal);
+            if (focusable.length) {
+                focusable[0].focus();
+            } else {
+                modal.focus();
+            }
         }, 50);
 
         document.addEventListener('keydown', onKeyDown);
@@ -81,17 +138,25 @@ addAction(
 addAction(
     HIDE_MODAL_HOOK,
     (modal) => {
+        clearTimeout(scrollLockTimeout);
+        clearTimeout(openAnimationTimeout);
         document.removeEventListener('keydown', onKeyDown);
         document.body.classList.remove('lock-scroll');
         modal.classList.remove('sitchco-modal--open');
 
+        // Remove inert from background content
+        document.querySelectorAll('body > [inert]').forEach((el) => {
+            el.removeAttribute('inert');
+        });
+
         if (modal.id && window.location.hash === `#${modal.id}`) {
             history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-        if (previouslyFocusedElement) {
+        if (previouslyFocusedElement && previouslyFocusedElement !== document.body) {
             previouslyFocusedElement.focus();
-            previouslyFocusedElement = null;
         }
+
+        previouslyFocusedElement = null;
     },
     10,
     COMPONENT
@@ -110,16 +175,17 @@ addAction(
 );
 
 document.addEventListener('DOMContentLoaded', function () {
-    // Mark trigger elements
+    // Mark trigger elements and add ARIA attributes
     document.querySelectorAll('.sitchco-modal').forEach((modal) => {
         const id = modal.id;
         if (!id) {
             return;
         }
 
-        document
-            .querySelectorAll(`a[href="#${id}"], [data-target="#${id}"]`)
-            .forEach((el) => el.classList.add('js-modal-trigger'));
+        document.querySelectorAll(`a[href="#${id}"], [data-target="#${id}"]`).forEach((el) => {
+            el.classList.add('js-modal-trigger');
+            el.setAttribute('aria-haspopup', 'dialog');
+        });
     });
 
     // Trigger click
@@ -149,6 +215,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    openFromHash();
-    window.addEventListener('hashchange', openFromHash);
+    syncModalWithHash();
+    window.addEventListener('hashchange', syncModalWithHash);
 });

@@ -124,8 +124,14 @@
 
     &--blockdismiss {
         .sitchco-modal__close {
-            opacity: 0;
-            pointer-events: none;
+            visibility: hidden;
         }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sitchco-modal,
+    .sitchco-modal__container {
+        transition-duration: 0s;
     }
 }

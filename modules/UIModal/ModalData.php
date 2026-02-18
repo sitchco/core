@@ -20,7 +20,7 @@ readonly class ModalData
 
     public function heading(): string
     {
-        if (str_contains($this->post->post_content, '<h')) {
+        if (preg_match('/<h[1-6][\s>]/i', $this->post->post_content)) {
             return '';
         }
         return $this->post->title();
