@@ -9,6 +9,7 @@ import { registerScrollWatchActions, scrollWatch } from './lib/scroll-watch.mjs'
 import { registerHeaderHeightActions } from './lib/header-height.mjs';
 import { registerCssVarsActions } from './lib/css-vars.mjs';
 import { registerExitIntentActions } from './lib/exit-intent.mjs';
+import { registerAccessibilityActions } from './lib/accessibility.mjs';
 
 const init = (cb, priority = 100) => hooks.addAction(constants.INIT, cb, priority);
 const register = (cb, priority = 100) => hooks.addAction(constants.REGISTER, cb, priority);
@@ -52,6 +53,7 @@ register(registerScrollWatchActions);
 register(registerHeaderHeightActions);
 register(registerCssVarsActions);
 register(registerExitIntentActions);
+register(registerAccessibilityActions);
 window.addEventListener('DOMContentLoaded', () => {
     // Use this event if for external or non-explicit dependencies
     document.dispatchEvent(new CustomEvent('sitchco/core/init', window.sitchco));

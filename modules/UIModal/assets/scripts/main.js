@@ -5,7 +5,6 @@ const SHOW_MODAL_HOOK = `${COMPONENT}-show`;
 const HIDE_MODAL_HOOK = `${COMPONENT}-hide`;
 const ENABLE_DISMISS_HOOK = `${COMPONENT}-enableDismiss`;
 
-let previouslyFocusedElement = null;
 let scrollLockTimeout = null;
 let openAnimationTimeout = null;
 
@@ -30,35 +29,6 @@ const setModalLabel = (modal) => {
     modal.setAttribute('aria-labelledby', heading.id);
 };
 
-const getFocusableElements = (modal) => {
-    return modal.querySelectorAll(
-        'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    );
-};
-
-const trapFocus = (e) => {
-    const modal = document.querySelector('.sitchco-modal--open');
-    if (!modal || e.key !== 'Tab') {
-        return;
-    }
-
-    const focusable = getFocusableElements(modal);
-    if (!focusable.length) {
-        e.preventDefault();
-        return;
-    }
-
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-    }
-};
-
 const getTriggerTarget = (trigger) => {
     const href = trigger.getAttribute('href');
     const dataTarget = trigger.dataset.target;
@@ -70,8 +40,6 @@ const onKeyDown = (e) => {
     if (e.key === 'Escape') {
         escHandler();
     }
-
-    trapFocus(e);
 };
 
 // Open modal from URL hash, close modal on hash-away
@@ -104,7 +72,7 @@ addAction(
             hideModal(currentModal);
         }
 
-        previouslyFocusedElement = document.activeElement;
+        doAction('focusTrapInit', modal);
         setModalLabel(modal);
 
         if (applyFilters('sitchco/ui-modal/lockScroll', true, modal)) {
@@ -121,12 +89,7 @@ addAction(
 
         openAnimationTimeout = setTimeout(() => {
             modal.classList.add('sitchco-modal--open');
-            const focusable = getFocusableElements(modal);
-            if (focusable.length) {
-                focusable[0].focus();
-            } else {
-                modal.focus();
-            }
+            doAction('focusTrapActivate');
         }, 50);
 
         document.addEventListener('keydown', onKeyDown);
@@ -152,11 +115,8 @@ addAction(
         if (modal.id && window.location.hash === `#${modal.id}`) {
             history.replaceState(null, '', window.location.pathname + window.location.search);
         }
-        if (previouslyFocusedElement && previouslyFocusedElement !== document.body) {
-            previouslyFocusedElement.focus();
-        }
 
-        previouslyFocusedElement = null;
+        doAction('focusTrapDeactivate');
     },
     10,
     COMPONENT
