@@ -55,7 +55,9 @@ class FocusTrap {
     }
 
     getFocusableElements() {
-        return this.el.querySelectorAll(FOCUSABLE_SELECTOR);
+        return Array.from(this.el.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) =>
+            el.checkVisibility({ checkVisibilityCSS: true })
+        );
     }
 
     activate({ focusFirst = true } = {}) {
@@ -75,8 +77,14 @@ class FocusTrap {
     deactivate({ restoreFocus = true } = {}) {
         document.removeEventListener('keydown', this._onKeyDown);
 
-        if (restoreFocus && this.previouslyFocused && this.previouslyFocused !== document.body) {
-            this.previouslyFocused.focus();
+        if (restoreFocus) {
+            const target =
+                this.previouslyFocused && this.previouslyFocused !== document.body
+                    ? this.previouslyFocused
+                    : document.querySelector('main');
+            if (target) {
+                target.focus();
+            }
         }
 
         this.previouslyFocused = null;

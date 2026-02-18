@@ -7,6 +7,7 @@ const ENABLE_DISMISS_HOOK = `${COMPONENT}-enableDismiss`;
 
 let scrollLockTimeout = null;
 let openAnimationTimeout = null;
+let currentlyOpening = null;
 
 const showModal = (modal) => doAction(SHOW_MODAL_HOOK, modal);
 const hideModal = (modal) => doAction(HIDE_MODAL_HOOK, modal);
@@ -27,6 +28,10 @@ const setModalLabel = (modal) => {
 
     heading.id = labelId;
     modal.setAttribute('aria-labelledby', heading.id);
+};
+
+const getTriggersForModal = (modal) => {
+    return modal.id ? document.querySelectorAll(`a[href="#${modal.id}"], [data-target="#${modal.id}"]`) : [];
 };
 
 const getTriggerTarget = (trigger) => {
@@ -67,11 +72,12 @@ addAction(
     SHOW_MODAL_HOOK,
     (modal) => {
         // Close any already-open modal before opening a new one
-        const currentModal = document.querySelector('.sitchco-modal--open');
+        const currentModal = currentlyOpening || document.querySelector('.sitchco-modal--open');
         if (currentModal && currentModal !== modal) {
             hideModal(currentModal);
         }
 
+        currentlyOpening = modal;
         doAction('focusTrapInit', modal);
         setModalLabel(modal);
 
@@ -87,8 +93,11 @@ addAction(
             el.setAttribute('inert', '');
         });
 
+        getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'true'));
+
         openAnimationTimeout = setTimeout(() => {
             modal.classList.add('sitchco-modal--open');
+            currentlyOpening = null;
             doAction('focusTrapActivate');
         }, 50);
 
@@ -103,9 +112,11 @@ addAction(
     (modal) => {
         clearTimeout(scrollLockTimeout);
         clearTimeout(openAnimationTimeout);
+        currentlyOpening = null;
         document.removeEventListener('keydown', onKeyDown);
         document.body.classList.remove('lock-scroll');
         modal.classList.remove('sitchco-modal--open');
+        getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'false'));
 
         // Remove inert from background content
         document.querySelectorAll('body > [inert]').forEach((el) => {
@@ -142,9 +153,20 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        document.querySelectorAll(`a[href="#${id}"], [data-target="#${id}"]`).forEach((el) => {
+        getTriggersForModal(modal).forEach((el) => {
             el.classList.add('js-modal-trigger');
             el.setAttribute('aria-haspopup', 'dialog');
+            el.setAttribute('aria-expanded', 'false');
+
+            const tag = el.tagName.toLowerCase();
+            if (tag !== 'a' && tag !== 'button') {
+                if (!el.getAttribute('role')) {
+                    el.setAttribute('role', 'button');
+                }
+                if (!el.getAttribute('tabindex')) {
+                    el.setAttribute('tabindex', '0');
+                }
+            }
         });
     });
 
