@@ -1,3 +1,10 @@
+:root {
+    --transition-duration: 0.25s;
+    --transition-timing: ease-in-out;
+    --transition-timing-in: ease-in;
+    --transition-timing-out: ease-out;
+}
+
 html {
     &.js {
         opacity: 0;
@@ -21,4 +28,65 @@ body.lock-scroll {
     /*pointer-events: none;*/
     /*height: var(--dynamic__header-height);*/
     /*margin-top: calc(-1 * var(--dynamic__header-height));*/
+}
+
+/* Accessibility - Focus States */
+
+.accessibility-off *:focus {
+    outline: none;
+}
+
+.accessibility-on *:focus {
+    outline: 1px dotted currentColor;
+    outline-offset: 3px;
+}
+
+.accessibility-on .btn:focus,
+.accessibility-on .button:focus {
+    outline-offset: -4px;
+}
+
+[role='button'] {
+    cursor: pointer;
+}
+
+/* Accessibility - Skip Navigation */
+
+.sitchco-skip-nav {
+    --skip-nav-bg: #000;
+    --skip-nav-color: #fff;
+
+    position: absolute;
+    display: inline-block;
+    overflow: hidden;
+    border: 1px solid currentColor;
+    padding: 10px;
+    background: var(--skip-nav-bg);
+    color: var(--skip-nav-color);
+    font: inherit;
+    line-height: normal;
+    left: -999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    z-index: -999;
+    user-select: none;
+    opacity: 0;
+    transition:
+        transform 250ms,
+        opacity 250ms;
+    transform: translateX(-100%);
+
+    &:focus,
+    &:active {
+        overflow: auto;
+        height: auto;
+        width: auto;
+        z-index: 9999;
+        outline: 0;
+        top: 5px;
+        left: 3px;
+        opacity: 1;
+        transform: translateX(0);
+    }
 }

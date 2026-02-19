@@ -22,6 +22,7 @@ use Sitchco\Modules\PostLifecycle;
 use Sitchco\Modules\Stream;
 use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIFramework\UIFramework;
+use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\Wordpress\BlockConfig;
 use Sitchco\Modules\Wordpress\Cleanup;
 use Sitchco\Modules\Wordpress\SearchRewrite;
@@ -59,6 +60,7 @@ return [
         PostDeployment::class,
         AcfLifecycle::class,
         PostLifecycle::class,
+        UIModal::class,
         CacheInvalidation::class,
     ],
     'disallowedBlocks' => [],

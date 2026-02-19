@@ -288,7 +288,8 @@ class ModuleAssets
     private function namespacedHandle(string $handle): string
     {
         if (!str_starts_with($handle, $this->namespace)) {
-            $handle = HookName::join($this->namespace, $handle);
+            $joined = HookName::join($this->namespace, $handle);
+            $handle = str_ends_with($this->namespace, "/$handle") ? $this->namespace : $joined;
         }
         return $handle;
     }

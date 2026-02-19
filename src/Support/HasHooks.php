@@ -26,6 +26,9 @@ trait HasHooks
     public static function hookName(...$name_parts): string
     {
         $prefix = defined('static::HOOK_PREFIX') ? static::HOOK_PREFIX : '';
+        if (!empty($name_parts) && $name_parts[0] === static::HOOK_SUFFIX) {
+            array_shift($name_parts);
+        }
         return Hooks::name($prefix, static::HOOK_SUFFIX, ...$name_parts);
     }
 }
