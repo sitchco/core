@@ -9,6 +9,7 @@ use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeAdminSort;
 use Sitchco\Modules\AdvancedCustomFields\AcfPostTypeQueries;
 use Sitchco\Modules\AmazonCloudfront;
 use Sitchco\Modules\BackgroundProcessing;
+use Sitchco\Modules\CacheInvalidation\CacheInvalidation;
 use Sitchco\Modules\Cron;
 use Sitchco\Modules\Flash;
 use Sitchco\Modules\Imagify;
@@ -60,6 +61,7 @@ return [
         AcfLifecycle::class,
         PostLifecycle::class,
         UIModal::class,
+        CacheInvalidation::class,
     ],
     'disallowedBlocks' => [],
 ];

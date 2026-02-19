@@ -178,7 +178,15 @@ abstract class FileRegistry
         if (is_array($additionalPathsRaw)) {
             $potentialPaths = array_merge($potentialPaths, $additionalPathsRaw);
         }
-        $potentialPaths = array_merge($potentialPaths, [get_template_directory(), get_stylesheet_directory()]);
+        $potentialPaths = array_merge(
+            $potentialPaths,
+            array_filter(
+                [get_template_directory(), get_stylesheet_directory()],
+                fn($dir) => FilePath::create($dir)
+                    ->append(SITCHCO_CONFIG_FILENAME)
+                    ->exists(),
+            ),
+        );
 
         // Filter to valid string paths
         $validPaths = array_filter($potentialPaths, fn($path) => is_string($path) && !empty($path));
