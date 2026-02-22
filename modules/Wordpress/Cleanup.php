@@ -35,22 +35,6 @@ class Cleanup extends Module
         'youtubeNoCookie',
     ];
 
-    public function init(): void
-    {
-        // Workaround for WP core bug: block-style-variation-styles declares global-styles
-        // as a dependency, but global-styles is conditionally registered and may not exist.
-        // This was exposed by the new dependency validation added in WP 6.9.1.
-        add_action(
-            'wp_enqueue_scripts',
-            function (): void {
-                if (!wp_style_is('global-styles', 'registered')) {
-                    wp_register_style('global-styles', false);
-                }
-            },
-            0,
-        );
-    }
-
     /**
      * Obscure and suppress WordPress information.
      *
