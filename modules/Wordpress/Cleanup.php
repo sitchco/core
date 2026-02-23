@@ -35,6 +35,19 @@ class Cleanup extends Module
         'youtubeNoCookie',
     ];
 
+    public function init(): void
+    {
+        add_filter(
+            'file_mod_allowed',
+            fn(bool $allowed, string $context) => match ($context) {
+                'object_cache_dropin' => true,
+                default => $allowed,
+            },
+            10,
+            2,
+        );
+    }
+
     /**
      * Obscure and suppress WordPress information.
      *
