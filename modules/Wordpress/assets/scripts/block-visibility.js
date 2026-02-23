@@ -42,4 +42,4 @@ import { select, subscribe } from '@wordpress/data';
             initializeBlockVisibility(editor, postType);
         });
     });
-})(window.wp, window.sitchcoBlockVisibility || {});
+})(window.wp, window.sitchco?.blockVisibility || {});
