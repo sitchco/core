@@ -1,4 +1,3 @@
-import { addAction, addFilter, applyFilters } from './hooks.mjs';
 import { LAYOUT, LAYOUTEND, READY, SCROLL } from './constants.mjs';
 import { scrollPosition } from './viewport.mjs';
 
@@ -24,26 +23,26 @@ export function registerCssVarsActions() {
     const layoutStyles = new DynamicStylesheet('dynamic-styles');
     const scrollStyles = new DynamicStylesheet('scroll-styles');
     let currentScrollPosition = scrollPosition().top;
-    addAction(
+    sitchco.hooks.addAction(
         READY,
         function () {
-            const useScroll = applyFilters('css-vars.use-scroll', false);
-            layoutStyles.styles = applyFilters('css-vars.register', layoutStyles.styles);
+            const useScroll = sitchco.hooks.applyFilters('css-vars.use-scroll', false);
+            layoutStyles.styles = sitchco.hooks.applyFilters('css-vars.register', layoutStyles.styles);
             layoutStyles.update();
 
             if (useScroll) {
-                scrollStyles.styles = applyFilters('css-vars.register-scroll', scrollStyles.styles);
+                scrollStyles.styles = sitchco.hooks.applyFilters('css-vars.register-scroll', scrollStyles.styles);
                 scrollStyles.update();
-                addAction(SCROLL, () => scrollStyles.update(), 10);
+                sitchco.hooks.addAction(SCROLL, () => scrollStyles.update(), 10);
             }
         },
         100
     );
 
-    addAction(LAYOUT, () => layoutStyles.update(), 10);
-    addAction(LAYOUTEND, () => layoutStyles.update(), 10);
-    addAction('css-vars.refresh', () => layoutStyles.update(), 10);
-    addFilter('css-vars.register-scroll', function (styles) {
+    sitchco.hooks.addAction(LAYOUT, () => layoutStyles.update(), 10);
+    sitchco.hooks.addAction(LAYOUTEND, () => layoutStyles.update(), 10);
+    sitchco.hooks.addAction('css-vars.refresh', () => layoutStyles.update(), 10);
+    sitchco.hooks.addFilter('css-vars.register-scroll', function (styles) {
         styles['scroll-direction'] = function () {
             const newPosition = scrollPosition().top;
             const direction = newPosition >= currentScrollPosition ? 1 : -1;

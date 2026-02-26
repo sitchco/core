@@ -1,4 +1,3 @@
-import { doAction, applyFilters } from './hooks.mjs';
 import { debounce } from './util.mjs';
 
 let disabled = false;
@@ -6,11 +5,11 @@ let disabled = false;
 function detectExitIntent() {
     const triggerCustomEvent = debounce(
         () => {
-            if (!applyFilters('enableExitIntent', true) || disabled) {
+            if (!sitchco.hooks.applyFilters('enableExitIntent', true) || disabled) {
                 return;
             }
 
-            doAction('exitIntent');
+            sitchco.hooks.doAction('exitIntent');
             disabled = true;
         },
         500,
@@ -35,7 +34,7 @@ function detectExitIntent() {
 }
 
 export function registerExitIntentActions() {
-    if (applyFilters('enableExitIntent', false)) {
+    if (sitchco.hooks.applyFilters('enableExitIntent', false)) {
         detectExitIntent();
     }
 }

@@ -1,5 +1,4 @@
 import { READY, SET_HASH_STATE, HASH_STATE_CHANGE } from './constants.mjs';
-import { addAction, doAction } from './hooks.mjs';
 
 function getPath() {
     return decodeURIComponent(location.hash.slice(1)).replace(/^\/+/, '');
@@ -39,7 +38,7 @@ let currentState = new HashState();
 export const hashState = {
     emit() {
         if (currentState.isset() && currentState.hasChanged()) {
-            doAction(HASH_STATE_CHANGE, currentState);
+            sitchco.hooks.doAction(HASH_STATE_CHANGE, currentState);
         }
     },
     isset() {
@@ -63,7 +62,7 @@ export const hashState = {
 };
 
 export function registerHashStateActions() {
-    addAction(
+    sitchco.hooks.addAction(
         READY,
         () => {
             hashState.emit();
@@ -74,7 +73,7 @@ export function registerHashStateActions() {
         99
     );
 
-    addAction(SET_HASH_STATE, (hash) => {
+    sitchco.hooks.addAction(SET_HASH_STATE, (hash) => {
         hashState.set(hash);
     });
 }

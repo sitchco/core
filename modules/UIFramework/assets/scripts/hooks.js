@@ -1,4 +1,4 @@
-import { NAMESPACE } from './constants.mjs';
+const NAMESPACE = 'sitchco';
 
 const {
     addAction: _addAction,
@@ -34,47 +34,52 @@ function buildNamespace(subNamespace) {
 /**
  * Add a namespaced action.
  */
-export function addAction(hookName, callback, priority = 10, subNamespace = '') {
+function addAction(hookName, callback, priority = 10, subNamespace = '') {
     _addAction(hookName, buildNamespace(subNamespace), callback, priority);
 }
 
 /**
  * Add a namespaced filter.
  */
-export function addFilter(hookName, callback, priority = 10, subNamespace = '') {
+function addFilter(hookName, callback, priority = 10, subNamespace = '') {
     _addFilter(hookName, buildNamespace(subNamespace), callback, priority);
 }
 
 /**
  * Remove a namespaced action.
  */
-export function removeAction(hookName, callback, subNamespace) {
+function removeAction(hookName, callback, subNamespace) {
     _removeAction(hookName, buildNamespace(subNamespace), callback);
 }
 
 /**
  * Remove a namespaced filter.
  */
-export function removeFilter(hookName, callback, subNamespace) {
+function removeFilter(hookName, callback, subNamespace) {
     _removeFilter(hookName, buildNamespace(subNamespace), callback);
 }
 
 /**
  * Check if a namespaced action exists.
  */
-export function hasAction(hookName, subNamespace = '') {
+function hasAction(hookName, subNamespace = '') {
     return _hasAction(hookName, buildNamespace(subNamespace));
 }
 
 /**
  * Check if a namespaced filter exists.
  */
-export function hasFilter(hookName, subNamespace = '') {
+function hasFilter(hookName, subNamespace = '') {
     return _hasFilter(hookName, buildNamespace(subNamespace));
 }
 
-// Pass through exports for rest of API
-export {
+const hooks = {
+    addAction,
+    addFilter,
+    removeAction,
+    removeFilter,
+    hasAction,
+    hasFilter,
     removeAllActions,
     removeAllFilters,
     doAction,
@@ -89,3 +94,7 @@ export {
     filters,
     defaultHooks,
 };
+
+window.sitchco = Object.assign(window.sitchco || {}, {
+    hooks,
+});

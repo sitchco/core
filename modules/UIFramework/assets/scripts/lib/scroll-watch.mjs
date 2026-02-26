@@ -1,4 +1,3 @@
-import { addAction } from './hooks.mjs';
 import { isInViewport, isVisible } from './viewport.mjs';
 import { READY, SCROLL, LAYOUT } from './constants.mjs';
 
@@ -66,7 +65,7 @@ window.addEventListener('load', () => {
 });
 
 export function registerScrollWatchActions() {
-    addAction(READY, checkElements);
-    addAction(SCROLL, checkElements);
-    addAction(LAYOUT, checkElements);
+    sitchco.hooks.addAction(READY, checkElements);
+    sitchco.hooks.addAction(SCROLL, checkElements);
+    sitchco.hooks.addAction(LAYOUT, checkElements);
 }
