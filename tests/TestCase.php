@@ -14,11 +14,14 @@ abstract class TestCase extends \WPTest\Test\TestCase
         parent::setUp();
     }
 
-    protected function fakeHttp(): void
+    protected function fakeHttp(?callable $handler = null): void
     {
         add_filter(
             'pre_http_request',
-            function ($preempt, $args, $url) {
+            function ($preempt, $args, $url) use ($handler) {
+                if ($handler) {
+                    return $handler($args, $url);
+                }
                 return [
                     'url' => $url,
                     'method' => $args['method'],

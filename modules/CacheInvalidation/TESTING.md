@@ -28,7 +28,7 @@ This plan is organized to match the [SPEC](SPEC.md) user stories.
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/ObjectCacheInvalidator.php` | `wp_cache_flush()` |
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/WPRocketInvalidator.php` | `rocket_clean_domain()` |
 | `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CloudFrontInvalidator.php` | CloudFront Clear Cache plugin |
-| `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CloudflareInvalidator.php` | Cloudflare plugin purge action |
+| `wp-content/mu-plugins/sitchco-core/modules/CacheInvalidation/CloudflareInvalidator.php` | Cloudflare API cache purge (direct) |
 | `wp-content/mu-plugins/sitchco-core/modules/PostLifecycle.php` | Fires `sitchco/post/content_updated` and `sitchco/post/visibility_changed` |
 | `wp-content/mu-plugins/sitchco-core/modules/AcfLifecycle.php` | Fires `sitchco/acf/fields_saved` |
 | `wp-content/mu-plugins/sitchco-core/modules/PostDeployment.php` | Fires `sitchco/deploy/complete` (`.clear-cache` file or WP Migrate DB) |
@@ -40,7 +40,7 @@ This plan is organized to match the [SPEC](SPEC.md) user stories.
 | `object_cache` | 0 | 10s | Always available |
 | `wp_rocket` | 10 | 50s | `function_exists('rocket_clean_domain')` |
 | `cloudfront` | 50 | 100s | CloudFront Clear Cache plugin active |
-| `cloudflare` | 100 | 100s | Cloudflare plugin active |
+| `cloudflare` | 100 | 100s | `SITCHCO_CLOUDFLARE_API_TOKEN` and `SITCHCO_CLOUDFLARE_ZONE_ID` defined |
 
 Queue is stored in: `wp_options` → `sitchco_cache_queue`
 

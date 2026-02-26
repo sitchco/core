@@ -66,14 +66,6 @@ class CacheInvalidation extends Module
             add_action('after_rocket_clean_domain', fn() => $this->queue->write($cdnInvalidators));
         }
 
-        $cloudflareInvalidator = $this->resolved[CloudflareInvalidator::class];
-        if ($cloudflareInvalidator->isAvailable()) {
-            add_filter(
-                'cloudflare_purge_everything_actions',
-                fn(array $actions) => [...$actions, CloudflareInvalidator::PURGE_ACTION],
-            );
-        }
-
         add_action(Hooks::name('cron', 'minutely'), [$this->queue, 'process']);
     }
 

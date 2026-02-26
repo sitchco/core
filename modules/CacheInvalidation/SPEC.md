@@ -20,7 +20,7 @@ These are the immutable truths about the problem space. They don't change with i
    | Object Cache  | Always (wp_cache_flush is core WP)    |
    | WP Rocket     | `rocket_clean_domain` function exists  |
    | CloudFront    | CloudFront Clear Cache plugin active   |
-   | Cloudflare    | Cloudflare plugin active               |
+   | Cloudflare    | `SITCHCO_CLOUDFLARE_API_TOKEN` and `SITCHCO_CLOUDFLARE_ZONE_ID` defined |
 
    Any combination is possible. The system must work correctly with any subset.
 
@@ -99,7 +99,7 @@ When a new trigger event fires while invalidation is pending, the entire queue i
 ### 5. Invalidators are simple value objects
 
 An invalidator declares:
-- **Condition:** Is the backing service present? (e.g., is Cloudflare plugin active?)
+- **Condition:** Is the backing service present? (e.g., are Cloudflare API credentials defined?)
 - **Priority:** Processing order within the queue (lower = earlier)
 - **Delay:** Minimum settling time in seconds (used by the queue for relative timing). Actual processing depends on cron tick frequency (~60s), so effective delay is `delay + (0 to cron_interval)`
 - **Flush:** The actual invalidation action
@@ -140,7 +140,7 @@ The orchestrator selects the appropriate route map at init, registers a WordPres
 
 In Delegated Mode, the orchestrator also registers the standalone sync hook: `wp_cache_flush()` on `before_rocket_clean_domain` with a single-execution guard. This is a direct `add_action` call — five lines of code, completely outside the invalidator/queue system.
 
-The orchestrator also handles Cloudflare's setup requirement: the Cloudflare plugin doesn't expose a direct purge function, so a custom action must be registered with its `cloudflare_purge_everything_actions` filter. The orchestrator registers this filter at init (when the Cloudflare invalidator is available), and the Cloudflare invalidator's `flush()` fires that action. This follows the same pattern as the Rocket sync hook — integration-specific setup lives in the orchestrator, not the invalidator.
+The Cloudflare invalidator calls the Cloudflare API directly using `SITCHCO_CLOUDFLARE_API_TOKEN` and `SITCHCO_CLOUDFLARE_ZONE_ID` environment constants. No plugin integration is needed — `flush()` sends a purge request to the Cloudflare zone endpoint with the derived host list.
 
 ### Invalidators
 
