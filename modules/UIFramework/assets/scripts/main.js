@@ -28,22 +28,6 @@ window.sitchco = Object.assign(window.sitchco || {}, {
     ready,
 });
 
-// Init listeners
-sitchco.hooks.addAction(
-    constants.READY,
-    () => {
-        hashState.emit();
-        window.addEventListener('hashchange', () => {
-            hashState.set();
-        });
-    },
-    99
-);
-
-sitchco.hooks.addAction(constants.SET_HASH_STATE, (hash) => {
-    hashState.set(hash);
-});
-
 // Core components
 register(registerHashStateActions);
 register(registerLayoutActions);
@@ -61,6 +45,14 @@ window.addEventListener('DOMContentLoaded', () => {
     sitchco.hooks.doAction(constants.REGISTER);
     // Component post-registration actions can happen here
     sitchco.hooks.doAction(constants.READY);
+});
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        sitchco.hooks.doAction(constants.RESTORED);
+        updateLayout();
+        window.dispatchEvent(new Event('scroll'));
+    }
 });
 
 window.addEventListener('load', () => {

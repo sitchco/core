@@ -4,7 +4,7 @@ export const height = () => Math.max(document.documentElement.clientHeight, wind
 
 export const scrollPosition = () => {
     const scrollTop = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
-    const windowHeight = width();
+    const windowHeight = height();
     return {
         top: scrollTop,
         bottom: scrollTop + windowHeight,

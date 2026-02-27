@@ -57,8 +57,6 @@ export function scrollWatch(els, callback, options = {}) {
     }
 }
 
-// Call checkElements on scroll
-window.addEventListener('scroll', () => requestAnimationFrame(checkElements));
 window.addEventListener('load', () => {
     windowLoaded = true;
     checkElements();

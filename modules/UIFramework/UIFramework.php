@@ -18,13 +18,24 @@ class UIFramework extends Module
     protected const NO_JS_SCRIPT = "
             document.documentElement.classList.remove('no-js');
             document.documentElement.classList.add('js');
+            window.__updateHeaderHeight = function() {
+                var h = document.querySelector('header');
+                if (h) {
+                    document.documentElement.style.setProperty('--dynamic__header-height', h.offsetHeight + 'px');
+                }
+            };
             document.fonts.ready.then(function () {
                 document.documentElement.classList.add('fonts-loaded');
+                window.__updateHeaderHeight();
             });
         ";
 
+    /** Sets --dynamic__header-height on <html>; consumed by SiteHeader structural CSS and header-height JS filter. */
+    protected const HEADER_HEIGHT_SCRIPT = <<<'HTML'
+    <script>window.__updateHeaderHeight();</script>
+    HTML;
+
     protected const EDITOR_FLUSH_SCRIPT = "
-            console.log('editor flush');
             if(window.sitchco?.editorFlush) {
                 window.sitchco.editorFlush();
             }
@@ -45,6 +56,7 @@ class UIFramework extends Module
                     : str_replace('class="', 'class="no-js ', $attributes),
             );
         });
+        add_action('sitchco/after_site_header', fn() => print static::HEADER_HEIGHT_SCRIPT);
     }
 
     public function loadEditorAssets(): void

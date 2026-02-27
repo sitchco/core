@@ -20,6 +20,8 @@ export const SCROLL = 'scroll';
 
 export const SCROLLEND = 'scrollEnd';
 
+export const RESTORED = 'restored';
+
 export const USER_FIRST_INTERACTION = 'userFirstInteraction';
 
 export const GFORM_CONFIRM = 'gformConfirmation';

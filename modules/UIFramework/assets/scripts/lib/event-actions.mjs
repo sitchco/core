@@ -125,4 +125,5 @@ export function registerLayoutActions() {
     );
 
     updateLayout();
+    onScroll(new Event('scroll'));
 }

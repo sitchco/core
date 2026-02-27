@@ -170,7 +170,6 @@ Opt in with the `css-vars.use-scroll` filter, then register via `css-vars.regist
 | Filter | Default | Purpose |
 |--------|---------|---------|
 | `header-height` | Auto-measured | Current header element height in px |
-| `header-offset` | Auto-measured | Header height cached at scroll position 0 |
 | `css-vars.register` | `{}` | Register dynamic CSS custom properties |
 | `css-vars.use-scroll` | `false` | Enable scroll-reactive CSS vars |
 | `css-vars.register-scroll` | `{}` | Register scroll-dependent CSS vars |
