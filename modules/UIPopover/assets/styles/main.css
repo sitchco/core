@@ -1,0 +1,129 @@
+/* Popover */
+
+.sitchco-popover {
+    --popover-bg: #fff;
+    --popover-color: #000;
+    --popover-padding: 1rem;
+    --popover-border-radius: 0.25rem;
+    --popover-shadow: 0 4px 16px rgb(0 0 0 / 0.15);
+    --popover-max-width: 24rem;
+    --popover-offset: 0.5rem;
+    --popover-position-area: bottom;
+    --popover-backdrop-bg: rgb(0 0 0 / 0.7);
+    --popover-arrow-size: 1rem;
+    --popover-arrow-left: 0;
+    --_arrow-offset: 0px;
+
+    /* UA reset */
+    border: none;
+    margin: 0;
+    overflow: visible;
+
+    /* Base styles */
+    background: var(--popover-bg);
+    color: var(--popover-color);
+    padding: var(--popover-padding, 0);
+    border-radius: var(--popover-border-radius);
+    box-shadow: var(--popover-shadow);
+    max-width: var(--popover-max-width);
+    width: max-content;
+
+    /* Animation: closed state */
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    transition:
+        opacity var(--transition-duration) var(--transition-timing-out),
+        transform var(--transition-duration) var(--transition-timing-out),
+        display var(--transition-duration) allow-discrete,
+        overlay var(--transition-duration) allow-discrete;
+
+    &:popover-open {
+        opacity: 1;
+        transform: translateY(0);
+        transition:
+            opacity var(--transition-duration) var(--transition-timing-in),
+            transform var(--transition-duration) var(--transition-timing-in),
+            display var(--transition-duration) allow-discrete,
+            overlay var(--transition-duration) allow-discrete;
+
+        @starting-style {
+            opacity: 0;
+            transform: translateY(-0.5rem);
+        }
+    }
+
+    /* Arrow: opt-in via --arrow modifier */
+    &--arrow {
+        --_arrow-offset: var(--popover-arrow-size);
+        overflow: visible;
+
+        &::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: var(--popover-arrow-left, 50%);
+            translate: -50% 0;
+            border: var(--popover-arrow-size) solid transparent;
+            border-bottom-color: var(--popover-bg);
+            border-top-width: 0;
+        }
+    }
+
+    /* Backdrop: opt-in via --backdrop modifier */
+    &--backdrop {
+        &::backdrop {
+            background: transparent;
+            transition:
+                background-color var(--transition-duration) var(--transition-timing-out),
+                display var(--transition-duration) allow-discrete,
+                overlay var(--transition-duration) allow-discrete;
+        }
+
+        &:popover-open::backdrop {
+            background: var(--popover-backdrop-bg);
+            transition:
+                background-color var(--transition-duration) var(--transition-timing-in),
+                display var(--transition-duration) allow-discrete,
+                overlay var(--transition-duration) allow-discrete;
+
+            @starting-style {
+                background: transparent;
+            }
+        }
+    }
+}
+
+/* Anchor positioning (modern browsers) */
+@supports (anchor-name: --a) {
+    .sitchco-popover {
+        position: fixed;
+        position-area: var(--popover-position-area);
+        position-try-fallbacks:
+            flip-block,
+            flip-inline,
+            flip-block flip-inline;
+        margin: calc(var(--popover-offset) + var(--_arrow-offset)) 0 var(--popover-offset);
+    }
+}
+
+/* Fallback positioning (no anchor support) */
+@supports not (anchor-name: --a) {
+    .sitchco-popover-wrapper {
+        position: relative;
+        display: inline-block;
+    }
+
+    .sitchco-popover-wrapper > .sitchco-popover {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        margin-top: calc(var(--popover-offset) + var(--_arrow-offset));
+        inset: unset;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sitchco-popover {
+        transition-duration: 0s;
+    }
+}
