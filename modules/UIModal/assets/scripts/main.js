@@ -1,23 +1,12 @@
-const { addAction, doAction, applyFilters } = sitchco.hooks;
+const { addAction, doAction } = sitchco.hooks;
 
 const COMPONENT = 'ui-modal';
 const SHOW_MODAL_HOOK = `${COMPONENT}-show`;
 const HIDE_MODAL_HOOK = `${COMPONENT}-hide`;
 const ENABLE_DISMISS_HOOK = `${COMPONENT}-enableDismiss`;
 
-let scrollLockTimeout = null;
-let openAnimationTimeout = null;
-let currentlyOpening = null;
-
 const showModal = (modal) => doAction(SHOW_MODAL_HOOK, modal);
 const hideModal = (modal) => doAction(HIDE_MODAL_HOOK, modal);
-
-const escHandler = () => {
-    const modal = document.querySelector('.sitchco-modal--open');
-    if (modal && !modal.classList.contains('sitchco-modal--blockdismiss')) {
-        hideModal(modal);
-    }
-};
 
 const setModalLabel = (modal) => {
     const labelId = `${modal.id}-label`;
@@ -41,16 +30,10 @@ const getTriggerTarget = (trigger) => {
     return selector ? document.querySelector(selector) : null;
 };
 
-const onKeyDown = (e) => {
-    if (e.key === 'Escape') {
-        escHandler();
-    }
-};
-
 // Open modal from URL hash, close modal on hash-away
 const syncModalWithHash = () => {
     const hash = window.location.hash;
-    const openModal = document.querySelector('.sitchco-modal--open');
+    const openModal = document.querySelector('dialog.sitchco-modal[open]');
     if (openModal && (!hash || `#${openModal.id}` !== hash)) {
         hideModal(openModal);
     }
@@ -59,8 +42,8 @@ const syncModalWithHash = () => {
     }
 
     try {
-        const modal = document.querySelector(`.sitchco-modal${hash}`);
-        if (modal && !modal.classList.contains('sitchco-modal--open')) {
+        const modal = document.querySelector(`dialog.sitchco-modal${hash}`);
+        if (modal && !modal.hasAttribute('open')) {
             showModal(modal);
         }
     } catch {
@@ -72,71 +55,32 @@ addAction(
     SHOW_MODAL_HOOK,
     (modal) => {
         // Close any already-open modal before opening a new one
-        const currentModal = currentlyOpening || document.querySelector('.sitchco-modal--open');
+        const currentModal = document.querySelector('dialog.sitchco-modal[open]');
         if (currentModal && currentModal !== modal) {
             hideModal(currentModal);
         }
 
-        currentlyOpening = modal;
-        doAction('focusTrapInit', modal);
         setModalLabel(modal);
 
-        if (applyFilters('sitchco/ui-modal/lockScroll', true, modal)) {
-            scrollLockTimeout = setTimeout(() => document.body.classList.add('lock-scroll'), 700);
-        }
         if (modal.id && window.location.hash !== `#${modal.id}`) {
             history.replaceState(null, '', `#${modal.id}`);
         }
 
-        // Set inert on background content
-        document.querySelectorAll('body > *:not(.sitchco-modal)').forEach((el) => {
-            el.setAttribute('inert', '');
-        });
-
         getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'true'));
 
-        openAnimationTimeout = setTimeout(() => {
-            modal.classList.add('sitchco-modal--open');
-            currentlyOpening = null;
-            doAction('focusTrapActivate');
-        }, 50);
-
-        document.addEventListener('keydown', onKeyDown);
+        document.body.classList.add('lock-scroll');
+        modal.showModal();
     },
     10,
     COMPONENT
 );
 
-addAction(
-    HIDE_MODAL_HOOK,
-    (modal) => {
-        clearTimeout(scrollLockTimeout);
-        clearTimeout(openAnimationTimeout);
-        currentlyOpening = null;
-        document.removeEventListener('keydown', onKeyDown);
-        document.body.classList.remove('lock-scroll');
-        modal.classList.remove('sitchco-modal--open');
-        getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'false'));
-
-        // Remove inert from background content
-        document.querySelectorAll('body > [inert]').forEach((el) => {
-            el.removeAttribute('inert');
-        });
-
-        if (modal.id && window.location.hash === `#${modal.id}`) {
-            history.replaceState(null, '', window.location.pathname + window.location.search);
-        }
-
-        doAction('focusTrapDeactivate');
-    },
-    10,
-    COMPONENT
-);
+addAction(HIDE_MODAL_HOOK, (modal) => modal.close(), 10, COMPONENT);
 
 addAction(
     ENABLE_DISMISS_HOOK,
     (modal) => {
-        const el = modal || document.querySelector('.sitchco-modal--open.sitchco-modal--blockdismiss');
+        const el = modal || document.querySelector('dialog.sitchco-modal[open].sitchco-modal--blockdismiss');
         if (el) {
             el.classList.remove('sitchco-modal--blockdismiss');
         }
@@ -146,8 +90,28 @@ addAction(
 );
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Set up cancel/close event listeners on each dialog
+    document.querySelectorAll('dialog.sitchco-modal').forEach((modal) => {
+        // Prevent Escape close when blockdismiss is active
+        modal.addEventListener('cancel', (e) => {
+            if (modal.classList.contains('sitchco-modal--blockdismiss')) {
+                e.preventDefault();
+            }
+        });
+
+        // Clean up on close — runs for both programmatic modal.close() and browser Escape
+        modal.addEventListener('close', () => {
+            document.body.classList.remove('lock-scroll');
+            getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'false'));
+
+            if (modal.id && window.location.hash === `#${modal.id}`) {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
+        });
+    });
+
     // Mark trigger elements and add ARIA attributes
-    document.querySelectorAll('.sitchco-modal').forEach((modal) => {
+    document.querySelectorAll('dialog.sitchco-modal').forEach((modal) => {
         const id = modal.id;
         if (!id) {
             return;
@@ -184,9 +148,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Modal dismiss click (overlay, close button, or dismiss trigger)
+    // Modal dismiss click (backdrop or close button)
     document.body.addEventListener('click', (e) => {
-        const modal = e.target.closest('.sitchco-modal');
+        const modal = e.target.closest('dialog.sitchco-modal');
         if (!modal || modal.classList.contains('sitchco-modal--blockdismiss')) {
             return;
         }
