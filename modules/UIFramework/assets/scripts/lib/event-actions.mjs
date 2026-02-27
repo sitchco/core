@@ -1,4 +1,3 @@
-import { applyFilters, doAction } from './hooks.mjs';
 import * as viewport from './viewport.mjs';
 import { LAYOUT, LAYOUTEND, SCROLL, SCROLLSTART, SCROLLEND, USER_FIRST_INTERACTION, isiOS } from './constants.mjs';
 import { debounce, throttle } from './util.mjs';
@@ -13,9 +12,9 @@ export function updateLayout() {
 }
 
 export function registerLayoutActions() {
-    const debounceDelay = applyFilters('debounceDelay', 300) || 300;
-    const throttleLayout = applyFilters('layoutThrottle', 300) || 300;
-    const throttleScroll = applyFilters('scrollThrottle', 100) || 100;
+    const debounceDelay = sitchco.hooks.applyFilters('debounceDelay', 300) || 300;
+    const throttleLayout = sitchco.hooks.applyFilters('layoutThrottle', 300) || 300;
+    const throttleScroll = sitchco.hooks.applyFilters('scrollThrottle', 100) || 100;
     let docWidth = viewport.width();
     let isScrolling = false;
     let currentWidth = 0;
@@ -33,7 +32,7 @@ export function registerLayoutActions() {
     broadcastLayoutUpdate = throttle(
         () => {
             requestAnimationFrame(() => {
-                doAction(LAYOUT, widthHasChanged());
+                sitchco.hooks.doAction(LAYOUT, widthHasChanged());
             });
         },
         throttleLayout,
@@ -45,14 +44,14 @@ export function registerLayoutActions() {
 
     broadcastLayoutEnd = debounce(() => {
         requestAnimationFrame(() => {
-            doAction(LAYOUTEND);
+            sitchco.hooks.doAction(LAYOUTEND);
         });
     }, debounceDelay);
 
     const broadcastScrollEnd = debounce((event, position) => {
         isScrolling = false;
         requestAnimationFrame(() => {
-            doAction(SCROLLEND, event, position);
+            sitchco.hooks.doAction(SCROLLEND, event, position);
         });
     }, debounceDelay);
     const onScroll = throttle(
@@ -61,12 +60,12 @@ export function registerLayoutActions() {
             if (!isScrolling) {
                 isScrolling = true;
                 requestAnimationFrame(() => {
-                    doAction(SCROLLSTART, event, position);
+                    sitchco.hooks.doAction(SCROLLSTART, event, position);
                 });
             }
 
             requestAnimationFrame(() => {
-                doAction(SCROLL, event, position);
+                sitchco.hooks.doAction(SCROLL, event, position);
             });
 
             broadcastScrollEnd(event, position);
@@ -83,7 +82,7 @@ export function registerLayoutActions() {
         window.removeEventListener('touchend', onUserFirstInteraction);
         window.removeEventListener('wheel', onUserFirstInteraction);
         requestAnimationFrame(() => {
-            doAction(USER_FIRST_INTERACTION);
+            sitchco.hooks.doAction(USER_FIRST_INTERACTION);
         });
     };
 
@@ -115,7 +114,7 @@ export function registerLayoutActions() {
             27: 'esc',
         };
         if (codes.hasOwnProperty(code)) {
-            doAction('key.' + codes[code], e);
+            sitchco.hooks.doAction('key.' + codes[code], e);
         }
     });
 

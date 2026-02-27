@@ -2,11 +2,36 @@
 
 ## Overview
 
-The UIFramework provides a front-end JavaScript lifecycle and event system built on top of WordPress's `@wordpress/hooks` package. It creates a three-phase boot pipeline that gives themes and plugins a predictable order of execution, and normalizes browser events into hook-based actions.
+The UIFramework provides JavaScript lifecycle and event systems for both the frontend and the block editor, built on top of WordPress's `@wordpress/hooks` package. It creates deterministic boot pipelines that give themes and plugins a predictable order of execution.
 
 Everything is exposed on `window.sitchco`.
 
-## Boot Pipeline
+## Architecture
+
+The module ships three entry scripts:
+
+| Script | Handle | Context | Purpose |
+|--------|--------|---------|---------|
+| `hooks.js` | `sitchco/hooks` | Both | Isolated hooks instance shared across all contexts |
+| `main.js` | `sitchco/ui-framework` | Frontend | Frontend lifecycle, event normalization, utilities |
+| `editor-ui-main.js` | `sitchco/editor-ui-framework` | Block Editor | Editor lifecycle with two-phase pipeline |
+
+`hooks.js` is a dependency of both `main.js` and `editor-ui-main.js`, ensuring the same `sitchco.hooks` instance is available everywhere without duplication.
+
+## Hooks
+
+The hooks system creates an isolated `wp.hooks` instance (separate from the WordPress global) and auto-namespaces all callbacks under `"sitchco"`. Consumers never manage namespaces manually.
+
+```js
+sitchco.hooks.addAction('myHook', callback, priority);
+sitchco.hooks.addFilter('myFilter', callback, priority);
+sitchco.hooks.doAction('myHook', ...args);
+sitchco.hooks.applyFilters('myFilter', value, ...args);
+```
+
+An optional `subNamespace` parameter (4th argument) scopes callbacks further to `"sitchco/{subNamespace}"`.
+
+## Frontend Lifecycle
 
 On `DOMContentLoaded`, three hook phases fire in sequence:
 
@@ -30,18 +55,75 @@ sitchco.ready(callback, priority);    // Hook into phase 3
 
 Priority defaults to `100`. Lower numbers run first.
 
-## Hooks Wrapper
+## Editor Lifecycle
 
-The library creates an isolated `wp.hooks` instance (separate from the WordPress global) and auto-namespaces all callbacks under `"sitchco"`. Consumers never manage namespaces manually.
+The block editor has its own two-phase pipeline that fires synchronously before the editor React app initializes:
+
+| Phase | Hook Name | Purpose |
+|-------|-----------|---------|
+| 1 | `editorInit` | Theme configures filters (e.g. color options, icon options) |
+| 2 | `editorReady` | Components register using APIs and consume filters |
+
+### How It Works
+
+1. `sitchco/editor-ui-framework` is enqueued at priority **1** on `enqueue_block_editor_assets`
+2. Module scripts enqueue at the default priority (10) — no priority juggling needed
+3. At `PHP_INT_MAX`, a flush script fires `sitchco.editorFlush()`, executing all registered phases in order
+4. A `DOMContentLoaded` fallback catches edge cases where the PHP flush doesn't fire
+
+Since WordPress outputs enqueued scripts in enqueue order, the flush naturally runs after all module scripts have registered their callbacks.
+
+### Convenience Functions
 
 ```js
-sitchco.hooks.addAction('myHook', callback, priority);
-sitchco.hooks.addFilter('myFilter', callback, priority);
-sitchco.hooks.doAction('myHook', ...args);
-sitchco.hooks.applyFilters('myFilter', value, ...args);
+sitchco.editorInit(callback, priority);  // Hook into phase 1
+sitchco.editorReady(callback, priority); // Hook into phase 2
 ```
 
-An optional `subNamespace` parameter (4th argument) scopes callbacks further to `"sitchco/{subNamespace}"`.
+Priority defaults to `100`. Lower numbers run first.
+
+### Example: Theme + Module Integration
+
+```js
+// Parent theme editor-ui.js — Phase 1: configure filters
+sitchco.editorInit(() => {
+    sitchco.hooks.addFilter('theme.color-options', (options) => {
+        return [...options, { label: 'Default', value: '' }, { label: 'White', value: 'white' }];
+    }, 5, 'parent-theme');
+});
+
+// Phase 2: consume filters and register block extensions
+sitchco.editorReady(() => {
+    extendButton(sitchco.extendBlock);
+});
+```
+
+```js
+// Child theme editor-ui.js — extends parent filters at higher priority
+sitchco.editorInit(() => {
+    sitchco.hooks.addFilter('theme.color-options', (options) => {
+        return [...options, { label: 'Brand Blue', value: 'brand-blue' }];
+    }, 10, 'child-theme');
+});
+```
+
+```js
+// Module editor-ui.js — reads filters at editorReady, guaranteed to have all values
+sitchco.editorReady(() => {
+    const colors = sitchco.hooks.applyFilters('theme.color-options', []);
+    // colors includes parent + child theme values
+});
+```
+
+### Script Dependencies
+
+Editor modules should depend on `sitchco/editor-ui-framework` (not `sitchco/ui-framework`). The framework handles the rest:
+
+```php
+$assets->registerScript('my-editor-script', 'editor-ui.js', [
+    'sitchco/editor-ui-framework',
+]);
+```
 
 ## Event Actions
 
@@ -142,7 +224,7 @@ sitchco.registerScript('my-lib', 'https://example.com/lib.js');
 sitchco.loadScript('my-lib').then(() => { /* ready */ });
 ```
 
-## Example: Theme Integration
+## Example: Frontend Theme Integration
 
 ```js
 // Phase 1 — configure

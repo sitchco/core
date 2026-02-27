@@ -1,5 +1,3 @@
-import { addAction } from './hooks.mjs';
-
 const COMPONENT = 'accessibility';
 
 const FOCUSABLE_SELECTOR = [
@@ -19,7 +17,7 @@ function registerFocusStateDetection() {
     let isAccessibleMode = false;
     document.body.classList.add('accessibility-off');
 
-    addAction(
+    sitchco.hooks.addAction(
         'key.tab',
         () => {
             if (!isAccessibleMode) {
@@ -176,7 +174,7 @@ function registerButtons() {
 function registerFocusTrapActions() {
     let currentTrap = null;
 
-    addAction(
+    sitchco.hooks.addAction(
         'focusTrapInit',
         (el) => {
             if (currentTrap) {
@@ -189,7 +187,7 @@ function registerFocusTrapActions() {
         COMPONENT
     );
 
-    addAction(
+    sitchco.hooks.addAction(
         'focusTrapActivate',
         () => {
             if (currentTrap) {
@@ -200,7 +198,7 @@ function registerFocusTrapActions() {
         COMPONENT
     );
 
-    addAction(
+    sitchco.hooks.addAction(
         'focusTrapDeactivate',
         () => {
             if (currentTrap) {

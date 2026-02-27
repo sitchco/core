@@ -1,7 +1,6 @@
 import * as constants from './lib/constants.mjs';
 import * as util from './lib/util.mjs';
 import * as viewport from './lib/viewport.mjs';
-import * as hooks from './lib/hooks.mjs';
 import { loadScript, registerScript } from './lib/script-registration.js';
 import { hashState, registerHashStateActions } from './lib/hash-state.mjs';
 import { registerLayoutActions, updateLayout } from './lib/event-actions.mjs';
@@ -11,13 +10,12 @@ import { registerCssVarsActions } from './lib/css-vars.mjs';
 import { registerExitIntentActions } from './lib/exit-intent.mjs';
 import { registerAccessibilityActions } from './lib/accessibility.mjs';
 
-const init = (cb, priority = 100) => hooks.addAction(constants.INIT, cb, priority);
-const register = (cb, priority = 100) => hooks.addAction(constants.REGISTER, cb, priority);
-const ready = (cb, priority = 100) => hooks.addAction(constants.READY, cb, priority);
+const init = (cb, priority = 100) => sitchco.hooks.addAction(constants.INIT, cb, priority);
+const register = (cb, priority = 100) => sitchco.hooks.addAction(constants.REGISTER, cb, priority);
+const ready = (cb, priority = 100) => sitchco.hooks.addAction(constants.READY, cb, priority);
 
 window.sitchco = Object.assign(window.sitchco || {}, {
     constants,
-    hooks,
     util,
     viewport,
     loadScript,
@@ -31,7 +29,7 @@ window.sitchco = Object.assign(window.sitchco || {}, {
 });
 
 // Init listeners
-hooks.addAction(
+sitchco.hooks.addAction(
     constants.READY,
     () => {
         hashState.emit();
@@ -42,7 +40,7 @@ hooks.addAction(
     99
 );
 
-hooks.addAction(constants.SET_HASH_STATE, (hash) => {
+sitchco.hooks.addAction(constants.SET_HASH_STATE, (hash) => {
     hashState.set(hash);
 });
 
@@ -58,11 +56,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // Use this event if for external or non-explicit dependencies
     document.dispatchEvent(new CustomEvent('sitchco/core/init', window.sitchco));
     // Theme should register here to add any filters
-    hooks.doAction(constants.INIT);
+    sitchco.hooks.doAction(constants.INIT);
     // Components should register here so theme can filter
-    hooks.doAction(constants.REGISTER);
+    sitchco.hooks.doAction(constants.REGISTER);
     // Component post-registration actions can happen here
-    hooks.doAction(constants.READY);
+    sitchco.hooks.doAction(constants.READY);
 });
 
 window.addEventListener('load', () => {
@@ -72,7 +70,6 @@ window.addEventListener('load', () => {
 
 if (window.jQuery) {
     jQuery(document).bind('gform_confirmation_loaded', function (event, formId) {
-        hooks.doAction(constants.GFORM_CONFIRM, formId);
+        sitchco.hooks.doAction(constants.GFORM_CONFIRM, formId);
     });
 }
-// document.write('TEsting testing testing')

@@ -75,12 +75,14 @@ class ModuleAssets
         return $buildPath->append($manifest[$assetKey]['file']);
     }
 
-    public function registerScript(string $handle, string $src, array $deps = []): void
+    public function registerScript(string $handle, string|false $src, array $deps = []): void
     {
         $handle = $this->namespacedHandle($handle);
-        $src = $this->scriptUrl($src);
-        if (!$src) {
-            return;
+        if (false !== $src) {
+            $src = $this->scriptUrl($src);
+            if (!$src) {
+                return;
+            }
         }
         wp_register_script($handle, $src, $deps);
     }
