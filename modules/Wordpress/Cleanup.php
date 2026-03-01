@@ -33,6 +33,7 @@ class Cleanup extends Module
         'disableScriptVersion',
         'disableDefaultBlockPatterns',
         'youtubeNoCookie',
+        'throttleHeartbeat',
     ];
 
     public function init(): void
@@ -500,6 +501,21 @@ class Cleanup extends Module
     public function removeSelfClosingTags(array|string $html): array|string
     {
         return is_array($html) ? array_map([$this, 'removeSelfClosingTags'], $html) : str_replace(' />', '>', $html);
+    }
+
+    /**
+     * Throttle the Heartbeat API to reduce HTTP request volume.
+     *
+     * WP 6.7+ fires Heartbeat every 10s in the block editor, contributing to
+     * HTTP/2 connection saturation and stale-connection hangs in Chrome.
+     */
+    public function throttleHeartbeat(): void
+    {
+        add_filter('heartbeat_settings', function (array $settings): array {
+            $settings['interval'] = 60;
+
+            return $settings;
+        });
     }
 
     public function youtubeNoCookie(): void
