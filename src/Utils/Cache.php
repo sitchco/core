@@ -83,7 +83,9 @@ class Cache
         }
 
         $value = $callback();
-        set_transient($key, $value, $expiration);
+        if ($value !== null) {
+            set_transient($key, $value, $expiration);
+        }
 
         return $value;
     }
