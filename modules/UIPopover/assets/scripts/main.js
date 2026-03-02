@@ -81,6 +81,10 @@ document.addEventListener('DOMContentLoaded', function () {
             if (e.newState === 'open') {
                 positionArrow(panel);
                 focusPanel(panel);
+
+                if (trigger) {
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
             }
             if (e.newState === 'closed') {
                 if (trigger) {
@@ -125,7 +129,7 @@ document.addEventListener('DOMContentLoaded', function () {
             trigger.setAttribute('aria-controls', trigger.dataset.popoverTrigger);
         }
         if (!trigger.getAttribute('aria-haspopup')) {
-            trigger.setAttribute('aria-haspopup', 'dialog');
+            trigger.setAttribute('aria-haspopup', 'true');
         }
         if (!trigger.getAttribute('aria-expanded')) {
             trigger.setAttribute('aria-expanded', 'false');
@@ -160,7 +164,8 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         // If the popover was open at mousedown, light dismiss already closed it — done.
-        if (panelWasOpen) {
+        // (Skip this guard for manual popovers: light dismiss never fires for them.)
+        if (panelWasOpen && panel.getAttribute('popover') !== 'manual') {
             panelWasOpen = false;
             return;
         }

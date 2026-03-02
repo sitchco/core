@@ -35,10 +35,11 @@ class UIPopover extends Module
         $panelId = 'sitchco-popover-' . ++static::$counter;
 
         $triggerDefaults = [
+            'type' => 'button',
             'class' => 'sitchco-popover-trigger',
             'aria-expanded' => 'false',
             'aria-controls' => $panelId,
-            'aria-haspopup' => 'dialog',
+            'aria-haspopup' => 'true',
             'data-popover-trigger' => $panelId,
             'style' => ['anchor-name' => "--$panelId"],
         ];

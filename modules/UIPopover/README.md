@@ -45,10 +45,11 @@ echo $popover->render('Menu', $menuHtml, [
 
 | Attribute | Value |
 |-----------|-------|
+| `type` | `button` |
 | `class` | `sitchco-popover-trigger` |
 | `aria-expanded` | `false` |
 | `aria-controls` | `$panelId` |
-| `aria-haspopup` | `dialog` |
+| `aria-haspopup` | `true` |
 | `data-popover-trigger` | `$panelId` |
 | `style` | `anchor-name: --$panelId` |
 
@@ -71,10 +72,11 @@ Write the HTML manually with the required data attributes, then call `$popover->
 
 ```html
 <button
+    type="button"
     class="sitchco-popover-trigger"
     aria-expanded="false"
     aria-controls="my-popover"
-    aria-haspopup="dialog"
+    aria-haspopup="true"
     data-popover-trigger="my-popover"
     style="anchor-name: --my-popover"
 >
@@ -132,9 +134,9 @@ sitchco.hooks.doAction('ui-popover-toggle', panel);
 
 ## PHP Hooks
 
-All hook names are generated via `UIPopover::hookName()`, producing the pattern `ui-popover/{suffix}`.
+All hook names are generated via `UIPopover::hookName()`, producing the pattern `sitchco/ui-popover/{suffix}`.
 
-### `ui-popover/trigger-attributes`
+### `sitchco/ui-popover/trigger-attributes`
 
 Modify trigger element attributes.
 
@@ -145,7 +147,7 @@ add_filter(UIPopover::hookName('trigger-attributes'), function (array $attrs, st
 }, 10, 2);
 ```
 
-### `ui-popover/panel-attributes`
+### `sitchco/ui-popover/panel-attributes`
 
 Modify panel element attributes.
 
@@ -172,6 +174,7 @@ Override CSS custom properties on `.sitchco-popover` or a specific panel:
     --popover-position-area: bottom;
     --popover-backdrop-bg: rgb(0 0 0 / 0.7);
     --popover-arrow-size: 1rem;
+    /* --popover-arrow-left: set automatically by JS to center the arrow over the trigger */
 }
 ```
 
@@ -243,10 +246,11 @@ The wrapper provides `position: relative` context for `position: absolute` fallb
 - Trigger and panel are adjacent in the DOM, preserving natural tab order
 - Trigger has `aria-expanded` toggled on open/close
 - `aria-controls` links trigger to panel
-- `aria-haspopup="dialog"` communicates trigger purpose
-- Focus moves to first focusable child on open, returns to trigger on close
+- `aria-haspopup="true"` communicates trigger purpose
+- Focus moves to first focusable child on open, returns to trigger on close when no other element is focused
 - Tab-out dismisses the popover (keyboard only — mouse interactions inside the panel are unaffected)
-- Multiple popovers can coexist independently (no modal blocking)
+- Respects `prefers-reduced-motion` (transitions disabled when set)
+- Multiple manual-mode popovers can coexist; auto-mode popovers follow native single-open behavior
 
 ## Browser Support
 
@@ -256,7 +260,7 @@ The wrapper provides `position: relative` context for `position: absolute` fallb
 | CSS Anchor Positioning | 125+ | 125+ | 147+ | 26+ |
 | `@starting-style` | 117+ | 117+ | 129+ | 17.4+ |
 
-Older browsers get instant show/hide (no animation) and require the `.sitchco-popover-wrapper` fallback for positioning.
+Older browsers get instant show/hide (no animation). For fallback positioning, manually wrap the trigger and panel in a `.sitchco-popover-wrapper` div (see Positioning section).
 
 ## Dependencies
 
