@@ -156,6 +156,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .sitchco-modal,
+    .sitchco-modal::backdrop,
     .sitchco-modal__container {
         transition-duration: 0s;
     }

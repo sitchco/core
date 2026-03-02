@@ -77,14 +77,14 @@ Opening a modal sets the URL hash to `#modal-id`. Navigating directly to a URL w
 - If the post content has no `<h1>`–`<h6>`, the post title is rendered as a screen-reader-only `<h2>`
 - Focus trapping is handled natively by the browser (no JS focus trap needed)
 - Background content is made inert natively by `.showModal()` (no manual `inert` attribute needed)
-- Scroll locking is handled natively by the top layer (no `lock-scroll` class needed)
+- Scroll locking uses a `lock-scroll` class on `<body>`, added on open and removed on the native `close` event
 - `prefers-reduced-motion` disables transitions
 
 ## PHP Hooks
 
-All hook names are generated via `UIModal::hookName()`, producing the pattern `ui-modal/{suffix}`.
+All hook names are generated via `UIModal::hookName()`, producing the pattern `sitchco/ui-modal/{suffix}`.
 
-### `ui-modal/pre-content`
+### `sitchco/ui-modal/pre-content`
 
 Insert content before the modal body.
 
@@ -94,7 +94,7 @@ add_filter(UIModal::hookName('pre-content'), function (string $html, ModalData $
 }, 10, 2);
 ```
 
-### `ui-modal/close`
+### `sitchco/ui-modal/close`
 
 Customize the close button inner HTML. Default: `&#10005;` (✕).
 
@@ -104,7 +104,7 @@ add_filter(UIModal::hookName('close'), function (string $html, ModalData $modal)
 }, 10, 2);
 ```
 
-### `ui-modal/attributes`
+### `sitchco/ui-modal/attributes`
 
 Modify the outer `<dialog>` attributes. Useful for adding classes or data attributes.
 
@@ -186,7 +186,7 @@ UIModal/
 ├── ModalType.php         # Enum: BOX, CENTERED, VIDEO
 ├── ModalData.php         # Readonly data model wrapping a Timber Post
 ├── acf-json/             # ACF field group for the block
-├── blocks/modal/         # Gutenberg block (block.json, block.php, style.css)
+├── blocks/modal/         # Gutenberg block (block.json, block.php, block.twig, style.css)
 ├── templates/modal.twig  # Modal HTML template
 └── assets/
     ├── scripts/main.js   # Frontend behavior

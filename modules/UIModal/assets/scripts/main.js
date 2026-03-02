@@ -54,6 +54,10 @@ const syncModalWithHash = () => {
 addAction(
     SHOW_MODAL_HOOK,
     (modal) => {
+        if (modal.hasAttribute('open')) {
+            return;
+        }
+
         // Close any already-open modal before opening a new one
         const currentModal = document.querySelector('dialog.sitchco-modal[open]');
         if (currentModal && currentModal !== modal) {
@@ -139,6 +143,30 @@ document.addEventListener('DOMContentLoaded', function () {
         const trigger = e.target.closest('.js-modal-trigger');
         if (!trigger) {
             return;
+        }
+
+        e.preventDefault();
+        const target = getTriggerTarget(trigger);
+        if (target) {
+            trigger.focus(); // ensure native dialog saves the right element for focus restoration
+            showModal(target);
+        }
+    });
+
+    // Trigger keyboard activation for non-interactive elements
+    document.body.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') {
+            return;
+        }
+
+        const trigger = e.target.closest('.js-modal-trigger');
+        if (!trigger) {
+            return;
+        }
+
+        const tag = trigger.tagName.toLowerCase();
+        if (tag === 'a' || tag === 'button') {
+            return; // native elements handle this themselves
         }
 
         e.preventDefault();
