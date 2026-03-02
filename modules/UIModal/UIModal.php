@@ -71,14 +71,11 @@ class UIModal extends Module
                 [
                     'id' => $modal->id(),
                     'class' => 'sitchco-modal sitchco-modal--' . $modal->type->value,
-                    'tabindex' => '-1',
-                    'role' => 'dialog',
-                    'aria-modal' => 'true',
                 ],
                 $modal,
             );
             $modalContent = $this->renderModalContent($modal);
-            echo Str::wrapElement($modalContent, 'div', $attributes);
+            echo Str::wrapElement($modalContent, 'dialog', $attributes);
         }
     }
 }
