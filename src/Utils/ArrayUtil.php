@@ -108,7 +108,7 @@ class ArrayUtil
                 array_map(
                     function ($key, $value) use ($glue) {
                         if ($value === true) {
-                            return $key;
+                            return esc_attr($key);
                         }
                         if ($value === false || $value === null) {
                             return '';
@@ -120,7 +120,7 @@ class ArrayUtil
                         if ($value === '') {
                             return '';
                         }
-                        return sprintf('%s="%s"', $key, $value);
+                        return sprintf('%s="%s"', esc_attr($key), esc_attr($value));
                     },
                     array_keys($arr),
                     $arr,
