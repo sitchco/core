@@ -206,6 +206,32 @@ class ArrayUtil
         return null;
     }
 
+    public static function mergeAttributes(array ...$attrSets): array
+    {
+        $merged = [];
+        $classes = [];
+        foreach ($attrSets as $attrs) {
+            foreach ($attrs as $key => $value) {
+                if ($key === 'class') {
+                    array_push($classes, ...is_array($value) ? $value : explode(' ', $value));
+                } elseif (
+                    $key === 'style' &&
+                    is_array($value) &&
+                    isset($merged['style']) &&
+                    is_array($merged['style'])
+                ) {
+                    $merged['style'] = self::mergeRecursiveDistinct($merged['style'], $value);
+                } else {
+                    $merged[$key] = $value;
+                }
+            }
+        }
+        if ($classes) {
+            $merged['class'] = implode(' ', array_unique(array_filter($classes)));
+        }
+        return $merged;
+    }
+
     public static function pick(array $array, array $keys): array
     {
         return array_filter($array, fn($key) => in_array($key, $keys, true), ARRAY_FILTER_USE_KEY);

@@ -43,16 +43,23 @@ class UIPopover extends Module
             'data-popover-trigger' => $panelId,
             'style' => ['anchor-name' => "--$panelId"],
         ];
-        $triggerAttrs = ArrayUtil::mergeRecursiveDistinct($triggerDefaults, $options['trigger_attributes'] ?? []);
+        $triggerAttrs = ArrayUtil::mergeAttributes($triggerDefaults, $options['trigger_attributes'] ?? []);
         $triggerAttrs = apply_filters(static::hookName('trigger-attributes'), $triggerAttrs, $panelId);
 
+        $panelClasses = ['sitchco-popover'];
+        if (!empty($options['arrow'])) {
+            $panelClasses[] = 'sitchco-popover--arrow';
+        }
+        if (!empty($options['backdrop'])) {
+            $panelClasses[] = 'sitchco-popover--backdrop';
+        }
         $panelDefaults = [
             'id' => $panelId,
-            'class' => 'sitchco-popover',
+            'class' => $panelClasses,
             'popover' => true,
             'style' => ['position-anchor' => "--$panelId"],
         ];
-        $panelAttrs = ArrayUtil::mergeRecursiveDistinct($panelDefaults, $options['panel_attributes'] ?? []);
+        $panelAttrs = ArrayUtil::mergeAttributes($panelDefaults, $options['panel_attributes'] ?? []);
         $panelAttrs = apply_filters(static::hookName('panel-attributes'), $panelAttrs, $panelId);
 
         $context = [
