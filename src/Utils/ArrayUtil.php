@@ -129,6 +129,18 @@ class ArrayUtil
         );
     }
 
+    public static function parseStyleString(string $style): array
+    {
+        $properties = [];
+        foreach (array_filter(explode(';', $style)) as $declaration) {
+            $parts = explode(':', $declaration, 2);
+            if (count($parts) === 2) {
+                $properties[trim($parts[0])] = trim($parts[1]);
+            }
+        }
+        return $properties;
+    }
+
     public static function toCSSProperties(array $arr): string
     {
         return implode(
@@ -209,27 +221,32 @@ class ArrayUtil
     public static function mergeAttributes(array ...$attrSets): array
     {
         $merged = [];
-        $classes = [];
         foreach ($attrSets as $attrs) {
-            foreach ($attrs as $key => $value) {
-                if ($key === 'class') {
-                    array_push($classes, ...is_array($value) ? $value : explode(' ', $value));
-                } elseif (
-                    $key === 'style' &&
-                    is_array($value) &&
-                    isset($merged['style']) &&
-                    is_array($merged['style'])
-                ) {
-                    $merged['style'] = self::mergeRecursiveDistinct($merged['style'], $value);
-                } else {
-                    $merged[$key] = $value;
-                }
-            }
+            array_walk($attrs, function ($value, $key) use (&$merged) {
+                $merged[$key] = self::mergeAttributeValue($key, $value, $merged[$key] ?? null);
+            });
         }
-        if ($classes) {
-            $merged['class'] = implode(' ', array_unique(array_filter($classes)));
+        if (isset($merged['class'])) {
+            $merged['class'] = implode(' ', array_unique(array_filter($merged['class'])));
+        }
+        if (isset($merged['style']) && is_array($merged['style'])) {
+            $merged['style'] = self::toCSSProperties($merged['style']);
         }
         return $merged;
+    }
+
+    private static function mergeAttributeValue(string $key, mixed $value, mixed $existing): mixed
+    {
+        if ($key === 'class') {
+            return array_merge($existing ?? [], is_array($value) ? $value : explode(' ', $value));
+        }
+        if ($key === 'style') {
+            if (is_string($value)) {
+                $value = self::parseStyleString($value);
+            }
+            return is_array($value) ? self::mergeRecursiveDistinct($existing ?? [], $value) : $value;
+        }
+        return $value;
     }
 
     public static function pick(array $array, array $keys): array
