@@ -244,7 +244,9 @@ class ArrayUtil
             if (is_string($value)) {
                 $value = self::parseStyleString($value);
             }
-            return is_array($value) ? self::mergeRecursiveDistinct($existing ?? [], $value) : $value;
+            return is_array($value)
+                ? self::mergeRecursiveDistinct(is_array($existing) ? $existing : [], $value)
+                : $value;
         }
         return $value;
     }

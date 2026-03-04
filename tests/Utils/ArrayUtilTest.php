@@ -357,6 +357,15 @@ class ArrayUtilTest extends TestCase
         $this->assertSame('foo bar', $result['class']);
     }
 
+    public function test_merge_attributes_style_scalar_existing_does_not_crash(): void
+    {
+        $result = ArrayUtil::mergeAttributes(['style' => false], ['style' => ['color' => 'red']]);
+        $this->assertSame('color: red;', $result['style']);
+
+        $result = ArrayUtil::mergeAttributes(['style' => true], ['style' => ['color' => 'red']]);
+        $this->assertSame('color: red;', $result['style']);
+    }
+
     // --- pick ---
 
     public function test_pick_selects_specified_keys(): void
