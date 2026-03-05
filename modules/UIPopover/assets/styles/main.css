@@ -60,12 +60,21 @@
         &::before {
             content: '';
             position: absolute;
-            bottom: 100%;
             left: var(--popover-arrow-left, 50%);
             translate: -50% 0;
             border: var(--popover-arrow-size) solid transparent;
+        }
+
+        &.sitchco-popover--arrow-top::before {
+            bottom: 100%;
             border-bottom-color: var(--popover-bg);
             border-top-width: 0;
+        }
+
+        &.sitchco-popover--arrow-bottom::before {
+            top: 100%;
+            border-top-color: var(--popover-bg);
+            border-bottom-width: 0;
         }
     }
 

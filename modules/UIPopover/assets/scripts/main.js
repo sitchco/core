@@ -25,6 +25,10 @@ const positionArrow = (panel) => {
     const panelRect = panel.getBoundingClientRect();
     const left = triggerRect.left + triggerRect.width / 2 - panelRect.left;
     panel.style.setProperty('--popover-arrow-left', `${left}px`);
+
+    const isAbove = panelRect.bottom <= triggerRect.top;
+    panel.classList.toggle('sitchco-popover--arrow-top', !isAbove);
+    panel.classList.toggle('sitchco-popover--arrow-bottom', isAbove);
 };
 
 const focusPanel = (panel) => {
@@ -79,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
         panel.addEventListener('toggle', (e) => {
             const trigger = getTriggerForPanel(panel);
             if (e.newState === 'open') {
-                positionArrow(panel);
+                requestAnimationFrame(() => positionArrow(panel));
                 focusPanel(panel);
 
                 if (trigger) {
