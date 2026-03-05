@@ -27,6 +27,7 @@ const positionArrow = (panel) => {
     panel.style.setProperty('--popover-arrow-left', `${left}px`);
 
     const isAbove = panelRect.bottom <= triggerRect.top;
+    panel.classList.toggle('sitchco-popover--arrow-top', !isAbove);
     panel.classList.toggle('sitchco-popover--arrow-bottom', isAbove);
 };
 
