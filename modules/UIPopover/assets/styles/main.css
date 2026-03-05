@@ -67,6 +67,15 @@
             border-bottom-color: var(--popover-bg);
             border-top-width: 0;
         }
+
+        &.sitchco-popover--arrow-bottom::before {
+            bottom: auto;
+            top: 100%;
+            border-bottom-color: transparent;
+            border-bottom-width: 0;
+            border-top-color: var(--popover-bg);
+            border-top-width: var(--popover-arrow-size);
+        }
     }
 
     /* Backdrop: opt-in via --backdrop modifier */
