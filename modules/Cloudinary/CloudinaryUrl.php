@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Sitchco\Modules\Cloudinary;
 
 use Sitchco\Support\CropDirection;
+use Sitchco\Utils\Cache;
 
 class CloudinaryUrl
 {
     private const BASE_URL = 'https://res.cloudinary.com';
-    private const UPLOADS_SEGMENT = '/wp-content/uploads/';
     private const DEFAULT_TRANSFORMS = ['f_auto', 'q_auto'];
     private const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
 
@@ -59,11 +59,11 @@ class CloudinaryUrl
     private function extractRelativePath(string $src): ?string
     {
         $src = strtok($src, '?#');
-        $pos = strpos($src, self::UPLOADS_SEGMENT);
-        if ($pos === false) {
+        $prefix = Cache::remember('uploads_base_url', fn() => wp_get_upload_dir()['baseurl']) . '/';
+        if (!str_starts_with($src, $prefix)) {
             return null;
         }
-        return substr($src, $pos + strlen(self::UPLOADS_SEGMENT));
+        return substr($src, strlen($prefix));
     }
 
     private function resolveResourceType(string $relativePath): string

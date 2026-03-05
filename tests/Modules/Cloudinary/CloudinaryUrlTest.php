@@ -13,6 +13,7 @@ class CloudinaryUrlTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        wp_cache_set('uploads_base_url', 'https://example.com/wp-content/uploads', 'sitchco');
         $this->url = new CloudinaryUrl('testcloud', 'testfolder');
     }
 
@@ -100,6 +101,13 @@ class CloudinaryUrlTest extends TestCase
         $externalUrl = 'https://cdn.example.com/images/photo.jpg';
         $result = $this->url->buildUrl($externalUrl);
         $this->assertSame($externalUrl, $result);
+    }
+
+    public function test_third_party_upload_url_passes_through_unchanged()
+    {
+        $thirdPartyUrl = 'https://other-site.com/wp-content/uploads/2024/01/photo.jpg';
+        $result = $this->url->buildUrl($thirdPartyUrl);
+        $this->assertSame($thirdPartyUrl, $result);
     }
 
     public function test_svg_gets_quality_only_no_format_or_dimensions()
