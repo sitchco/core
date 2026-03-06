@@ -11,7 +11,7 @@
     --popover-position-area: bottom;
     --popover-backdrop-bg: rgb(0 0 0 / 0.7);
     --popover-arrow-size: 1rem;
-    --popover-arrow-left: 0;
+    --popover-arrow-left: 0px;
     --_arrow-offset: 0px;
 
     /* UA reset */
@@ -22,7 +22,7 @@
     /* Base styles */
     background: var(--popover-bg);
     color: var(--popover-color);
-    padding: var(--popover-padding, 0);
+    padding: var(--popover-padding, 0px);
     border-radius: var(--popover-border-radius);
     box-shadow: var(--popover-shadow);
     max-width: var(--popover-max-width);

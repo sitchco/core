@@ -1,5 +1,5 @@
 :where(.wp-block-sitchco-icon) {
-    --sitchco-icon-background-radius: 0;
+    --sitchco-icon-background-radius: 0px;
     --sitchco-icon-background: transparent;
     --sitchco-icon-background-size: 0.8em;
     display: inline-flex;
@@ -49,7 +49,7 @@
     }
 
     &.background-size-none {
-        --sitchco-icon-background-size: 0;
+        --sitchco-icon-background-size: 0px;
     }
 
     &.background-size-sm {
