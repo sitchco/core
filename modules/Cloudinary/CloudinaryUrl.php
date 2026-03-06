@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Sitchco\Modules\Cloudinary;
 
 use Sitchco\Support\CropDirection;
+use Sitchco\Support\ImageTransform;
 use Sitchco\Utils\Cache;
 
 class CloudinaryUrl
@@ -13,19 +14,26 @@ class CloudinaryUrl
     private const DEFAULT_TRANSFORMS = ['f_auto', 'q_auto'];
     private const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'avi', 'mkv', 'ogv'];
 
-    private const GRAVITY_MAP = [
-        'center' => 'g_center',
-        'top' => 'g_north',
-        'bottom' => 'g_south',
-        'left' => 'g_west',
-        'right' => 'g_east',
-        'top-center' => 'g_north',
-        'bottom-center' => 'g_south',
-    ];
+    private string $cloudName;
+    private string $folder;
 
-    public function __construct(private string $cloudName, private string $folder) {}
+    public function __construct()
+    {
+        if ($this->isConfigured()) {
+            $this->cloudName = CLOUDINARY_CLOUD_NAME;
+            $this->folder = CLOUDINARY_FOLDER;
+        }
+    }
 
-    public function buildUrl(string $src, ?int $width = null, ?int $height = null, ?CropDirection $crop = null): string
+    public function isConfigured(): bool
+    {
+        return defined('CLOUDINARY_CLOUD_NAME') &&
+            defined('CLOUDINARY_FOLDER') &&
+            CLOUDINARY_CLOUD_NAME &&
+            CLOUDINARY_FOLDER;
+    }
+
+    public function buildUrl(string $src, ?ImageTransform $transform = null): string
     {
         $relativePath = $this->extractRelativePath($src);
         if ($relativePath === null) {
@@ -35,16 +43,16 @@ class CloudinaryUrl
         $resourceType = $this->resolveResourceType($relativePath);
         $isSvg = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION)) === 'svg';
         $transforms = $isSvg ? ['q_auto'] : self::DEFAULT_TRANSFORMS;
-        if ($resourceType === 'image' && !$isSvg) {
-            if ($width) {
-                $transforms[] = "w_{$width}";
+        if ($transform && $resourceType === 'image' && !$isSvg) {
+            if ($transform->width) {
+                $transforms[] = "w_{$transform->width}";
             }
-            if ($height) {
-                $transforms[] = "h_{$height}";
+            if ($transform->height) {
+                $transforms[] = "h_{$transform->height}";
             }
-            if ($crop && $crop !== CropDirection::NONE) {
+            if ($transform->crop && $transform->crop !== CropDirection::NONE) {
                 $transforms[] = 'c_fill';
-                $gravity = self::GRAVITY_MAP[$crop->value] ?? null;
+                $gravity = $this->gravityParam($transform->crop);
                 if ($gravity) {
                     $transforms[] = $gravity;
                 }
@@ -54,6 +62,18 @@ class CloudinaryUrl
         $transformString = implode(',', $transforms);
         return self::BASE_URL .
             "/{$this->cloudName}/{$resourceType}/upload/{$transformString}/{$this->folder}/{$relativePath}";
+    }
+
+    private function gravityParam(CropDirection $crop): ?string
+    {
+        return match ($crop) {
+            CropDirection::CENTER => 'g_center',
+            CropDirection::TOP, CropDirection::TOP_CENTER => 'g_north',
+            CropDirection::BOTTOM, CropDirection::BOTTOM_CENTER => 'g_south',
+            CropDirection::LEFT => 'g_west',
+            CropDirection::RIGHT => 'g_east',
+            CropDirection::NONE => null,
+        };
     }
 
     private function extractRelativePath(string $src): ?string

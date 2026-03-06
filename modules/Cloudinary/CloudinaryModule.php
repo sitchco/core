@@ -5,24 +5,18 @@ declare(strict_types=1);
 namespace Sitchco\Modules\Cloudinary;
 
 use Sitchco\Framework\Module;
-use Sitchco\Support\CropDirection;
+use Sitchco\Support\ImageTransform;
 use WP_HTML_Tag_Processor;
 
 class CloudinaryModule extends Module
 {
-    private CloudinaryUrl $cloudinaryUrl;
+    public function __construct(private CloudinaryUrl $cloudinaryUrl) {}
 
     public function init(): void
     {
-        if (
-            !defined('CLOUDINARY_CLOUD_NAME') ||
-            !defined('CLOUDINARY_FOLDER') ||
-            !CLOUDINARY_CLOUD_NAME ||
-            !CLOUDINARY_FOLDER
-        ) {
+        if (!$this->cloudinaryUrl->isConfigured()) {
             return;
         }
-        $this->cloudinaryUrl = new CloudinaryUrl(CLOUDINARY_CLOUD_NAME, CLOUDINARY_FOLDER);
         add_filter('sitchco/image/resize', [$this, 'imageResize'], 10, 2);
         add_filter('wp_content_img_tag', [$this, 'contentImgTag'], 10, 3);
         add_filter('wp_calculate_image_srcset', [$this, 'calculateImageSrcset'], 10, 5);
@@ -33,9 +27,7 @@ class CloudinaryModule extends Module
     {
         return $this->cloudinaryUrl->buildUrl(
             $imageData['src'],
-            $imageData['width'],
-            $imageData['height'],
-            $imageData['crop'],
+            new ImageTransform($imageData['width'], $imageData['height'], $imageData['crop']),
         );
     }
 
@@ -83,55 +75,41 @@ class CloudinaryModule extends Module
         if (!$meta) {
             return false;
         }
-        $dimensions = $this->resolveSizeDimensions($size, $meta);
-        if (!$dimensions) {
+        $transform = $this->resolveSizeTransform($size, $meta);
+        if (!$transform) {
             return false;
         }
-        [$width, $height, $crop] = $dimensions;
-        $is_intermediate = $width !== ($meta['width'] ?? 0) || $height !== ($meta['height'] ?? 0);
-        return [$this->cloudinaryUrl->buildUrl($url, $width, $height, $crop), $width, $height, $is_intermediate];
+        $is_intermediate = $transform->width !== ($meta['width'] ?? 0) || $transform->height !== ($meta['height'] ?? 0);
+        return [
+            $this->cloudinaryUrl->buildUrl($url, $transform),
+            $transform->width,
+            $transform->height,
+            $is_intermediate,
+        ];
     }
 
-    private static function parseCrop(bool|array $crop): CropDirection
+    private function resolveSizeTransform(string|array $size, array $meta): ?ImageTransform
     {
-        if (!is_array($crop)) {
-            return CropDirection::CENTER;
-        }
-        [$x, $y] = $crop;
-        if ($y === 'top') {
-            return CropDirection::TOP;
-        }
-        if ($y === 'bottom') {
-            return CropDirection::BOTTOM;
-        }
-        if ($x === 'left') {
-            return CropDirection::LEFT;
-        }
-        if ($x === 'right') {
-            return CropDirection::RIGHT;
-        }
-        return CropDirection::CENTER;
-    }
-
-    private function resolveSizeDimensions(string|array $size, array $meta): ?array
-    {
+        // Array size [w, h] — explicit dimensions, no crop
         if (is_array($size)) {
-            return [(int) $size[0], (int) $size[1], null];
+            return ImageTransform::fromSizeArray($size);
         }
+        // 'full' — original dimensions from meta, no crop
         if ($size === 'full') {
-            return [(int) ($meta['width'] ?? 0), (int) ($meta['height'] ?? 0), null];
+            return ImageTransform::fromRegisteredSize($meta);
         }
         $registered = wp_get_registered_image_subsizes();
+        // Registered size with crop — use registered dimensions + crop direction
         if (isset($registered[$size]) && $registered[$size]['crop']) {
-            $reg = $registered[$size];
-            return [(int) $reg['width'], (int) $reg['height'], self::parseCrop($reg['crop'])];
+            return ImageTransform::fromRegisteredSize($registered[$size]);
         }
+        // Meta size — actual generated file dimensions (may differ from registered if aspect ratio adjusted)
         if (isset($meta['sizes'][$size])) {
-            $s = $meta['sizes'][$size];
-            return [(int) $s['width'], (int) $s['height'], null];
+            return ImageTransform::fromRegisteredSize($meta['sizes'][$size]);
         }
+        // Registered size without crop — fallback to registered dimensions
         if (isset($registered[$size])) {
-            return [(int) $registered[$size]['width'], (int) $registered[$size]['height'], null];
+            return ImageTransform::fromRegisteredSize($registered[$size]);
         }
         return null;
     }

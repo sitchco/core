@@ -4,17 +4,29 @@ namespace Sitchco\Tests\Modules\Cloudinary;
 
 use Sitchco\Modules\Cloudinary\CloudinaryUrl;
 use Sitchco\Support\CropDirection;
+use Sitchco\Support\ImageTransform;
 use Sitchco\Tests\TestCase;
 
 class CloudinaryUrlTest extends TestCase
 {
     private CloudinaryUrl $url;
 
+    public static function setUpBeforeClass(): void
+    {
+        if (!defined('CLOUDINARY_CLOUD_NAME')) {
+            define('CLOUDINARY_CLOUD_NAME', 'testcloud');
+        }
+        if (!defined('CLOUDINARY_FOLDER')) {
+            define('CLOUDINARY_FOLDER', 'testfolder');
+        }
+        parent::setUpBeforeClass();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
         wp_cache_set('uploads_base_url', 'https://example.com/wp-content/uploads', 'sitchco');
-        $this->url = new CloudinaryUrl('testcloud', 'testfolder');
+        $this->url = new CloudinaryUrl();
     }
 
     public function test_image_url_uses_image_upload_path()
@@ -29,9 +41,7 @@ class CloudinaryUrlTest extends TestCase
     {
         $result = $this->url->buildUrl(
             'https://example.com/wp-content/uploads/2024/01/photo.jpg',
-            800,
-            600,
-            CropDirection::CENTER,
+            new ImageTransform(800, 600, CropDirection::CENTER),
         );
         $this->assertStringContainsString('w_800', $result);
         $this->assertStringContainsString('h_600', $result);
@@ -52,9 +62,7 @@ class CloudinaryUrlTest extends TestCase
     {
         $result = $this->url->buildUrl(
             'https://example.com/wp-content/uploads/2024/01/clip.mp4',
-            1920,
-            1080,
-            CropDirection::CENTER,
+            new ImageTransform(1920, 1080, CropDirection::CENTER),
         );
         $this->assertStringNotContainsString('w_', $result);
         $this->assertStringNotContainsString('h_', $result);
@@ -114,9 +122,7 @@ class CloudinaryUrlTest extends TestCase
     {
         $result = $this->url->buildUrl(
             'https://example.com/wp-content/uploads/2024/01/icon.svg',
-            400,
-            300,
-            CropDirection::CENTER,
+            new ImageTransform(400, 300, CropDirection::CENTER),
         );
         $this->assertEquals(
             'https://res.cloudinary.com/testcloud/image/upload/q_auto/testfolder/2024/01/icon.svg',
@@ -128,9 +134,7 @@ class CloudinaryUrlTest extends TestCase
     {
         $result = $this->url->buildUrl(
             'https://example.com/wp-content/uploads/2024/01/icon.svg?ver=1',
-            400,
-            300,
-            CropDirection::CENTER,
+            new ImageTransform(400, 300, CropDirection::CENTER),
         );
         $this->assertEquals(
             'https://res.cloudinary.com/testcloud/image/upload/q_auto/testfolder/2024/01/icon.svg',
@@ -143,7 +147,10 @@ class CloudinaryUrlTest extends TestCase
      */
     public function test_gravity_map(CropDirection $crop, string $expectedGravity)
     {
-        $result = $this->url->buildUrl('https://example.com/wp-content/uploads/2024/01/photo.jpg', 800, 600, $crop);
+        $result = $this->url->buildUrl(
+            'https://example.com/wp-content/uploads/2024/01/photo.jpg',
+            new ImageTransform(800, 600, $crop),
+        );
         $this->assertEquals(
             "https://res.cloudinary.com/testcloud/image/upload/f_auto,q_auto,w_800,h_600,c_fill,{$expectedGravity}/testfolder/2024/01/photo.jpg",
             $result,
@@ -167,9 +174,7 @@ class CloudinaryUrlTest extends TestCase
     {
         $result = $this->url->buildUrl(
             'https://example.com/wp-content/uploads/2024/01/photo.jpg',
-            800,
-            600,
-            CropDirection::NONE,
+            new ImageTransform(800, 600, CropDirection::NONE),
         );
         $this->assertEquals(
             'https://res.cloudinary.com/testcloud/image/upload/f_auto,q_auto,w_800,h_600/testfolder/2024/01/photo.jpg',
