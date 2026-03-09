@@ -28,8 +28,8 @@ if ($context['is_preview']) {
         $pre_content_filter = true;
         add_filter(UIModal::hookName('pre-content'), fn($_, ModalData $modal) => "ID: #{$modal->id()}", 10, 2);
     }
-    return $module->renderModalContent(new ModalData($post, $type, true));
+    return $module->renderModalContent(ModalData::fromPost($post, $type, true));
 }
 
-$module->loadModal($post, $type);
+$module->loadModal(ModalData::fromPost($post, $type));
 return '';

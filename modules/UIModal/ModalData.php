@@ -6,28 +6,39 @@ use Timber\Post;
 
 readonly class ModalData
 {
-    /**
-     * @param Post $post
-     * @param ModalType $type
-     * @param bool $excerpt
-     */
-    public function __construct(private Post $post, public ModalType $type, private bool $excerpt = false) {}
+    private string $id;
+
+    public function __construct(string $id, private string $heading, private string $content, public ModalType $type)
+    {
+        $id = sanitize_title($id);
+        if (preg_match('/^\d/', $id)) {
+            $id = 'modal-' . $id;
+        }
+        $this->id = $id;
+    }
+
+    public static function fromPost(Post $post, ModalType $type, bool $excerpt = false): self
+    {
+        $heading = '';
+        if (!preg_match('/<h[1-6][\s>]/i', $post->post_content)) {
+            $heading = $post->title();
+        }
+        $content = $excerpt ? $post->excerpt() : $post->content();
+        return new self($post->slug, $heading, $content, $type);
+    }
 
     public function id(): string
     {
-        return $this->post->slug;
+        return $this->id;
     }
 
     public function heading(): string
     {
-        if (preg_match('/<h[1-6][\s>]/i', $this->post->post_content)) {
-            return '';
-        }
-        return $this->post->title();
+        return $this->heading;
     }
 
     public function content(): string
     {
-        return $this->excerpt ? $this->post->excerpt() : $this->post->content();
+        return $this->content;
     }
 }
