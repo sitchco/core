@@ -112,3 +112,50 @@
     background: #f0f0f0;
     border-left: 4px solid #c3c4c7;
 }
+
+/* Frontend poster and player */
+
+.sitchco-video__poster {
+    position: relative;
+    line-height: 0;
+}
+
+.sitchco-video__poster-img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.sitchco-video__play-button {
+    position: absolute;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    z-index: 2;
+    line-height: 0;
+}
+
+.sitchco-video__placeholder-poster {
+    background: #1a1a1a;
+    aspect-ratio: 16 / 9;
+}
+
+.sitchco-video--playing .sitchco-video__poster {
+    display: none;
+}
+
+.sitchco-video--playing .sitchco-video__play-button {
+    display: none;
+}
+
+.sitchco-video__player {
+    width: 100%;
+    height: 100%;
+}
+
+.sitchco-video__player iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
