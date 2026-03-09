@@ -23,22 +23,23 @@ In the editor, the block renders an inline preview showing a truncated excerpt a
 
 ## Usage: PHP
 
-Inject `UIModal` from the container and call `loadModal()` with a Timber `Post`. The modal will be queued and output in `wp_footer`.
+Inject `UIModal` from the container and call `loadModal()` with a `ModalData` instance. The modal will be queued and output in `wp_footer`.
 
 ```php
+use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\UIModal\ModalType;
 
-$modal = $container->get(UIModal::class);
+$module = $container->get(UIModal::class);
 $post = \Timber\Timber::get_post($postId);
-$modal->loadModal($post, ModalType::CENTERED);
+$module->loadModal(ModalData::fromPost($post, ModalType::CENTERED));
 ```
 
 Assets are only enqueued when at least one modal has been loaded.
 
 ## Triggering a Modal
 
-Any element can open a modal by referencing its ID (the post slug):
+Any element can open a modal by referencing its ID. The ID is derived from the post slug via `sanitize_title()`. Slugs with leading digits receive a `modal-` prefix (e.g. `2024-update` becomes `modal-2024-update`).
 
 ```html
 <!-- Anchor link -->
@@ -184,7 +185,7 @@ Open/close animations use `@starting-style` and `transition-behavior: allow-disc
 UIModal/
 ├── UIModal.php           # Module class: registration, loading, rendering
 ├── ModalType.php         # Enum: BOX, CENTERED, VIDEO
-├── ModalData.php         # Readonly data model wrapping a Timber Post
+├── ModalData.php         # Readonly value object for modal ID, heading, content, and type
 ├── acf-json/             # ACF field group for the block
 ├── blocks/modal/         # Gutenberg block (block.json, block.php, block.twig, style.css)
 ├── templates/modal.twig  # Modal HTML template

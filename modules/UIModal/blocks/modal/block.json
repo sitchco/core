@@ -2,7 +2,7 @@
     "name": "sitchco/modal",
     "title": "Modal",
     "apiVersion": 3,
-    "description": "A Gutenberg block for displaying a modal, hidden on front end until triggered by an anchor matching its post slug.",
+    "description": "A Gutenberg block for displaying a modal, hidden on front end until triggered by an anchor or data-target matching its ID.",
     "category": "sitchco",
     "keywords": ["modal", "acf"],
     "icon": "external",

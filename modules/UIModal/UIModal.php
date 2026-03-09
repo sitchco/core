@@ -6,7 +6,6 @@ use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
 use Sitchco\Modules\UIFramework\UIFramework;
-use Timber\Post;
 use Sitchco\Utils\Str;
 use Sitchco\Utils\TimberUtil;
 
@@ -41,12 +40,16 @@ class UIModal extends Module
         });
     }
 
-    public function loadModal(Post $post, ModalType $type = ModalType::BOX): ModalData
+    public function loadModal(ModalData $modal): ?ModalData
     {
-        if (!isset($this->modalsLoaded[$post->slug])) {
-            $this->modalsLoaded[$post->slug] = new ModalData($post, $type);
+        $id = $modal->id();
+        if (!$id) {
+            return null;
         }
-        return $this->modalsLoaded[$post->slug];
+        if (!isset($this->modalsLoaded[$id])) {
+            $this->modalsLoaded[$id] = $modal;
+        }
+        return $this->modalsLoaded[$id];
     }
 
     public function renderModalContent(ModalData $modalData): string
