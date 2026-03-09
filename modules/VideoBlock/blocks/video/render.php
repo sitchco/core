@@ -8,6 +8,10 @@
  * @var WP_Block $block      Block instance
  */
 
+use Sitchco\Modules\UIModal\ModalData;
+use Sitchco\Modules\UIModal\ModalType;
+use Sitchco\Modules\UIModal\UIModal;
+
 if (empty($attributes['url'])) {
     echo $content;
     return;
@@ -128,6 +132,56 @@ $wrapper_attrs = [
     'data-video-id' => $video_id,
     'data-video-title' => $video_title,
 ];
+
+// Modal and modal-only display mode branching
+if ($display_mode === 'modal' || $display_mode === 'modal-only') {
+    $modal_id = $attributes['modalId'] ?? '';
+    if (empty($modal_id)) {
+        $modal_id = sanitize_title($video_title);
+    }
+
+    // Always resolve oEmbed data for modal dialog content (even if InnerBlocks used for page poster)
+    $modal_oembed = $oembed ?? sitchco_video_get_cached_oembed_data($url);
+    $thumb_url = $modal_oembed && !empty($modal_oembed->thumbnail_url) ? $modal_oembed->thumbnail_url : '';
+    $aspect_w = $modal_oembed && !empty($modal_oembed->width) ? $modal_oembed->width : 16;
+    $aspect_h = $modal_oembed && !empty($modal_oembed->height) ? $modal_oembed->height : 9;
+
+    // Determine if oEmbed thumbnail was used as the page poster (for adaptive loading state in JS)
+    $has_oembed_poster = !$has_inner_blocks ? 'true' : 'false';
+
+    // Build modal dialog content HTML
+    $thumb_img = $thumb_url
+        ? sprintf(
+            '<img src="%s" alt="" class="sitchco-video__modal-poster-img" width="%s" height="%s">',
+            esc_url($thumb_url),
+            esc_attr($aspect_w),
+            esc_attr($aspect_h),
+        )
+        : '';
+
+    $modal_content = sprintf(
+        '<div class="sitchco-video__modal-player" data-url="%s" data-provider="%s" data-video-id="%s" data-has-oembed-poster="%s" style="aspect-ratio: %s / %s">%s<div class="sitchco-video__spinner"></div></div>',
+        esc_attr($url),
+        esc_attr($provider),
+        esc_attr($video_id),
+        esc_attr($has_oembed_poster),
+        esc_attr($aspect_w),
+        esc_attr($aspect_h),
+        $thumb_img,
+    );
+
+    // Queue modal for wp_footer rendering via UIModal
+    $uiModal = $GLOBALS['SitchcoContainer']->get(UIModal::class);
+    $uiModal->loadModal(new ModalData($modal_id, $video_title, $modal_content, ModalType::VIDEO));
+
+    // Modal-only: render nothing on page
+    if ($display_mode === 'modal-only') {
+        return;
+    }
+
+    // Modal mode: add modal trigger data attribute to wrapper
+    $wrapper_attrs['data-modal-id'] = $modal_id;
+}
 
 // ACCS-03: poster click mode adds role, tabindex, and aria-label to wrapper
 if ($click_behavior === 'poster') {
