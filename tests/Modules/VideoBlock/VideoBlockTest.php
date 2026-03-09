@@ -243,10 +243,10 @@ class VideoBlockTest extends TestCase
 
     public function test_data_video_id_attribute(): void
     {
-        $url = 'https://www.youtube.com/watch?v=test123';
+        $url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
         $this->deleteOembedTransient($url);
         $this->fakeOembedResponse($url, [
-            'thumbnail_url' => 'https://img.youtube.com/vi/test123/hqdefault.jpg',
+            'thumbnail_url' => 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
             'title' => 'Video ID Test',
             'width' => 480,
             'height' => 360,
@@ -258,7 +258,7 @@ class VideoBlockTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'data-video-id="test123"',
+            'data-video-id="dQw4w9WgXcQ"',
             $output,
             'Output should contain data-video-id attribute with extracted YouTube ID',
         );
