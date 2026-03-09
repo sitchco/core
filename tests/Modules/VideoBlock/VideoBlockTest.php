@@ -85,7 +85,7 @@ class VideoBlockTest extends TestCase
     private function renderBlock(array $attributes, string $content): string
     {
         $module = $this->container->get(VideoBlock::class);
-        $renderFile = $module->blocksPath()->append('video/render.php')->toString();
+        $renderFile = $module->blocksPath()->append('video/render.php')->value();
 
         // Mock $block as a simple object (render.php receives $block but Phase 1 doesn't use it)
         $block = new \stdClass();
