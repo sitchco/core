@@ -2,12 +2,22 @@
 
 namespace Sitchco\Tests\Modules\VideoBlock;
 
+use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\VideoBlock\VideoBlock;
 use Sitchco\Tests\TestCase;
 use WP_Block_Type_Registry;
 
 class VideoBlockTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        // Reset UIModal's modalsLoaded array to prevent test pollution
+        $uiModal = $this->container->get(UIModal::class);
+        $ref = new \ReflectionProperty(UIModal::class, 'modalsLoaded');
+        $ref->setValue($uiModal, []);
+        parent::tearDown();
+    }
+
     // --- Block Registration ---
 
     public function test_module_is_registered(): void
@@ -293,6 +303,349 @@ class VideoBlockTest extends TestCase
         $this->restoreHttp();
     }
 
+    // --- Modal Rendering ---
+
+    public function test_modal_mode_renders_poster_and_dialog(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=modal_test01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/modal_test01/hqdefault.jpg',
+            'title' => 'Modal Test Video',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Modal Test Video',
+                'displayMode' => 'modal',
+                'modalId' => 'modal-test-video',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'sitchco-video',
+            $result['page'],
+            'Modal mode should render poster wrapper on page',
+        );
+        $this->assertStringContainsString(
+            'data-modal-id',
+            $result['page'],
+            'Modal mode wrapper should have data-modal-id',
+        );
+        $this->assertStringContainsString('<dialog', $result['footer'], 'Modal mode should produce dialog in footer');
+        $this->assertStringContainsString(
+            'sitchco-modal--video',
+            $result['footer'],
+            'Dialog should have video modal class',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_mode_poster_stays_on_page(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=modal_poster1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/modal_poster1/hqdefault.jpg',
+            'title' => 'Modal Poster Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Modal Poster Test',
+                'displayMode' => 'modal',
+                'modalId' => 'modal-poster-test',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'sitchco-video__poster-img',
+            $result['page'],
+            'Modal mode should show poster image',
+        );
+        $this->assertStringContainsString('<button', $result['page'], 'Modal mode should show play button');
+        $this->restoreHttp();
+    }
+
+    public function test_modal_only_renders_no_visible_html(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=modalonly_te1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/modalonly_te1/hqdefault.jpg',
+            'title' => 'Modal Only Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Modal Only Test',
+                'displayMode' => 'modal-only',
+                'modalId' => 'modal-only-test',
+            ]),
+            '',
+        );
+
+        $this->assertEmpty($result['page'], 'Modal-only mode should render no visible HTML on page');
+        $this->restoreHttp();
+    }
+
+    public function test_modal_only_still_queues_dialog(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=modalonly_q01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/modalonly_q01/hqdefault.jpg',
+            'title' => 'Modal Only Queue Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Modal Only Queue Test',
+                'displayMode' => 'modal-only',
+                'modalId' => 'modal-only-queue',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            '<dialog',
+            $result['footer'],
+            'Modal-only should still queue dialog in footer',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_id_is_slugified(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=slug_test_01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/slug_test_01/hqdefault.jpg',
+            'title' => 'Slug Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'My Video Title',
+                'displayMode' => 'modal',
+                'modalId' => 'My Video Title',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString('id="my-video-title"', $result['footer'], 'Modal ID should be slugified');
+        $this->restoreHttp();
+    }
+
+    public function test_modal_dialog_has_video_title_heading(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=heading_tes1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/heading_tes1/hqdefault.jpg',
+            'title' => 'Heading Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'My Heading Title',
+                'displayMode' => 'modal',
+                'modalId' => 'heading-test',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString('<h2', $result['footer'], 'Dialog should contain h2 heading');
+        $this->assertStringContainsString(
+            'My Heading Title',
+            $result['footer'],
+            'Dialog heading should contain video title',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_content_has_data_attributes(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=data_attr_t1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/data_attr_t1/hqdefault.jpg',
+            'title' => 'Data Attr Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Data Attr Test',
+                'displayMode' => 'modal',
+                'modalId' => 'data-attr-test',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString('data-url=', $result['footer'], 'Modal content should have data-url');
+        $this->assertStringContainsString(
+            'data-provider=',
+            $result['footer'],
+            'Modal content should have data-provider',
+        );
+        $this->assertStringContainsString(
+            'data-video-id=',
+            $result['footer'],
+            'Modal content should have data-video-id',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_content_has_aspect_ratio(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=aspect_rat01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/aspect_rat01/hqdefault.jpg',
+            'title' => 'Aspect Ratio Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Aspect Ratio Test',
+                'displayMode' => 'modal',
+                'modalId' => 'aspect-ratio-test',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'aspect-ratio:',
+            $result['footer'],
+            'Modal content should have aspect-ratio style',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_has_oembed_poster_flag(): void
+    {
+        // Test 1: No InnerBlocks (oEmbed poster used) -> data-has-oembed-poster="true"
+        $url = 'https://www.youtube.com/watch?v=poster_flag1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/poster_flag1/hqdefault.jpg',
+            'title' => 'Poster Flag Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Poster Flag Test',
+                'displayMode' => 'modal',
+                'modalId' => 'poster-flag-test',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'data-has-oembed-poster="true"',
+            $result['footer'],
+            'Without InnerBlocks, modal should have data-has-oembed-poster="true"',
+        );
+        $this->restoreHttp();
+
+        // Reset modals between sub-tests
+        $uiModal = $this->container->get(UIModal::class);
+        $ref = new \ReflectionProperty(UIModal::class, 'modalsLoaded');
+        $ref->setValue($uiModal, []);
+
+        // Test 2: With InnerBlocks -> data-has-oembed-poster="false"
+        $url2 = 'https://www.youtube.com/watch?v=poster_flag2';
+        $this->deleteOembedTransient($url2);
+        $this->fakeOembedResponse($url2, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/poster_flag2/hqdefault.jpg',
+            'title' => 'Poster Flag Test 2',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result2 = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url2,
+                'provider' => 'youtube',
+                'videoTitle' => 'Poster Flag Test 2',
+                'displayMode' => 'modal',
+                'modalId' => 'poster-flag-test-2',
+            ]),
+            '<p>Custom poster</p>',
+        );
+
+        $this->assertStringContainsString(
+            'data-has-oembed-poster="false"',
+            $result2['footer'],
+            'With InnerBlocks, modal should have data-has-oembed-poster="false"',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_inline_mode_no_modal_queued(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=inline_nomod';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/inline_nomod/hqdefault.jpg',
+            'title' => 'Inline No Modal',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Inline No Modal',
+                'displayMode' => 'inline',
+            ]),
+            '',
+        );
+
+        $this->assertNotEmpty($result['page'], 'Inline mode should render page content');
+        $this->assertEmpty($result['footer'], 'Inline mode should not queue any modal dialog');
+        $this->restoreHttp();
+    }
+
     // --- Helpers ---
 
     private function makeAttributes(array $overrides = []): array
@@ -358,5 +711,22 @@ class VideoBlockTest extends TestCase
             include $_file;
         })($renderFile, $attributes, $content, $block);
         return ob_get_clean();
+    }
+
+    /**
+     * Render the block and capture both page output and modal footer output.
+     *
+     * @return array{page: string, footer: string}
+     */
+    private function renderBlockWithModals(array $attributes, string $content): array
+    {
+        $pageOutput = $this->renderBlock($attributes, $content);
+
+        $uiModal = $this->container->get(UIModal::class);
+        ob_start();
+        $uiModal->unloadModals();
+        $footerOutput = ob_get_clean();
+
+        return ['page' => $pageOutput, 'footer' => $footerOutput];
     }
 }
