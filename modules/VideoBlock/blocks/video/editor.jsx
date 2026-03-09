@@ -1,6 +1,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InnerBlocks, InspectorControls } from '@wordpress/block-editor';
-import { Placeholder, TextControl, PanelBody, Spinner } from '@wordpress/components';
+import { Placeholder, TextControl, SelectControl, PanelBody, Spinner } from '@wordpress/components';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -50,7 +50,9 @@ function PlayIcon() {
 
 function Edit({ attributes, setAttributes }) {
     const blockProps = useBlockProps();
-    const { url, _videoTitleEdited, _modalIdEdited } = attributes;
+    const { url, displayMode, videoTitle, modalId, _videoTitleEdited, _modalIdEdited } = attributes;
+    const isModalMode = displayMode === 'modal' || displayMode === 'modal-only';
+    const isModalOnly = displayMode === 'modal-only';
 
     const [oembedData, setOembedData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -134,7 +136,58 @@ function Edit({ attributes, setAttributes }) {
                         placeholder="https://youtube.com/watch?v=..."
                         __nextHasNoMarginBottom
                     />
+                    <SelectControl
+                        label={__('Display Mode', 'sitchco')}
+                        value={displayMode}
+                        options={[
+                            {
+                                label: __('Inline', 'sitchco'),
+                                value: 'inline',
+                            },
+                            {
+                                label: __('Modal', 'sitchco'),
+                                value: 'modal',
+                            },
+                            {
+                                label: __('Modal Only', 'sitchco'),
+                                value: 'modal-only',
+                            },
+                        ]}
+                        onChange={(value) => setAttributes({ displayMode: value })}
+                        __nextHasNoMarginBottom
+                    />
                 </PanelBody>
+                {isModalMode && (
+                    <PanelBody title={__('Modal Settings', 'sitchco')} initialOpen={true}>
+                        <TextControl
+                            label={__('Video Title', 'sitchco')}
+                            value={videoTitle}
+                            onChange={(value) =>
+                                setAttributes({
+                                    videoTitle: value,
+                                    _videoTitleEdited: true,
+                                })
+                            }
+                            help={__(
+                                'Used for accessibility and modal heading. Auto-populated from video metadata.',
+                                'sitchco'
+                            )}
+                            __nextHasNoMarginBottom
+                        />
+                        <TextControl
+                            label={__('Modal ID', 'sitchco')}
+                            value={modalId}
+                            onChange={(value) =>
+                                setAttributes({
+                                    modalId: slugify(value),
+                                    _modalIdEdited: true,
+                                })
+                            }
+                            help={__('Unique identifier for deep linking. Auto-generated from title.', 'sitchco')}
+                            __nextHasNoMarginBottom
+                        />
+                    </PanelBody>
+                )}
             </InspectorControls>
 
             {!url && (
@@ -158,13 +211,14 @@ function Edit({ attributes, setAttributes }) {
             )}
 
             {url && oembedData && oembedData.thumbnail_url && (
-                <div className="sitchco-video__preview">
+                <div className={'sitchco-video__preview' + (isModalOnly ? ' sitchco-video__preview--modal-only' : '')}>
                     <img
                         className="sitchco-video__thumbnail"
                         src={oembedData.thumbnail_url}
                         alt={oembedData.title || ''}
                     />
                     <PlayIcon />
+                    {isModalOnly && <span className="sitchco-video__badge">{__('Modal Only', 'sitchco')}</span>}
                 </div>
             )}
 
@@ -174,7 +228,13 @@ function Edit({ attributes, setAttributes }) {
                 </div>
             )}
 
-            <InnerBlocks />
+            {isModalOnly ? (
+                <p className="sitchco-video__modal-only-notice">
+                    {__('Modal Only mode -- block content is not visible on the page.', 'sitchco')}
+                </p>
+            ) : (
+                <InnerBlocks />
+            )}
         </div>
     );
 }

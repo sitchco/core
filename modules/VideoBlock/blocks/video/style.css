@@ -60,3 +60,36 @@
 .sitchco-video__placeholder p {
     margin: 0;
 }
+
+/* Modal Only mode visual indicator */
+.sitchco-video__preview--modal-only {
+    border: 2px dashed #c3c4c7;
+    opacity: 0.85;
+}
+
+/* Modal Only badge overlay */
+.sitchco-video__badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 2px 8px;
+    font-size: 11px;
+    line-height: 1.6;
+    font-weight: 600;
+    color: #1e1e1e;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 2px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* Modal Only informational notice */
+.sitchco-video__modal-only-notice {
+    padding: 12px 16px;
+    margin: 8px 0 0;
+    font-size: 13px;
+    font-style: italic;
+    color: #757575;
+    background: #f0f0f0;
+    border-left: 4px solid #c3c4c7;
+}
