@@ -1,14 +1,19 @@
 /* global Vimeo */
 
 /**
- * Click-to-play inline playback for sitchco/video block.
+ * Click-to-play playback for sitchco/video block.
  *
- * Loads YouTube IFrame API or Vimeo Player SDK on first click only.
+ * Handles three display modes:
+ * - inline: click poster to play video in-place (replaces poster)
+ * - modal: click poster to open dialog with video player
+ * - modal-only: dialog triggered by external links (UIModal handles triggers)
+ *
+ * Loads YouTube IFrame API or Vimeo Player SDK on first interaction only.
  * Uses sitchco.register() lifecycle for initialization and
  * sitchco.loadScript() for deduplicating SDK loads.
  *
  * Privacy: YouTube uses youtube-nocookie.com, Vimeo uses dnt:true.
- * No provider SDK, iframe, or CDN resource loads before user clicks play.
+ * No provider SDK, iframe, or CDN resource loads before user interacts.
  */
 
 /**
@@ -17,6 +22,13 @@
  * Deduplicates via sitchco.loadScript() and module-level promise cache.
  */
 var ytAPIPromise = null;
+
+/**
+ * Modal player instance storage.
+ * Maps modalId -> { player: SDKPlayer|null, provider: string, loading: boolean }
+ * Enables pause on close and resume on reopen without creating duplicate iframes.
+ */
+var modalPlayers = new Map();
 
 function loadYouTubeAPI() {
     if (ytAPIPromise) {
@@ -75,6 +87,48 @@ function createYouTubePlayer(container, videoId, startTime) {
 }
 
 /**
+ * Create a YouTube player inside a modal dialog container.
+ * Stores player reference in modalPlayers Map for pause/resume lifecycle.
+ * Uses youtube-nocookie.com for privacy (PRIV-02).
+ */
+function createModalYouTubePlayer(container, videoId, startTime, modalId) {
+    loadYouTubeAPI()
+        .then(function (YT) {
+            var iframeContainer = document.createElement('div');
+            iframeContainer.className = 'sitchco-video__player';
+            container.appendChild(iframeContainer);
+
+            new YT.Player(iframeContainer, {
+                videoId: videoId,
+                host: 'https://www.youtube-nocookie.com',
+                playerVars: {
+                    autoplay: 1,
+                    playsinline: 1,
+                    enablejsapi: 1,
+                    origin: window.location.origin,
+                    start: startTime,
+                    rel: 0,
+                },
+                events: {
+                    onReady: function (event) {
+                        var entry = modalPlayers.get(modalId);
+                        if (entry) {
+                            entry.player = event.target;
+                            entry.loading = false;
+                        }
+
+                        container.classList.add('sitchco-video__modal-player--ready');
+                        event.target.playVideo();
+                    },
+                },
+            });
+        })
+        .catch(function (err) {
+            console.error('sitchco-video: YouTube SDK load failed', err);
+        });
+}
+
+/**
  * Load the Vimeo Player SDK from CDN.
  * Uses sitchco.loadScript() for deduplication.
  */
@@ -100,6 +154,43 @@ function createVimeoPlayer(container, videoId, startTime) {
                     player.setCurrentTime(startTime);
                 });
             }
+        })
+        .catch(function (err) {
+            console.error('sitchco-video: Vimeo SDK load failed', err);
+        });
+}
+
+/**
+ * Create a Vimeo player inside a modal dialog container.
+ * Stores player reference in modalPlayers Map for pause/resume lifecycle.
+ * Uses dnt:true for privacy (PRIV-03).
+ */
+function createModalVimeoPlayer(container, videoId, startTime, modalId) {
+    loadVimeoSDK()
+        .then(function () {
+            var iframeContainer = document.createElement('div');
+            iframeContainer.className = 'sitchco-video__player';
+            container.appendChild(iframeContainer);
+
+            var player = new Vimeo.Player(iframeContainer, {
+                id: parseInt(videoId, 10),
+                autoplay: true,
+                dnt: true,
+            });
+
+            player.ready().then(function () {
+                var entry = modalPlayers.get(modalId);
+                if (entry) {
+                    entry.player = player;
+                    entry.loading = false;
+                }
+
+                container.classList.add('sitchco-video__modal-player--ready');
+
+                if (startTime > 0) {
+                    player.setCurrentTime(startTime);
+                }
+            });
         })
         .catch(function (err) {
             console.error('sitchco-video: Vimeo SDK load failed', err);
@@ -152,6 +243,55 @@ function extractVimeoStartTime(url) {
 }
 
 /**
+ * Handle modal open event from UIModal hook.
+ * Loads SDK and autoplays on first open, resumes on subsequent opens.
+ * Skips non-video modals (no .sitchco-video__modal-player container).
+ *
+ * Registered at priority 20 (after UIModal core at 10) to run after
+ * the dialog is already open via showModal().
+ */
+function handleModalShow(modal) {
+    var playerContainer = modal.querySelector('.sitchco-video__modal-player');
+    if (!playerContainer) {
+        return; // Not a video modal
+    }
+
+    var modalId = modal.id;
+    var entry = modalPlayers.get(modalId);
+    // Resume existing player
+    if (entry && entry.player) {
+        if (entry.provider === 'youtube') {
+            entry.player.playVideo();
+        } else {
+            entry.player.play();
+        }
+        return;
+    }
+    // Prevent double-creation during SDK load
+    if (entry && entry.loading) {
+        return;
+    }
+
+    // First open: load SDK and create player
+    var provider = playerContainer.dataset.provider;
+    var videoId = playerContainer.dataset.videoId;
+    var url = playerContainer.dataset.url;
+    var startTime = provider === 'youtube' ? extractYouTubeStartTime(url) : extractVimeoStartTime(url);
+
+    modalPlayers.set(modalId, {
+        player: null,
+        provider: provider,
+        loading: true,
+    });
+
+    if (provider === 'youtube') {
+        createModalYouTubePlayer(playerContainer, videoId, startTime, modalId);
+    } else if (provider === 'vimeo') {
+        createModalVimeoPlayer(playerContainer, videoId, startTime, modalId);
+    }
+}
+
+/**
  * Handle play interaction on a video block wrapper.
  * Locks dimensions (INLN-02), hides poster (INLN-03), creates player.
  */
@@ -187,10 +327,43 @@ function handlePlay(wrapper) {
 /**
  * Initialize a single video block wrapper.
  * Attaches click and keyboard handlers for play interaction.
+ * Handles both inline mode (play in-place) and modal mode (open dialog).
  */
 function initVideoBlock(wrapper) {
     var displayMode = wrapper.dataset.displayMode;
-    // Skip non-inline display modes (modal handled in Phase 3)
+    if (displayMode === 'modal') {
+        // Modal mode: click poster -> open modal (not inline play)
+        var modalId = wrapper.dataset.modalId;
+        var modal = document.getElementById(modalId);
+        if (!modal) {
+            return;
+        }
+
+        var modalClickBehavior = wrapper.dataset.clickBehavior;
+        var modalClickTarget =
+            modalClickBehavior === 'icon' ? wrapper.querySelector('.sitchco-video__play-button') : wrapper;
+        if (!modalClickTarget) {
+            return;
+        }
+
+        // Click handler (NOT { once: true } -- modal can be opened multiple times)
+        modalClickTarget.addEventListener('click', function (e) {
+            e.preventDefault();
+            sitchco.hooks.doAction('ui-modal-show', modal);
+        });
+
+        // Keyboard handler for wrapper with role="button"
+        if (wrapper.getAttribute('role') === 'button') {
+            wrapper.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    sitchco.hooks.doAction('ui-modal-show', modal);
+                }
+            });
+        }
+        return;
+    }
+    // Modal-only blocks have no on-page wrapper -- skip
     if (displayMode !== 'inline') {
         return;
     }
@@ -232,7 +405,28 @@ function initVideoBlock(wrapper) {
     }
 }
 
+// Register modal show hook at priority 20 (after UIModal core at 10).
+// Fires for all modal opens: poster click, trigger link, and deep link via syncModalWithHash().
+sitchco.hooks.addAction('ui-modal-show', handleModalShow, 20, 'video-block');
+
 // Register with sitchco lifecycle (runs on DOMContentLoaded)
 sitchco.register(function initVideoBlocks() {
     document.querySelectorAll('.sitchco-video[data-url]').forEach(initVideoBlock);
+
+    // Pause video on modal close (all dismiss methods: Escape, backdrop, close button).
+    // Uses native close event, NOT ui-modal-hide hook, because the hook does NOT fire
+    // on Escape key close. The native close event fires for all close methods.
+    document.querySelectorAll('dialog.sitchco-modal--video').forEach(function (modal) {
+        modal.addEventListener('close', function () {
+            var entry = modalPlayers.get(modal.id);
+            if (!entry || !entry.player) {
+                return;
+            }
+            if (entry.provider === 'youtube') {
+                entry.player.pauseVideo();
+            } else {
+                entry.player.pause();
+            }
+        });
+    });
 });
