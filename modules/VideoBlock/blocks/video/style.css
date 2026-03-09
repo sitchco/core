@@ -16,14 +16,33 @@
     object-fit: cover;
 }
 
-/* Play icon overlay */
+/* Play icon overlay -- position is set via inline styles for X/Y control */
 .sitchco-video__play-icon {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     pointer-events: none;
     z-index: 1;
+    line-height: 0;
+}
+
+/* Play icon SVG base */
+.sitchco-video__play-icon-svg {
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: opacity 0.15s ease;
+}
+
+/* YouTube branded icon variants */
+.sitchco-video__play-icon-svg--youtube-dark,
+.sitchco-video__play-icon-svg--youtube-light,
+.sitchco-video__play-icon-svg--youtube-red {
+    width: 68px;
+    height: 48px;
+}
+
+/* Generic icon variants */
+.sitchco-video__play-icon-svg--generic-dark,
+.sitchco-video__play-icon-svg--generic-light {
+    width: 68px;
+    height: 68px;
 }
 
 /* Loading state */

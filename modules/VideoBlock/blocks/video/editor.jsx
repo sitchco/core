@@ -1,6 +1,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InnerBlocks, InspectorControls } from '@wordpress/block-editor';
-import { Placeholder, TextControl, SelectControl, PanelBody, Spinner } from '@wordpress/components';
+import { Placeholder, TextControl, SelectControl, RangeControl, PanelBody, Spinner } from '@wordpress/components';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -34,23 +34,101 @@ function slugify(text) {
 }
 
 /**
- * Generic play icon SVG component.
- * Temporary -- Plan 03 adds provider-specific branded icons.
+ * Return play icon SVG JSX based on provider and style.
+ *
+ * YouTube branded icons use a rounded rectangle shape with the YouTube play button style.
+ * Generic icons use a circle shape.
  */
-function PlayIcon() {
-    return (
-        <div className="sitchco-video__play-icon" aria-hidden="true">
-            <svg width="68" height="68" viewBox="0 0 68 68" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="34" cy="34" r="34" fill="rgba(0, 0, 0, 0.6)" />
-                <polygon points="26,18 52,34 26,50" fill="#ffffff" />
+function getPlayIconSvg(provider, style) {
+    if (provider === 'youtube') {
+        switch (style) {
+            case 'light':
+                return (
+                    <svg
+                        width="68"
+                        height="48"
+                        viewBox="0 0 68 48"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="sitchco-video__play-icon-svg sitchco-video__play-icon-svg--youtube-light"
+                    >
+                        <rect width="68" height="48" rx="12" fill="rgba(255, 255, 255, 0.8)" />
+                        <polygon points="27,12 27,36 50,24" fill="#212121" />
+                    </svg>
+                );
+            case 'red':
+                return (
+                    <svg
+                        width="68"
+                        height="48"
+                        viewBox="0 0 68 48"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="sitchco-video__play-icon-svg sitchco-video__play-icon-svg--youtube-red"
+                    >
+                        <rect width="68" height="48" rx="12" fill="#FF0000" />
+                        <polygon points="27,12 27,36 50,24" fill="#ffffff" />
+                    </svg>
+                );
+            default:
+                // 'dark' -- standard YouTube play overlay
+                return (
+                    <svg
+                        width="68"
+                        height="48"
+                        viewBox="0 0 68 48"
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="sitchco-video__play-icon-svg sitchco-video__play-icon-svg--youtube-dark"
+                    >
+                        <rect width="68" height="48" rx="12" fill="rgba(0, 0, 0, 0.8)" />
+                        <polygon points="27,12 27,36 50,24" fill="#ffffff" />
+                    </svg>
+                );
+        }
+    }
+    // Generic play icons (non-YouTube providers including Vimeo)
+    if (style === 'light') {
+        return (
+            <svg
+                width="68"
+                height="68"
+                viewBox="0 0 68 68"
+                xmlns="http://www.w3.org/2000/svg"
+                className="sitchco-video__play-icon-svg sitchco-video__play-icon-svg--generic-light"
+            >
+                <circle cx="34" cy="34" r="34" fill="rgba(255, 255, 255, 0.8)" />
+                <polygon points="26,18 52,34 26,50" fill="#212121" />
             </svg>
-        </div>
+        );
+    }
+    // Generic dark (default)
+    return (
+        <svg
+            width="68"
+            height="68"
+            viewBox="0 0 68 68"
+            xmlns="http://www.w3.org/2000/svg"
+            className="sitchco-video__play-icon-svg sitchco-video__play-icon-svg--generic-dark"
+        >
+            <circle cx="34" cy="34" r="34" fill="rgba(0, 0, 0, 0.8)" />
+            <polygon points="26,18 52,34 26,50" fill="#ffffff" />
+        </svg>
     );
 }
 
 function Edit({ attributes, setAttributes }) {
     const blockProps = useBlockProps();
-    const { url, displayMode, videoTitle, modalId, _videoTitleEdited, _modalIdEdited } = attributes;
+    const {
+        url,
+        provider,
+        displayMode,
+        videoTitle,
+        modalId,
+        playIconStyle,
+        playIconX,
+        playIconY,
+        clickBehavior,
+        _videoTitleEdited,
+        _modalIdEdited,
+    } = attributes;
     const isModalMode = displayMode === 'modal' || displayMode === 'modal-only';
     const isModalOnly = displayMode === 'modal-only';
 
@@ -59,12 +137,47 @@ function Edit({ attributes, setAttributes }) {
     const [error, setError] = useState(null);
     const abortControllerRef = useRef(null);
 
+    // Play icon style options are provider-conditional
+    const playIconStyleOptions =
+        provider === 'youtube'
+            ? [
+                  {
+                      label: __('Dark', 'sitchco'),
+                      value: 'dark',
+                  },
+                  {
+                      label: __('Light', 'sitchco'),
+                      value: 'light',
+                  },
+                  {
+                      label: __('Red', 'sitchco'),
+                      value: 'red',
+                  },
+              ]
+            : [
+                  {
+                      label: __('Dark', 'sitchco'),
+                      value: 'dark',
+                  },
+                  {
+                      label: __('Light', 'sitchco'),
+                      value: 'light',
+                  },
+              ];
+
     // URL change handler: update url + auto-detect provider
     const onUrlChange = (newUrl) => {
-        setAttributes({
+        const newProvider = detectProvider(newUrl);
+        const updates = {
             url: newUrl,
-            provider: detectProvider(newUrl),
-        });
+            provider: newProvider,
+        };
+        // Auto-reset "red" style when switching away from YouTube
+        if (newProvider !== 'youtube' && playIconStyle === 'red') {
+            updates.playIconStyle = 'dark';
+        }
+
+        setAttributes(updates);
     };
 
     // oEmbed fetch with 500ms debounce
@@ -188,6 +301,57 @@ function Edit({ attributes, setAttributes }) {
                         />
                     </PanelBody>
                 )}
+                {url && (
+                    <PanelBody title={__('Play Icon', 'sitchco')} initialOpen={true}>
+                        <SelectControl
+                            label={__('Icon Style', 'sitchco')}
+                            value={playIconStyle}
+                            options={playIconStyleOptions}
+                            onChange={(value) => setAttributes({ playIconStyle: value })}
+                            __nextHasNoMarginBottom
+                        />
+                        <RangeControl
+                            label={__('Horizontal Position', 'sitchco')}
+                            value={playIconX}
+                            onChange={(value) => setAttributes({ playIconX: value })}
+                            min={0}
+                            max={100}
+                            step={1}
+                            help={__('Position as percentage (50% = centered)', 'sitchco')}
+                            __nextHasNoMarginBottom
+                        />
+                        <RangeControl
+                            label={__('Vertical Position', 'sitchco')}
+                            value={playIconY}
+                            onChange={(value) => setAttributes({ playIconY: value })}
+                            min={0}
+                            max={100}
+                            step={1}
+                            help={__('Position as percentage (50% = centered)', 'sitchco')}
+                            __nextHasNoMarginBottom
+                        />
+                        <SelectControl
+                            label={__('Click Behavior', 'sitchco')}
+                            value={clickBehavior}
+                            options={[
+                                {
+                                    label: __('Entire poster', 'sitchco'),
+                                    value: 'poster',
+                                },
+                                {
+                                    label: __('Play icon only', 'sitchco'),
+                                    value: 'icon',
+                                },
+                            ]}
+                            onChange={(value) => setAttributes({ clickBehavior: value })}
+                            help={__(
+                                'Controls whether clicking anywhere on the poster or only the play icon starts the video',
+                                'sitchco'
+                            )}
+                            __nextHasNoMarginBottom
+                        />
+                    </PanelBody>
+                )}
             </InspectorControls>
 
             {!url && (
@@ -217,7 +381,18 @@ function Edit({ attributes, setAttributes }) {
                         src={oembedData.thumbnail_url}
                         alt={oembedData.title || ''}
                     />
-                    <PlayIcon />
+                    <div
+                        className="sitchco-video__play-icon"
+                        aria-hidden="true"
+                        style={{
+                            position: 'absolute',
+                            left: `${playIconX}%`,
+                            top: `${playIconY}%`,
+                            transform: 'translate(-50%, -50%)',
+                        }}
+                    >
+                        {getPlayIconSvg(provider, playIconStyle)}
+                    </div>
                     {isModalOnly && <span className="sitchco-video__badge">{__('Modal Only', 'sitchco')}</span>}
                 </div>
             )}
