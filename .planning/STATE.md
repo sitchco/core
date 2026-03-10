@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed quick/3-editor-jsx-cleanup-extract-conditional-j
-last_updated: "2026-03-10T17:43:17Z"
-last_activity: 2026-03-10 - Completed quick task 3: editor JSX cleanup
+stopped_at: Completed quick/4-fix-code-review-issues-for-video-block-m
+last_updated: "2026-03-10T18:30:00Z"
+last_activity: 2026-03-10 - Completed quick task 4: fix code review issues (7 bugs + 2 nitpicks)
 progress:
   total_phases: 4
   completed_phases: 3
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-09)
 Phase: 3 of 4 (Modal Integration & Triggers) -- COMPLETE
 Plan: 3 of 3 in current phase
 Status: Phase Complete
-Last activity: 2026-03-10 - Completed quick task 2: render.php architecture refactor
+Last activity: 2026-03-10 - Completed quick task 4: fix code review issues (7 bugs + 2 nitpicks)
 
 Progress: [██████████] 100%
 
@@ -89,6 +89,11 @@ Recent decisions affecting current work:
 - [Phase 03-modal-integration-triggers]: modalPlayers Map with loading flag prevents race condition double-creation during SDK load (Plan 03-02)
 - [Phase 03-modal-integration-triggers]: Deep link and trigger autoplay are automatic via UIModal hooks -- zero video-block-specific code needed (Plan 03-02)
 - [Phase 03-modal-integration-triggers]: Auto-approved browser verification checkpoint -- build succeeds and all Phase 3 video block assets compile correctly (Plan 03-03)
+- [quick-4]: extractVimeoStartTime now mirrors extractYouTubeStartTime with full h/m/s group parsing
+- [quick-4]: cancelled flag in modalPlayers entry guards against autoplay-after-close race without destroying player instance
+- [quick-4]: videoTitleRef/modalIdRef synced on every render (outside useEffect) as canonical stale-closure pattern for async callbacks
+- [quick-4]: slugify() accepts optional fallback; call sites extract video ID from URL for non-Latin title fallback
+- [quick-4]: ModalData.id() readback ensures data-modal-id matches normalized dialog id (digit-prefix handling)
 
 ### Pending Todos
 
@@ -101,6 +106,7 @@ None yet.
 | 1 | view.js DRY refactor: consolidate duplicated player creation, event binding, and replace var with const/let | 2026-03-10 | 22f666f | [1-view-js-dry-refactor-consolidate-duplica](./quick/1-view-js-dry-refactor-consolidate-duplica/) |
 | 2 | render.php architecture refactor: extract VideoBlockRenderer class, fix SRP/DIP/function_exists/sprintf-chains (CR-05/07/08/09/15) | 2026-03-10 | 4cfee63 | [2-implement-all-render-php-architecture-fi](./quick/2-implement-all-render-php-architecture-fi/) |
 | 3 | editor.jsx cleanup: extract named render functions, upgradeThumbnailUrl(), derive edit flags from value comparison, remove _*Edited attributes | 2026-03-10 | 1f92b19 | [3-editor-jsx-cleanup-extract-conditional-j](./quick/3-editor-jsx-cleanup-extract-conditional-j/) |
+| 4 | Fix code review issues: Vimeo time parsing, modal-close race, double-play guard, poster pointer events, stale closures, slugify fallback, dead AbortController guard, modal ID mismatch, buildPlayButton placement | 2026-03-10 | 6619bfe | [4-fix-code-review-issues-for-video-block-m](./quick/4-fix-code-review-issues-for-video-block-m/) |
 
 ### Blockers/Concerns
 
@@ -110,6 +116,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T17:47:20Z
-Stopped at: Completed quick/3-editor-jsx-cleanup-extract-conditional-j
+Last session: 2026-03-10T18:30:00Z
+Stopped at: Completed quick/4-fix-code-review-issues-for-video-block-m
 Resume file: None
