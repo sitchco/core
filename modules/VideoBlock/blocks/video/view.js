@@ -249,6 +249,23 @@ function bindKeyboardTrigger(element, callback, options) {
 }
 
 /**
+ * Handle modal hide event from UIModal hook.
+ * Pauses video on any close method (Escape, backdrop, close button).
+ * Skips non-video modals (no modalPlayers entry).
+ */
+function handleModalHide(modal) {
+    const entry = modalPlayers.get(modal.id);
+    if (!entry || !entry.player) {
+        return;
+    }
+    if (entry.provider === 'youtube') {
+        entry.player.pauseVideo();
+    } else {
+        entry.player.pause();
+    }
+}
+
+/**
  * Handle modal open event from UIModal hook.
  * Loads SDK and autoplays on first open, resumes on subsequent opens.
  * Skips non-video modals (no .sitchco-video__modal-player container).
@@ -402,28 +419,11 @@ function initVideoBlock(wrapper) {
     );
 }
 
-// Register modal show hook at priority 20 (after UIModal core at 10).
-// Fires for all modal opens: poster click, trigger link, and deep link via syncModalWithHash().
+// Register modal hooks at priority 20 (after UIModal core at 10).
 sitchco.hooks.addAction('ui-modal-show', handleModalShow, 20, 'video-block');
+sitchco.hooks.addAction('ui-modal-hide', handleModalHide, 20, 'video-block');
 
 // Register with sitchco lifecycle (runs on DOMContentLoaded)
 sitchco.register(function initVideoBlocks() {
     document.querySelectorAll('.sitchco-video[data-url]').forEach(initVideoBlock);
-
-    // Pause video on modal close (all dismiss methods: Escape, backdrop, close button).
-    // Uses native close event, NOT ui-modal-hide hook, because the hook does NOT fire
-    // on Escape key close. The native close event fires for all close methods.
-    document.querySelectorAll('dialog.sitchco-modal--video').forEach(function (modal) {
-        modal.addEventListener('close', function () {
-            const entry = modalPlayers.get(modal.id);
-            if (!entry || !entry.player) {
-                return;
-            }
-            if (entry.provider === 'youtube') {
-                entry.player.pauseVideo();
-            } else {
-                entry.player.pause();
-            }
-        });
-    });
 });
