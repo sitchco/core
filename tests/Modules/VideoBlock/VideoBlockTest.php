@@ -642,6 +642,95 @@ class VideoBlockTest extends TestCase
         $this->restoreHttp();
     }
 
+    // --- Extension Points ---
+
+    public function test_hook_suffix_produces_correct_filter_name(): void
+    {
+        $this->assertSame(
+            'sitchco/video/play_icon_svg',
+            VideoBlock::hookName('play_icon_svg'),
+            'VideoBlock::hookName("play_icon_svg") should return "sitchco/video/play_icon_svg"',
+        );
+    }
+
+    public function test_play_icon_svg_filter_is_applied(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=filter_apply1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/filter_apply1/hqdefault.jpg',
+            'title' => 'Filter Apply Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        add_filter('sitchco/video/play_icon_svg', function ($svg) {
+            return '<svg class="custom-icon">replaced</svg>';
+        });
+
+        $output = $this->renderBlock(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Filter Apply Test',
+            ]),
+            '',
+        );
+
+        remove_all_filters('sitchco/video/play_icon_svg');
+
+        $this->assertStringContainsString(
+            'custom-icon',
+            $output,
+            'Replacement SVG from filter should appear in output',
+        );
+        $this->assertStringContainsString(
+            'aria-label="Play video:',
+            $output,
+            'Button wrapper aria-label should be preserved when SVG is replaced',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_play_icon_svg_filter_receives_correct_args(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=filter_args01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/filter_args01/hqdefault.jpg',
+            'title' => 'Filter Args Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $captured = [];
+        add_filter(
+            'sitchco/video/play_icon_svg',
+            function ($svg, $provider, $style) use (&$captured) {
+                $captured = ['provider' => $provider, 'style' => $style];
+                return $svg;
+            },
+            10,
+            3,
+        );
+
+        $this->renderBlock(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Filter Args Test',
+                'playIconStyle' => 'dark',
+            ]),
+            '',
+        );
+
+        remove_all_filters('sitchco/video/play_icon_svg');
+
+        $this->assertSame('youtube', $captured['provider'] ?? null, 'Filter should receive provider as second arg');
+        $this->assertSame('dark', $captured['style'] ?? null, 'Filter should receive play_icon_style as third arg');
+        $this->restoreHttp();
+    }
+
     // --- Helpers ---
 
     private function makeAttributes(array $overrides = []): array
