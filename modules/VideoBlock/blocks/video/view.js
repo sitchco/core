@@ -21,14 +21,14 @@
  * Wraps the global onYouTubeIframeAPIReady callback in a Promise.
  * Deduplicates via sitchco.loadScript() and module-level promise cache.
  */
-var ytAPIPromise = null;
+let ytAPIPromise = null;
 
 /**
  * Modal player instance storage.
  * Maps modalId -> { player: SDKPlayer|null, provider: string, loading: boolean }
  * Enables pause on close and resume on reopen without creating duplicate iframes.
  */
-var modalPlayers = new Map();
+const modalPlayers = new Map();
 
 function loadYouTubeAPI() {
     if (ytAPIPromise) {
@@ -40,7 +40,7 @@ function loadYouTubeAPI() {
     }
 
     ytAPIPromise = new Promise(function (resolve) {
-        var prev = window.onYouTubeIframeAPIReady;
+        const prev = window.onYouTubeIframeAPIReady;
 
         window.onYouTubeIframeAPIReady = function () {
             if (prev) {
@@ -59,11 +59,25 @@ function loadYouTubeAPI() {
  * Create a YouTube player inside the given container.
  * Uses youtube-nocookie.com for privacy (PRIV-02).
  * Autoplay on ready (INLN-05). Start time from URL (INLN-06).
+ *
+ * When modalId is provided (modal mode): creates a wrapper div inside container,
+ * stores the player reference in modalPlayers on ready, and adds a --ready class.
+ * When modalId is null (inline mode): uses container directly with no modalPlayers interaction.
  */
-function createYouTubePlayer(container, videoId, startTime) {
+function createYouTubePlayer(container, videoId, startTime, modalId) {
+    modalId = modalId || null;
+    const target = modalId
+        ? (function () {
+              const wrapper = document.createElement('div');
+              wrapper.className = 'sitchco-video__player';
+              container.appendChild(wrapper);
+              return wrapper;
+          })()
+        : container;
+
     loadYouTubeAPI()
         .then(function (YT) {
-            new YT.Player(container, {
+            new YT.Player(target, {
                 videoId: videoId,
                 host: 'https://www.youtube-nocookie.com',
                 playerVars: {
@@ -76,48 +90,16 @@ function createYouTubePlayer(container, videoId, startTime) {
                 },
                 events: {
                     onReady: function (event) {
-                        event.target.playVideo();
-                    },
-                },
-            });
-        })
-        .catch(function (err) {
-            console.error('sitchco-video: YouTube SDK load failed', err);
-        });
-}
+                        if (modalId) {
+                            const entry = modalPlayers.get(modalId);
+                            if (entry) {
+                                entry.player = event.target;
+                                entry.loading = false;
+                            }
 
-/**
- * Create a YouTube player inside a modal dialog container.
- * Stores player reference in modalPlayers Map for pause/resume lifecycle.
- * Uses youtube-nocookie.com for privacy (PRIV-02).
- */
-function createModalYouTubePlayer(container, videoId, startTime, modalId) {
-    loadYouTubeAPI()
-        .then(function (YT) {
-            var iframeContainer = document.createElement('div');
-            iframeContainer.className = 'sitchco-video__player';
-            container.appendChild(iframeContainer);
-
-            new YT.Player(iframeContainer, {
-                videoId: videoId,
-                host: 'https://www.youtube-nocookie.com',
-                playerVars: {
-                    autoplay: 1,
-                    playsinline: 1,
-                    enablejsapi: 1,
-                    origin: window.location.origin,
-                    start: startTime,
-                    rel: 0,
-                },
-                events: {
-                    onReady: function (event) {
-                        var entry = modalPlayers.get(modalId);
-                        if (entry) {
-                            entry.player = event.target;
-                            entry.loading = false;
+                            container.classList.add('sitchco-video__modal-player--ready');
                         }
 
-                        container.classList.add('sitchco-video__modal-player--ready');
                         event.target.playVideo();
                     },
                 },
@@ -140,53 +122,40 @@ function loadVimeoSDK() {
  * Create a Vimeo player inside the given container.
  * Uses dnt:true for privacy (PRIV-03).
  * Autoplay on creation (INLN-05). Start time from URL (INLN-06).
+ *
+ * When modalId is provided (modal mode): creates a wrapper div inside container,
+ * stores the player reference in modalPlayers on ready, and adds a --ready class.
+ * When modalId is null (inline mode): uses container directly with no modalPlayers interaction.
  */
-function createVimeoPlayer(container, videoId, startTime) {
+function createVimeoPlayer(container, videoId, startTime, modalId) {
+    modalId = modalId || null;
     loadVimeoSDK()
         .then(function () {
-            var player = new Vimeo.Player(container, {
-                id: parseInt(videoId, 10),
-                autoplay: true,
-                dnt: true,
-            });
-            if (startTime > 0) {
-                player.ready().then(function () {
-                    player.setCurrentTime(startTime);
-                });
-            }
-        })
-        .catch(function (err) {
-            console.error('sitchco-video: Vimeo SDK load failed', err);
-        });
-}
+            const target = modalId
+                ? (function () {
+                      const wrapper = document.createElement('div');
+                      wrapper.className = 'sitchco-video__player';
+                      container.appendChild(wrapper);
+                      return wrapper;
+                  })()
+                : container;
 
-/**
- * Create a Vimeo player inside a modal dialog container.
- * Stores player reference in modalPlayers Map for pause/resume lifecycle.
- * Uses dnt:true for privacy (PRIV-03).
- */
-function createModalVimeoPlayer(container, videoId, startTime, modalId) {
-    loadVimeoSDK()
-        .then(function () {
-            var iframeContainer = document.createElement('div');
-            iframeContainer.className = 'sitchco-video__player';
-            container.appendChild(iframeContainer);
-
-            var player = new Vimeo.Player(iframeContainer, {
+            const player = new Vimeo.Player(target, {
                 id: parseInt(videoId, 10),
                 autoplay: true,
                 dnt: true,
             });
 
             player.ready().then(function () {
-                var entry = modalPlayers.get(modalId);
-                if (entry) {
-                    entry.player = player;
-                    entry.loading = false;
+                if (modalId) {
+                    const entry = modalPlayers.get(modalId);
+                    if (entry) {
+                        entry.player = player;
+                        entry.loading = false;
+                    }
+
+                    container.classList.add('sitchco-video__modal-player--ready');
                 }
-
-                container.classList.add('sitchco-video__modal-player--ready');
-
                 if (startTime > 0) {
                     player.setCurrentTime(startTime);
                 }
@@ -203,18 +172,18 @@ function createModalVimeoPlayer(container, videoId, startTime, modalId) {
  */
 function extractYouTubeStartTime(url) {
     try {
-        var urlObj = new URL(url);
-        var t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+        const urlObj = new URL(url);
+        let t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
         if (!t) {
             return 0;
         }
 
         t = String(t);
-        var hMatch = t.match(/(\d+)h/);
-        var mMatch = t.match(/(\d+)m/);
-        var sMatch = t.match(/(\d+)s?$/);
+        const hMatch = t.match(/(\d+)h/);
+        const mMatch = t.match(/(\d+)m/);
+        const sMatch = t.match(/(\d+)s?$/);
 
-        var seconds = 0;
+        let seconds = 0;
         if (hMatch) {
             seconds += parseInt(hMatch[1], 10) * 3600;
         }
@@ -237,9 +206,46 @@ function extractYouTubeStartTime(url) {
  * Handles: #t=90s, #t=90
  */
 function extractVimeoStartTime(url) {
-    var hash = url.split('#')[1] || '';
-    var match = hash.match(/t=(\d+)s?/);
+    const hash = url.split('#')[1] || '';
+    const match = hash.match(/t=(\d+)s?/);
     return match ? parseInt(match[1], 10) : 0;
+}
+
+/**
+ * Bind a click handler to an element.
+ * Passes the event to the callback when provided; always calls callback.
+ *
+ * @param {Element} element - The element to bind to.
+ * @param {Function} callback - Called on click. Receives the MouseEvent.
+ * @param {Object} [options] - addEventListener options (e.g. { once: true }).
+ */
+function bindPlayTrigger(element, callback, options) {
+    element.addEventListener('click', callback, options || {});
+}
+
+/**
+ * Bind a keyboard (Enter/Space) handler to an element with role="button".
+ * No-ops if the element does not have role="button".
+ *
+ * @param {Element} element - The element to bind to.
+ * @param {Function} callback - Called when Enter or Space is pressed.
+ * @param {Object} [options] - addEventListener options (e.g. { once: true }).
+ */
+function bindKeyboardTrigger(element, callback, options) {
+    if (element.getAttribute('role') !== 'button') {
+        return;
+    }
+
+    element.addEventListener(
+        'keydown',
+        function (e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                callback();
+            }
+        },
+        options || {}
+    );
 }
 
 /**
@@ -251,13 +257,13 @@ function extractVimeoStartTime(url) {
  * the dialog is already open via showModal().
  */
 function handleModalShow(modal) {
-    var playerContainer = modal.querySelector('.sitchco-video__modal-player');
+    const playerContainer = modal.querySelector('.sitchco-video__modal-player');
     if (!playerContainer) {
         return; // Not a video modal
     }
 
-    var modalId = modal.id;
-    var entry = modalPlayers.get(modalId);
+    const modalId = modal.id;
+    const entry = modalPlayers.get(modalId);
     // Resume existing player
     if (entry && entry.player) {
         if (entry.provider === 'youtube') {
@@ -273,10 +279,10 @@ function handleModalShow(modal) {
     }
 
     // First open: load SDK and create player
-    var provider = playerContainer.dataset.provider;
-    var videoId = playerContainer.dataset.videoId;
-    var url = playerContainer.dataset.url;
-    var startTime = provider === 'youtube' ? extractYouTubeStartTime(url) : extractVimeoStartTime(url);
+    const provider = playerContainer.dataset.provider;
+    const videoId = playerContainer.dataset.videoId;
+    const url = playerContainer.dataset.url;
+    const startTime = provider === 'youtube' ? extractYouTubeStartTime(url) : extractVimeoStartTime(url);
 
     modalPlayers.set(modalId, {
         player: null,
@@ -285,9 +291,9 @@ function handleModalShow(modal) {
     });
 
     if (provider === 'youtube') {
-        createModalYouTubePlayer(playerContainer, videoId, startTime, modalId);
+        createYouTubePlayer(playerContainer, videoId, startTime, modalId);
     } else if (provider === 'vimeo') {
-        createModalVimeoPlayer(playerContainer, videoId, startTime, modalId);
+        createVimeoPlayer(playerContainer, videoId, startTime, modalId);
     }
 }
 
@@ -309,14 +315,14 @@ function handlePlay(wrapper) {
     wrapper.removeAttribute('aria-label');
 
     // Create player container
-    var playerContainer = document.createElement('div');
+    const playerContainer = document.createElement('div');
     playerContainer.className = 'sitchco-video__player';
     wrapper.appendChild(playerContainer);
 
     // Load SDK and create player based on provider
-    var provider = wrapper.dataset.provider;
-    var url = wrapper.dataset.url;
-    var videoId = wrapper.dataset.videoId;
+    const provider = wrapper.dataset.provider;
+    const url = wrapper.dataset.url;
+    const videoId = wrapper.dataset.videoId;
     if (provider === 'youtube') {
         createYouTubePlayer(playerContainer, videoId, extractYouTubeStartTime(url));
     } else if (provider === 'vimeo') {
@@ -330,37 +336,32 @@ function handlePlay(wrapper) {
  * Handles both inline mode (play in-place) and modal mode (open dialog).
  */
 function initVideoBlock(wrapper) {
-    var displayMode = wrapper.dataset.displayMode;
+    const displayMode = wrapper.dataset.displayMode;
     if (displayMode === 'modal') {
         // Modal mode: click poster -> open modal (not inline play)
-        var modalId = wrapper.dataset.modalId;
-        var modal = document.getElementById(modalId);
+        const modalId = wrapper.dataset.modalId;
+        const modal = document.getElementById(modalId);
         if (!modal) {
             return;
         }
 
-        var modalClickBehavior = wrapper.dataset.clickBehavior;
-        var modalClickTarget =
+        const modalClickBehavior = wrapper.dataset.clickBehavior;
+        const modalClickTarget =
             modalClickBehavior === 'icon' ? wrapper.querySelector('.sitchco-video__play-button') : wrapper;
         if (!modalClickTarget) {
             return;
         }
 
         // Click handler (NOT { once: true } -- modal can be opened multiple times)
-        modalClickTarget.addEventListener('click', function (e) {
+        bindPlayTrigger(modalClickTarget, function (e) {
             e.preventDefault();
             sitchco.hooks.doAction('ui-modal-show', modal);
         });
 
         // Keyboard handler for wrapper with role="button"
-        if (wrapper.getAttribute('role') === 'button') {
-            wrapper.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    sitchco.hooks.doAction('ui-modal-show', modal);
-                }
-            });
-        }
+        bindKeyboardTrigger(wrapper, function () {
+            sitchco.hooks.doAction('ui-modal-show', modal);
+        });
         return;
     }
     // Modal-only blocks have no on-page wrapper -- skip
@@ -368,8 +369,8 @@ function initVideoBlock(wrapper) {
         return;
     }
 
-    var clickBehavior = wrapper.dataset.clickBehavior;
-    var clickTarget;
+    const clickBehavior = wrapper.dataset.clickBehavior;
+    let clickTarget;
     if (clickBehavior === 'icon') {
         clickTarget = wrapper.querySelector('.sitchco-video__play-button');
 
@@ -382,27 +383,23 @@ function initVideoBlock(wrapper) {
     }
 
     // Click handler (once: true ensures single activation)
-    clickTarget.addEventListener(
-        'click',
+    // Note: inline click does NOT preventDefault -- it just triggers play
+    bindPlayTrigger(
+        clickTarget,
         function () {
             handlePlay(wrapper);
         },
         { once: true }
     );
 
-    // Keyboard handler for wrapper with role="button" (Enter/Space)
-    if (wrapper.getAttribute('role') === 'button') {
-        wrapper.addEventListener(
-            'keydown',
-            function (event) {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    handlePlay(wrapper);
-                }
-            },
-            { once: true }
-        );
-    }
+    // Keyboard handler for wrapper with role="button" (Enter/Space), once only
+    bindKeyboardTrigger(
+        wrapper,
+        function () {
+            handlePlay(wrapper);
+        },
+        { once: true }
+    );
 }
 
 // Register modal show hook at priority 20 (after UIModal core at 10).
@@ -418,7 +415,7 @@ sitchco.register(function initVideoBlocks() {
     // on Escape key close. The native close event fires for all close methods.
     document.querySelectorAll('dialog.sitchco-modal--video').forEach(function (modal) {
         modal.addEventListener('close', function () {
-            var entry = modalPlayers.get(modal.id);
+            const entry = modalPlayers.get(modal.id);
             if (!entry || !entry.player) {
                 return;
             }
