@@ -35,6 +35,21 @@ function slugify(text) {
 }
 
 /**
+ * Upgrade oEmbed thumbnail URL to high-resolution variant.
+ *
+ * Mirrors VideoBlockRenderer::upgradeThumbnailUrl() in PHP.
+ */
+function upgradeThumbnailUrl(url, provider) {
+    if (provider === 'youtube') {
+        return url.replace(/\/hqdefault\.jpg$/, '/maxresdefault.jpg');
+    }
+    if (provider === 'vimeo') {
+        return url.replace(/_\d+x\d+/, '_1280x720');
+    }
+    return url;
+}
+
+/**
  * Return play icon SVG JSX based on provider.
  *
  * Colors are controlled via CSS custom properties (--sitchco-play-bg, --sitchco-play-fg)
@@ -72,18 +87,7 @@ function getPlayIconSvg(provider) {
 function Edit({ attributes, setAttributes, clientId }) {
     const { provider } = attributes;
     const blockProps = useBlockProps(provider ? { 'data-provider': provider } : {});
-    const {
-        url,
-        displayMode,
-        videoTitle,
-        modalId,
-        playIconStyle,
-        playIconX,
-        playIconY,
-        clickBehavior,
-        _videoTitleEdited,
-        _modalIdEdited,
-    } = attributes;
+    const { url, displayMode, videoTitle, modalId, playIconStyle, playIconX, playIconY, clickBehavior } = attributes;
     const isModalMode = displayMode === 'modal' || displayMode === 'modal-only';
     const isModalOnly = displayMode === 'modal-only';
     const hasInnerBlocks = useSelect((select) => select('core/block-editor').getBlockCount(clientId) > 0, [clientId]);
@@ -92,13 +96,7 @@ function Edit({ attributes, setAttributes, clientId }) {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const abortControllerRef = useRef(null);
-    const videoTitleEditedRef = useRef(_videoTitleEdited);
-    const modalIdEditedRef = useRef(_modalIdEdited);
-
-    useEffect(() => {
-        videoTitleEditedRef.current = _videoTitleEdited;
-        modalIdEditedRef.current = _modalIdEdited;
-    }, [_videoTitleEdited, _modalIdEdited]);
+    const prevOembedTitleRef = useRef(null);
 
     // Play icon style options are provider-conditional
     const playIconStyleOptions =
@@ -173,13 +171,22 @@ function Edit({ attributes, setAttributes, clientId }) {
                     setIsLoading(false);
                     setError(null);
 
-                    // Auto-populate videoTitle if not manually edited
-                    if (response.title && !videoTitleEditedRef.current) {
-                        setAttributes({ videoTitle: response.title });
-                    }
-                    // Auto-populate modalId if not manually edited
-                    if (response.title && !modalIdEditedRef.current) {
-                        setAttributes({ modalId: slugify(response.title) });
+                    if (response.title) {
+                        const updates = {};
+                        const prevTitle = prevOembedTitleRef.current;
+                        // Auto-populate only if current value is empty or matches what
+                        // oEmbed would have auto-generated (user hasn't manually edited)
+                        if (!videoTitle || videoTitle === prevTitle) {
+                            updates.videoTitle = response.title;
+                        }
+                        if (!modalId || modalId === slugify(prevTitle || '')) {
+                            updates.modalId = slugify(response.title);
+                        }
+                        if (Object.keys(updates).length > 0) {
+                            setAttributes(updates);
+                        }
+
+                        prevOembedTitleRef.current = response.title;
                     }
                 })
                 .catch((err) => {
@@ -200,6 +207,74 @@ function Edit({ attributes, setAttributes, clientId }) {
             }
         };
     }, [url]);
+
+    const renderPlaceholder = () => {
+        if (url) {
+            return null;
+        }
+        return (
+            <Placeholder
+                icon="video-alt3"
+                label={__('Video', 'sitchco')}
+                instructions={__('Enter a video URL in the block settings.', 'sitchco')}
+            />
+        );
+    };
+
+    const renderLoading = () => {
+        if (!url || !isLoading) {
+            return null;
+        }
+        return (
+            <div className="sitchco-video__loading">
+                <Spinner />
+            </div>
+        );
+    };
+
+    const renderError = () => {
+        if (!url || !error) {
+            return null;
+        }
+        return (
+            <div className="sitchco-video__error">
+                <p>{error}</p>
+            </div>
+        );
+    };
+
+    const renderPreview = () => {
+        if (!url || isModalOnly || hasInnerBlocks || !oembedData?.thumbnail_url) {
+            return null;
+        }
+        return (
+            <div
+                className="sitchco-video__preview"
+                style={
+                    oembedData.width && oembedData.height
+                        ? { aspectRatio: `${oembedData.width} / ${oembedData.height}` }
+                        : undefined
+                }
+            >
+                <img
+                    className="sitchco-video__thumbnail"
+                    src={upgradeThumbnailUrl(oembedData.thumbnail_url, provider)}
+                    alt={oembedData.title || ''}
+                />
+            </div>
+        );
+    };
+
+    const renderEmptyState = () => {
+        if (!url || isLoading || error || oembedData) {
+            return null;
+        }
+        return (
+            <div className="sitchco-video__placeholder">
+                <p>{__('Enter a YouTube or Vimeo URL to see a preview.', 'sitchco')}</p>
+            </div>
+        );
+    };
     return (
         <div {...blockProps}>
             <InspectorControls>
@@ -237,12 +312,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                         <TextControl
                             label={__('Video Title', 'sitchco')}
                             value={videoTitle}
-                            onChange={(value) =>
-                                setAttributes({
-                                    videoTitle: value,
-                                    _videoTitleEdited: true,
-                                })
-                            }
+                            onChange={(value) => setAttributes({ videoTitle: value })}
                             help={__(
                                 'Used for accessibility and modal heading. Auto-populated from video metadata.',
                                 'sitchco'
@@ -252,12 +322,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                         <TextControl
                             label={__('Modal ID', 'sitchco')}
                             value={modalId}
-                            onChange={(value) =>
-                                setAttributes({
-                                    modalId: slugify(value),
-                                    _modalIdEdited: true,
-                                })
-                            }
+                            onChange={(value) => setAttributes({ modalId: slugify(value) })}
                             help={__('Unique identifier for deep linking. Auto-generated from title.', 'sitchco')}
                             __nextHasNoMarginBottom
                         />
@@ -316,54 +381,11 @@ function Edit({ attributes, setAttributes, clientId }) {
                 )}
             </InspectorControls>
 
-            {!url && (
-                <Placeholder
-                    icon="video-alt3"
-                    label={__('Video', 'sitchco')}
-                    instructions={__('Enter a video URL in the block settings.', 'sitchco')}
-                />
-            )}
-
-            {url && isLoading && (
-                <div className="sitchco-video__loading">
-                    <Spinner />
-                </div>
-            )}
-
-            {url && error && (
-                <div className="sitchco-video__error">
-                    <p>{error}</p>
-                </div>
-            )}
-
-            {url && !isModalOnly && !hasInnerBlocks && oembedData && oembedData.thumbnail_url && (
-                <div
-                    className="sitchco-video__preview"
-                    style={
-                        oembedData.width && oembedData.height
-                            ? { aspectRatio: `${oembedData.width} / ${oembedData.height}` }
-                            : undefined
-                    }
-                >
-                    <img
-                        className="sitchco-video__thumbnail"
-                        src={
-                            provider === 'youtube'
-                                ? oembedData.thumbnail_url.replace(/\/hqdefault\.jpg$/, '/maxresdefault.jpg')
-                                : provider === 'vimeo'
-                                  ? oembedData.thumbnail_url.replace(/_\d+x\d+/, '_1280x720')
-                                  : oembedData.thumbnail_url
-                        }
-                        alt={oembedData.title || ''}
-                    />
-                </div>
-            )}
-
-            {url && !isLoading && !error && !oembedData && (
-                <div className="sitchco-video__placeholder">
-                    <p>{__('Enter a YouTube or Vimeo URL to see a preview.', 'sitchco')}</p>
-                </div>
-            )}
+            {renderPlaceholder()}
+            {renderLoading()}
+            {renderError()}
+            {renderPreview()}
+            {renderEmptyState()}
 
             {isModalOnly ? (
                 <Placeholder icon="video-alt3" label={__('Modal Only', 'sitchco')}>

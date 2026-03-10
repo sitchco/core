@@ -15,9 +15,7 @@
         "playIconStyle": { "type": "string", "default": "dark" },
         "playIconX": { "type": "number", "default": 50 },
         "playIconY": { "type": "number", "default": 50 },
-        "clickBehavior": { "type": "string", "default": "poster" },
-        "_videoTitleEdited": { "type": "boolean", "default": false },
-        "_modalIdEdited": { "type": "boolean", "default": false }
+        "clickBehavior": { "type": "string", "default": "poster" }
     },
     "supports": {
         "html": false,
