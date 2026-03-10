@@ -87,6 +87,7 @@ function createYouTubePlayer(container, videoId, startTime, modalId) {
                     origin: window.location.origin,
                     start: startTime,
                     rel: 0,
+                    iv_load_policy: 3,
                 },
                 events: {
                     onReady: function (event) {
@@ -144,6 +145,11 @@ function createVimeoPlayer(container, videoId, startTime, modalId) {
                 id: parseInt(videoId, 10),
                 autoplay: true,
                 dnt: true,
+                title: false,
+                byline: false,
+                portrait: false,
+                badge: false,
+                vimeo_logo: false,
             });
 
             player.ready().then(function () {
