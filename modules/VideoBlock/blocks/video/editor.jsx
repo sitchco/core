@@ -28,12 +28,15 @@ function detectProvider(url) {
 
 /**
  * Slugify text for modal ID generation.
+ * Falls back to the optional `fallback` string if the result is empty
+ * (e.g. non-Latin titles that produce no ASCII characters).
  */
-function slugify(text) {
-    return text
+function slugify(text, fallback) {
+    const result = text
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '');
+    return result || fallback || '';
 }
 
 /**
@@ -74,6 +77,10 @@ function Edit({ attributes, setAttributes, clientId }) {
     const [error, setError] = useState(null);
     const abortControllerRef = useRef(null);
     const prevOembedTitleRef = useRef(null);
+    const videoTitleRef = useRef(videoTitle);
+    const modalIdRef = useRef(modalId);
+    videoTitleRef.current = videoTitle;
+    modalIdRef.current = modalId;
 
     // Play icon style options are provider-conditional
     const playIconStyleOptions =
@@ -127,7 +134,8 @@ function Edit({ attributes, setAttributes, clientId }) {
             return;
         }
 
-        setIsLoading(true);
+        // Clear stale preview data immediately on URL change (before debounce resolves)
+        setOembedData(null);
         setError(null);
 
         const timeout = setTimeout(() => {
@@ -136,12 +144,14 @@ function Edit({ attributes, setAttributes, clientId }) {
                 abortControllerRef.current.abort();
             }
 
-            const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+            const controller = new AbortController();
             abortControllerRef.current = controller;
+
+            setIsLoading(true);
 
             apiFetch({
                 path: addQueryArgs('/oembed/1.0/proxy', { url }),
-                signal: controller ? controller.signal : undefined,
+                signal: controller.signal,
             })
                 .then((response) => {
                     setOembedData(response);
@@ -151,13 +161,19 @@ function Edit({ attributes, setAttributes, clientId }) {
                     if (response.title) {
                         const updates = {};
                         const prevTitle = prevOembedTitleRef.current;
+                        // Extract a video ID from the URL for non-Latin title fallback
+                        const videoIdMatch = url.match(
+                            /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|shorts\/|watch\?v=|watch\?.+&v=))([\w-]{11})|vimeo\.com\/(?:video\/)?(\d+)/
+                        );
+                        const videoIdFallback = videoIdMatch ? videoIdMatch[1] || videoIdMatch[2] : '';
                         // Auto-populate only if current value is empty or matches what
-                        // oEmbed would have auto-generated (user hasn't manually edited)
-                        if (!videoTitle || videoTitle === prevTitle) {
+                        // oEmbed would have auto-generated (user hasn't manually edited).
+                        // Use refs to avoid stale closure over videoTitle/modalId.
+                        if (!videoTitleRef.current || videoTitleRef.current === prevTitle) {
                             updates.videoTitle = response.title;
                         }
-                        if (!modalId || modalId === slugify(prevTitle || '')) {
-                            updates.modalId = slugify(response.title);
+                        if (!modalIdRef.current || modalIdRef.current === slugify(prevTitle || '')) {
+                            updates.modalId = slugify(response.title, videoIdFallback);
                         }
                         if (Object.keys(updates).length > 0) {
                             setAttributes(updates);
