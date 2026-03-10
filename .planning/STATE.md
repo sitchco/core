@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-10T22:58:45.624Z"
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-10T22:59:34.435Z"
 last_activity: "2026-03-10 - Completed quick task 4: fix code review issues (7 bugs + 2 nitpicks)"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 11
-  completed_plans: 10
+  completed_plans: 11
   percent: 100
 ---
 
@@ -56,6 +56,7 @@ Progress: [██████████] 100%
 | Phase 03 P02 | 2min | 1 tasks | 1 files |
 | Phase 03 P03 | 1min | 2 tasks | 0 files |
 | Phase 04 P02 | 2min | 1 tasks | 3 files |
+| Phase 04 P01 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,9 @@ Recent decisions affecting current work:
 - [quick-4]: ModalData.id() readback ensures data-modal-id matches normalized dialog id (digit-prefix handling)
 - [Phase 04-02]: HOOK_SUFFIX corrected from 'video-block' to 'video' -- sitchco/video/* namespace now consistent
 - [Phase 04-02]: apply_filters on $svg string only (not button wrapper) -- preserves aria-label, CSS class while allowing SVG replacement via sitchco/video/play_icon_svg filter
+- [Phase 04-cross-cutting-concerns-extensibility]: Milestone 100% fired from 'ended' event handler, not polling -- avoids off-by-one timing issues
+- [Phase 04-cross-cutting-concerns-extensibility]: milestonesFired Sets never cleared -- milestones fire at most once per page load (ANLT-02)
+- [Phase 04-cross-cutting-concerns-extensibility]: video-request-pause handler does NOT call doAction('video-pause') -- SDK fires native pause event which triggers the hook naturally (EXTN-02, NOOP-02)
 
 ### Pending Todos
 
@@ -119,6 +123,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-10T22:58:45.622Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-10T22:59:26.238Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None
