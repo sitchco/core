@@ -256,6 +256,8 @@ class VideoBlockRenderer
         <svg class="sitchco-video__play-icon-svg" aria-hidden="true" width="{$escaped_icon_width}" height="{$escaped_icon_height}" viewBox="0 0 {$escaped_icon_width} {$escaped_icon_height}"><use href="#icon-{$escaped_icon_name}"></use></svg>
         HTML;
 
+        $svg = apply_filters(VideoBlock::hookName('play_icon_svg'), $svg, $provider, $play_icon_style);
+
         return sprintf(
             '<button class="sitchco-video__play-button sitchco-video__play-button--%s" aria-label="%s" style="position:absolute;left:%s%%;top:%s%%;transform:translate(-50%%,-50%%)">%s</button>',
             esc_attr($play_icon_style),

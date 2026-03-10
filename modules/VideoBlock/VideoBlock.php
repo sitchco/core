@@ -9,7 +9,7 @@ class VideoBlock extends Module
 {
     public const DEPENDENCIES = [UIModal::class];
 
-    const HOOK_SUFFIX = 'video-block';
+    const HOOK_SUFFIX = 'video';
 
     public function __construct(private UIModal $uiModal) {}
 
