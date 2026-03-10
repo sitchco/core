@@ -76,7 +76,7 @@ $display_mode = $attributes['displayMode'] ?? 'inline';
 $video_id = sitchco_video_extract_id($url, $provider);
 
 // Poster resolution chain
-$has_inner_blocks = !empty(trim($content));
+$has_inner_blocks = count($block->inner_blocks) > 0;
 
 if ($has_inner_blocks) {
     $poster_html = $content;
@@ -102,7 +102,7 @@ if ($has_inner_blocks) {
 }
 
 // Play icon SVG via sprite <use>
-$icon_name = $provider === 'youtube' ? "youtube-play-{$play_icon_style}" : "generic-play-{$play_icon_style}";
+$icon_name = $provider === 'youtube' ? 'youtube-play' : 'generic-play';
 $icon_height = $provider === 'youtube' ? '48' : '68';
 $svg = sprintf(
     '<svg class="sitchco-video__play-icon-svg" aria-hidden="true" width="68" height="%s"><use href="#icon-%s"></use></svg>',
@@ -112,7 +112,8 @@ $svg = sprintf(
 
 // Play button (ACCS-01, ACCS-02)
 $play_button = sprintf(
-    '<button class="sitchco-video__play-button" aria-label="%s" style="position:absolute;left:%s%%;top:%s%%;transform:translate(-50%%,-50%%)">%s</button>',
+    '<button class="sitchco-video__play-button sitchco-video__play-button--%s" aria-label="%s" style="position:absolute;left:%s%%;top:%s%%;transform:translate(-50%%,-50%%)">%s</button>',
+    esc_attr($play_icon_style),
     esc_attr(sprintf('Play video: %s', $video_title)),
     esc_attr($play_icon_x),
     esc_attr($play_icon_y),

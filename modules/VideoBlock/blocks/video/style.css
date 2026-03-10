@@ -1,166 +1,210 @@
 .sitchco-video {
     position: relative;
+
+    /* Editor */
+
+    &__preview {
+        position: relative;
+        overflow: hidden;
+        line-height: 0;
+
+        &--modal-only {
+            border: 2px dashed #c3c4c7;
+            opacity: 0.85;
+        }
+    }
+
+    &__thumbnail {
+        width: 100%;
+        display: block;
+        object-fit: cover;
+    }
+
+    &__play-icon {
+        pointer-events: none;
+        z-index: 1;
+        line-height: 0;
+    }
+
+    &__loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+        background: #f0f0f0;
+    }
+
+    &__error {
+        padding: 12px 16px;
+        color: #cc1818;
+        background: #fcecec;
+        border: 1px solid #cc1818;
+        border-radius: 2px;
+
+        p { margin: 0; }
+    }
+
+    &__placeholder {
+        padding: 16px;
+        text-align: center;
+        color: #757575;
+        background: #f0f0f0;
+        border: 1px dashed #c3c4c7;
+
+        p { margin: 0; }
+    }
+
+    &__badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        padding: 2px 8px;
+        font-size: 11px;
+        line-height: 1.6;
+        font-weight: 600;
+        color: #1e1e1e;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 2px;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    &__modal-only-notice {
+        padding: 12px 16px;
+        margin: 8px 0 0;
+        font-size: 13px;
+        font-style: italic;
+        color: #757575;
+        background: #f0f0f0;
+        border-left: 4px solid #c3c4c7;
+    }
+
+    /* Shared */
+
+    &__play-icon-svg {
+        display: block;
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        transition: opacity 0.15s ease;
+    }
+
+    /* Frontend */
+
+    &__poster {
+        position: relative;
+        line-height: 0;
+    }
+
+    &__poster-img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    &__play-button {
+        --sitchco-play-bg: rgba(0, 0, 0, 0.8);
+        --sitchco-play-fg: #fff;
+        position: absolute;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        z-index: 2;
+        line-height: 0;
+
+        &--light {
+            --sitchco-play-bg: rgba(255, 255, 255, 0.8);
+            --sitchco-play-fg: #212121;
+        }
+    }
+
+    &__placeholder-poster {
+        background: #1a1a1a;
+        aspect-ratio: 16 / 9;
+    }
+
+    &__player {
+        width: 100%;
+        height: 100%;
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+    }
+
+    /* State: playing */
+
+    &--playing {
+        .sitchco-video__poster,
+        .sitchco-video__play-button {
+            display: none;
+        }
+    }
+
+    /* YouTube branding — higher specificity protects from theme overrides */
+
+    &[data-provider="youtube"] {
+        .sitchco-video__play-button--dark {
+            --sitchco-play-bg: rgba(0, 0, 0, 0.8);
+            --sitchco-play-fg: #fff;
+        }
+
+        .sitchco-video__play-button--light {
+            --sitchco-play-bg: rgba(255, 255, 255, 0.8);
+            --sitchco-play-fg: #212121;
+        }
+
+        .sitchco-video__play-button--red {
+            --sitchco-play-bg: #f00;
+            --sitchco-play-fg: #fff;
+        }
+    }
+
+    /* Modal player */
+
+    &__modal-player {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        margin: auto;
+
+        .sitchco-video__player {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        &--ready {
+            .sitchco-video__modal-poster-img,
+            .sitchco-video__spinner {
+                display: none;
+            }
+        }
+    }
+
+    &__modal-poster-img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    &__spinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: sitchco-spin 0.8s linear infinite;
+    }
 }
 
-/* Editor preview container */
-.sitchco-video__preview {
-    position: relative;
-    overflow: hidden;
-    line-height: 0;
-}
+/* Video modal dialog */
 
-/* Thumbnail image */
-.sitchco-video__thumbnail {
-    width: 100%;
-    display: block;
-    object-fit: cover;
-}
-
-/* Play icon overlay -- position is set via inline styles for X/Y control */
-.sitchco-video__play-icon {
-    pointer-events: none;
-    z-index: 1;
-    line-height: 0;
-}
-
-/* Play icon SVG base */
-.sitchco-video__play-icon-svg {
-    display: block;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-    transition: opacity 0.15s ease;
-}
-
-/* YouTube branded icon variants */
-.sitchco-video__play-icon-svg--youtube-dark,
-.sitchco-video__play-icon-svg--youtube-light,
-.sitchco-video__play-icon-svg--youtube-red {
-    width: 68px;
-    height: 48px;
-}
-
-/* Generic icon variants */
-.sitchco-video__play-icon-svg--generic-dark,
-.sitchco-video__play-icon-svg--generic-light {
-    width: 68px;
-    height: 68px;
-}
-
-/* Loading state */
-.sitchco-video__loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    background: #f0f0f0;
-}
-
-/* Error message */
-.sitchco-video__error {
-    padding: 12px 16px;
-    color: #cc1818;
-    background: #fcecec;
-    border: 1px solid #cc1818;
-    border-radius: 2px;
-}
-
-.sitchco-video__error p {
-    margin: 0;
-}
-
-/* No-URL placeholder hint */
-.sitchco-video__placeholder {
-    padding: 16px;
-    text-align: center;
-    color: #757575;
-    background: #f0f0f0;
-    border: 1px dashed #c3c4c7;
-}
-
-.sitchco-video__placeholder p {
-    margin: 0;
-}
-
-/* Modal Only mode visual indicator */
-.sitchco-video__preview--modal-only {
-    border: 2px dashed #c3c4c7;
-    opacity: 0.85;
-}
-
-/* Modal Only badge overlay */
-.sitchco-video__badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 2px 8px;
-    font-size: 11px;
-    line-height: 1.6;
-    font-weight: 600;
-    color: #1e1e1e;
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 2px;
-    z-index: 2;
-    pointer-events: none;
-}
-
-/* Modal Only informational notice */
-.sitchco-video__modal-only-notice {
-    padding: 12px 16px;
-    margin: 8px 0 0;
-    font-size: 13px;
-    font-style: italic;
-    color: #757575;
-    background: #f0f0f0;
-    border-left: 4px solid #c3c4c7;
-}
-
-/* Frontend poster and player */
-
-.sitchco-video__poster {
-    position: relative;
-    line-height: 0;
-}
-
-.sitchco-video__poster-img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.sitchco-video__play-button {
-    position: absolute;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    z-index: 2;
-    line-height: 0;
-}
-
-.sitchco-video__placeholder-poster {
-    background: #1a1a1a;
-    aspect-ratio: 16 / 9;
-}
-
-.sitchco-video--playing .sitchco-video__poster {
-    display: none;
-}
-
-.sitchco-video--playing .sitchco-video__play-button {
-    display: none;
-}
-
-.sitchco-video__player {
-    width: 100%;
-    height: 100%;
-}
-
-.sitchco-video__player iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-
-/* Video modal (ModalType::VIDEO) */
 .sitchco-modal--video {
     --modal-container-bg: #000;
     --modal-container-color: #fff;
@@ -168,56 +212,10 @@
     --modal-close-color: #fff;
     --modal-close-top: 0.5rem;
     --modal-close-right: 0.5rem;
-}
 
-.sitchco-modal--video::backdrop {
-    background: rgb(0 0 0 / 0.85);
-}
-
-.sitchco-video__modal-player {
-    position: relative;
-    width: 100%;
-    max-width: 960px;
-    margin: auto;
-}
-
-.sitchco-video__modal-poster-img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.sitchco-video__modal-player--ready .sitchco-video__modal-poster-img,
-.sitchco-video__modal-player--ready .sitchco-video__spinner {
-    display: none;
-}
-
-.sitchco-video__modal-player .sitchco-video__player {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-}
-
-.sitchco-video__modal-player .sitchco-video__player iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-}
-
-/* Spinner */
-.sitchco-video__spinner {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: sitchco-spin 0.8s linear infinite;
+    &::backdrop {
+        background: rgb(0 0 0 / 0.85);
+    }
 }
 
 @keyframes sitchco-spin {
