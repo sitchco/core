@@ -7,6 +7,8 @@ import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { addQueryArgs } from '@wordpress/url';
 import metadata from './block.json';
+import youtubePlaySvg from '../../assets/images/svg-sprite/icon-youtube-play.svg?raw';
+import genericPlaySvg from '../../assets/images/svg-sprite/icon-generic-play.svg?raw';
 
 /**
  * Detect video provider from URL.
@@ -50,38 +52,13 @@ function upgradeThumbnailUrl(url, provider) {
 }
 
 /**
- * Return play icon SVG JSX based on provider.
- *
- * Colors are controlled via CSS custom properties (--sitchco-play-bg, --sitchco-play-fg)
- * set on the parent element via style modifier classes.
+ * Play icon SVG markup, sourced from sprite SVG files via Vite ?raw import.
+ * The canonical shapes live in assets/images/svg-sprite/icon-*.svg.
+ * PHP frontend uses these same files via the compiled SVG sprite.
  */
 function getPlayIconSvg(provider) {
-    if (provider === 'youtube') {
-        return (
-            <svg
-                width="68"
-                height="48"
-                viewBox="0 0 68 48"
-                xmlns="http://www.w3.org/2000/svg"
-                className="sitchco-video__play-icon-svg"
-            >
-                <rect width="68" height="48" rx="12" fill="var(--sitchco-play-bg, rgba(0, 0, 0, 0.8))" />
-                <polygon points="27,12 27,36 50,24" fill="var(--sitchco-play-fg, #fff)" />
-            </svg>
-        );
-    }
-    return (
-        <svg
-            width="68"
-            height="68"
-            viewBox="0 0 68 68"
-            xmlns="http://www.w3.org/2000/svg"
-            className="sitchco-video__play-icon-svg"
-        >
-            <circle cx="34" cy="34" r="34" fill="var(--sitchco-play-bg, rgba(0, 0, 0, 0.8))" />
-            <polygon points="26,18 52,34 26,50" fill="var(--sitchco-play-fg, #fff)" />
-        </svg>
-    );
+    const svg = provider === 'youtube' ? youtubePlaySvg : genericPlaySvg;
+    return <span dangerouslySetInnerHTML={{ __html: svg }} />;
 }
 
 function Edit({ attributes, setAttributes, clientId }) {

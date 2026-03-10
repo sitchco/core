@@ -6,25 +6,16 @@ Source review: `modules/VideoBlock/code-review.md`
 
 ---
 
-## 2. Duplicated thumbnail URL upgrade logic (JS + PHP)
+## ~~2. Duplicated thumbnail URL upgrade logic (JS + PHP)~~ RESOLVED
 
-**Severity: Medium**
+**Severity: Medium** → **Resolved in quick-3**
 
-The same regex replacements exist in two places with no shared abstraction:
+Both sides now have named functions with matching signatures, documented as intentional mirrors:
 
-- **render.php:48-65** `sitchco_video_upgrade_thumbnail_url()` as a named function
-- **editor.jsx:348-353** inline in JSX as a nested ternary
+- **VideoBlockRenderer.php:44-55** — `VideoBlockRenderer::upgradeThumbnailUrl()`
+- **editor.jsx:42-50** — `upgradeThumbnailUrl()` with docblock: "Mirrors VideoBlockRenderer::upgradeThumbnailUrl() in PHP"
 
-```jsx
-// editor.jsx - inlined
-provider === 'youtube'
-    ? oembedData.thumbnail_url.replace(/\/hqdefault\.jpg$/, '/maxresdefault.jpg')
-    : provider === 'vimeo'
-      ? oembedData.thumbnail_url.replace(/_\d+x\d+/, '_1280x720')
-      : oembedData.thumbnail_url
-```
-
-This logic will drift. Since these run in different environments (PHP vs JS), true sharing isn't possible, but they should at least be named functions with matching signatures and documented as intentional mirrors.
+No further action needed.
 
 ---
 
@@ -36,9 +27,9 @@ Adding a third provider (e.g., Dailymotion) would require changes in **at least 
 
 | File | Locations |
 |------|-----------|
-| editor.jsx | `detectProvider()`, `getPlayIconSvg()`, thumbnail ternary, `playIconStyleOptions` |
-| render.php | `sitchco_video_upgrade_thumbnail_url()`, `sitchco_video_extract_id()`, icon name selection |
-| view.js | `handlePlay()` provider branch, start time extraction, SDK loader, player creator |
+| editor.jsx | `detectProvider()`, `getPlayIconSvg()`, `upgradeThumbnailUrl()`, `playIconStyleOptions` |
+| VideoBlockRenderer.php | `upgradeThumbnailUrl()`, `extractVideoId()`, `buildPlayButton()` icon name/dimensions |
+| view.js | `handlePlay()` provider branch, `extractYouTubeStartTime()`/`extractVimeoStartTime()`, `loadYouTubeAPI()`/`loadVimeoSDK()`, `createYouTubePlayer()`/`createVimeoPlayer()`, `handleModalShow()` resume branch |
 
 The spec explicitly notes "architecture supports [provider expansion], but no implementation." The current structure doesn't support it -- it actively resists it. A provider strategy (even a simple object map per file) would contain each provider's behavior in one place.
 
@@ -48,7 +39,7 @@ The spec explicitly notes "architecture supports [provider expansion], but no im
 
 **Severity: Low**
 
-The editor renders inline SVGs (`getPlayIconSvg()`) while the frontend uses SVG sprites via `<use href="#icon-...">`. This means:
+The editor renders inline SVGs (`getPlayIconSvg()` in editor.jsx:58) while the frontend uses SVG sprites via `<use href="#icon-...">` (`VideoBlockRenderer::buildPlayButton()` at VideoBlockRenderer.php:246). This means:
 - Two different rendering codepaths to maintain
 - Styling mechanisms diverge (editor uses direct attributes, frontend uses sprite inheritance)
 - Visual parity between editor and frontend can't be guaranteed structurally
