@@ -14,6 +14,13 @@
  *
  * Privacy: YouTube uses youtube-nocookie.com, Vimeo uses dnt:true.
  * No provider SDK, iframe, or CDN resource loads before user interacts.
+ *
+ * Phase 4 additions:
+ * - activePlayers registry for mutual exclusion (MXCL-01, MXCL-02)
+ * - Lifecycle hooks: video-play, video-pause, video-ended, video-progress (ANLT-01 -- ANLT-03, EXTN-01, EXTN-03)
+ * - video-request-pause subscriber (EXTN-02, NOOP-02)
+ * - Milestone progress polling at 25/50/75% (ANLT-02)
+ * - JS filters for player parameters (EXTN-04, EXTN-05)
  */
 
 /**
@@ -25,10 +32,164 @@ let ytAPIPromise = null;
 
 /**
  * Modal player instance storage.
- * Maps modalId -> { player: SDKPlayer|null, provider: string, loading: boolean }
+ * Maps modalId -> { player: SDKPlayer|null, provider: string, loading: boolean, cancelled: boolean }
  * Enables pause on close and resume on reopen without creating duplicate iframes.
  */
 const modalPlayers = new Map();
+
+/**
+ * Active player registry for mutual exclusion.
+ * Maps videoId -> { player: SDKPlayer, provider: 'youtube'|'vimeo', url: string }
+ * Only one player is active at a time (MXCL-01).
+ */
+const activePlayers = new Map();
+
+/**
+ * Milestone polling interval storage.
+ * Maps videoId -> intervalId
+ */
+const pollIntervals = new Map();
+
+/**
+ * Tracks which milestones have fired per video.
+ * Maps videoId -> Set<number> (set of fired percentages: 25, 50, 75)
+ * Never cleared -- milestones fire at most once per page load.
+ */
+const milestonesFired = new Map();
+
+/**
+ * Progress milestones to poll for (percent values).
+ * 100% is handled by the ended event, not polling.
+ */
+const MILESTONES = [25, 50, 75];
+
+/**
+ * Pause a player by its provider video ID.
+ * No-ops if the videoId is not in the activePlayers registry.
+ *
+ * @param {string} videoId - Provider video ID.
+ */
+function pausePlayerById(videoId) {
+    const entry = activePlayers.get(videoId);
+    if (!entry) {
+        return;
+    }
+    if (entry.provider === 'youtube') {
+        entry.player.pauseVideo();
+    } else {
+        entry.player.pause();
+    }
+}
+
+/**
+ * Register a player as active, pausing all other active players first.
+ * Implements mutual exclusion (MXCL-01, MXCL-02): only one video plays at a time.
+ *
+ * @param {string} videoId - Provider video ID.
+ * @param {Object} player - SDK player instance.
+ * @param {'youtube'|'vimeo'} provider - Player provider.
+ * @param {string} url - Original video URL.
+ */
+function registerActivePlayer(videoId, player, provider, url) {
+    activePlayers.forEach(function (entry, id) {
+        if (id !== videoId) {
+            if (entry.provider === 'youtube') {
+                entry.player.pauseVideo();
+            } else {
+                entry.player.pause();
+            }
+        }
+    });
+
+    activePlayers.set(videoId, {
+        player: player,
+        provider: provider,
+        url: url,
+    });
+}
+
+/**
+ * Check milestone percentages and fire video-progress hooks for newly crossed thresholds.
+ * Handles seeking past multiple milestones correctly -- all crossed milestones fire.
+ *
+ * @param {string} videoId - Provider video ID.
+ * @param {'youtube'|'vimeo'} provider - Player provider.
+ * @param {string} url - Original video URL.
+ * @param {number} current - Current playback time in seconds.
+ * @param {number} duration - Total video duration in seconds.
+ */
+function checkMilestones(videoId, provider, url, current, duration) {
+    if (!duration || duration <= 0) {
+        return;
+    }
+
+    const pct = (current / duration) * 100;
+    const fired = milestonesFired.get(videoId);
+    MILESTONES.forEach(function (milestone) {
+        if (pct >= milestone && !fired.has(milestone)) {
+            fired.add(milestone);
+            sitchco.hooks.doAction('video-progress', {
+                id: videoId,
+                provider: provider,
+                url: url,
+                milestone: milestone,
+            });
+        }
+    });
+}
+
+/**
+ * Start polling for milestone progress on a playing video.
+ * Polls every 1 second. No-ops if polling is already active for this videoId.
+ *
+ * @param {string} videoId - Provider video ID.
+ * @param {Object} player - SDK player instance.
+ * @param {'youtube'|'vimeo'} provider - Player provider.
+ * @param {string} url - Original video URL.
+ */
+function startMilestonePolling(videoId, player, provider, url) {
+    if (pollIntervals.has(videoId)) {
+        return;
+    }
+    if (!milestonesFired.has(videoId)) {
+        milestonesFired.set(videoId, new Set());
+    }
+
+    let intervalId;
+    if (provider === 'youtube') {
+        intervalId = setInterval(function () {
+            const current = player.getCurrentTime();
+            const duration = player.getDuration();
+            checkMilestones(videoId, provider, url, current, duration);
+        }, 1000);
+    } else {
+        intervalId = setInterval(function () {
+            Promise.all([player.getCurrentTime(), player.getDuration()])
+                .then(function ([current, duration]) {
+                    checkMilestones(videoId, provider, url, current, duration);
+                })
+                .catch(function () {
+                    // Player may be destroyed mid-poll -- ignore silently
+                });
+        }, 1000);
+    }
+
+    pollIntervals.set(videoId, intervalId);
+}
+
+/**
+ * Stop milestone polling for a video.
+ * Does NOT clear milestonesFired -- milestones fire at most once per page load.
+ *
+ * @param {string} videoId - Provider video ID.
+ */
+function stopMilestonePolling(videoId) {
+    const intervalId = pollIntervals.get(videoId);
+    if (intervalId !== undefined) {
+        clearInterval(intervalId);
+        pollIntervals.delete(videoId);
+    }
+}
 
 function loadYouTubeAPI() {
     if (ytAPIPromise) {
@@ -59,12 +220,21 @@ function loadYouTubeAPI() {
  * Create a YouTube player inside the given container.
  * Uses youtube-nocookie.com for privacy (PRIV-02).
  * Autoplay on ready (INLN-05). Start time from URL (INLN-06).
+ * Fires lifecycle hooks: video-play, video-pause, video-ended (ANLT-01, ANLT-03, EXTN-01, EXTN-03).
+ * Applies sitchco/video/playerVars/youtube filter before player creation (EXTN-04).
  *
  * When modalId is provided (modal mode): creates a wrapper div inside container,
  * stores the player reference in modalPlayers on ready, and adds a --ready class.
  * When modalId is null (inline mode): uses container directly with no modalPlayers interaction.
+ *
+ * @param {Element} container - DOM element to create the player in.
+ * @param {string} videoId - YouTube video ID.
+ * @param {number} startTime - Start time in seconds.
+ * @param {string|null} modalId - Modal ID if in modal mode, null for inline.
+ * @param {string} url - Original video URL.
+ * @param {string} displayMode - Display mode ('inline', 'modal', 'modal-only').
  */
-function createYouTubePlayer(container, videoId, startTime, modalId) {
+function createYouTubePlayer(container, videoId, startTime, modalId, url, displayMode) {
     modalId = modalId || null;
     const target = modalId
         ? (function () {
@@ -77,18 +247,25 @@ function createYouTubePlayer(container, videoId, startTime, modalId) {
 
     loadYouTubeAPI()
         .then(function (YT) {
+            const defaultPlayerVars = {
+                autoplay: 1,
+                playsinline: 1,
+                enablejsapi: 1,
+                origin: window.location.origin,
+                start: startTime,
+                rel: 0,
+                iv_load_policy: 3,
+            };
+            const playerVars = sitchco.hooks.applyFilters('sitchco/video/playerVars/youtube', defaultPlayerVars, {
+                url: url,
+                videoId: videoId,
+                displayMode: displayMode,
+            });
+
             new YT.Player(target, {
                 videoId: videoId,
                 host: 'https://www.youtube-nocookie.com',
-                playerVars: {
-                    autoplay: 1,
-                    playsinline: 1,
-                    enablejsapi: 1,
-                    origin: window.location.origin,
-                    start: startTime,
-                    rel: 0,
-                    iv_load_policy: 3,
-                },
+                playerVars: playerVars,
                 events: {
                     onReady: function (event) {
                         if (modalId) {
@@ -108,6 +285,42 @@ function createYouTubePlayer(container, videoId, startTime, modalId) {
                         }
 
                         event.target.playVideo();
+                    },
+                    onStateChange: function (event) {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            registerActivePlayer(videoId, event.target, 'youtube', url);
+                            sitchco.hooks.doAction('video-play', {
+                                id: videoId,
+                                provider: 'youtube',
+                                url: url,
+                            });
+
+                            startMilestonePolling(videoId, event.target, 'youtube', url);
+                        } else if (event.data === YT.PlayerState.PAUSED) {
+                            sitchco.hooks.doAction('video-pause', {
+                                id: videoId,
+                                provider: 'youtube',
+                                url: url,
+                            });
+
+                            stopMilestonePolling(videoId);
+                        } else if (event.data === YT.PlayerState.ENDED) {
+                            sitchco.hooks.doAction('video-progress', {
+                                id: videoId,
+                                provider: 'youtube',
+                                url: url,
+                                milestone: 100,
+                            });
+
+                            sitchco.hooks.doAction('video-ended', {
+                                id: videoId,
+                                provider: 'youtube',
+                                url: url,
+                            });
+
+                            stopMilestonePolling(videoId);
+                            activePlayers.delete(videoId);
+                        }
                     },
                 },
             });
@@ -129,12 +342,21 @@ function loadVimeoSDK() {
  * Create a Vimeo player inside the given container.
  * Uses dnt:true for privacy (PRIV-03).
  * Autoplay on creation (INLN-05). Start time from URL (INLN-06).
+ * Fires lifecycle hooks: video-play, video-pause, video-ended (ANLT-01, ANLT-03, EXTN-01, EXTN-03).
+ * Applies sitchco/video/playerVars/vimeo filter before player creation (EXTN-05).
  *
  * When modalId is provided (modal mode): creates a wrapper div inside container,
  * stores the player reference in modalPlayers on ready, and adds a --ready class.
  * When modalId is null (inline mode): uses container directly with no modalPlayers interaction.
+ *
+ * @param {Element} container - DOM element to create the player in.
+ * @param {string} videoId - Vimeo video ID.
+ * @param {number} startTime - Start time in seconds.
+ * @param {string|null} modalId - Modal ID if in modal mode, null for inline.
+ * @param {string} url - Original video URL.
+ * @param {string} displayMode - Display mode ('inline', 'modal', 'modal-only').
  */
-function createVimeoPlayer(container, videoId, startTime, modalId) {
+function createVimeoPlayer(container, videoId, startTime, modalId, url, displayMode) {
     modalId = modalId || null;
     loadVimeoSDK()
         .then(function () {
@@ -147,7 +369,7 @@ function createVimeoPlayer(container, videoId, startTime, modalId) {
                   })()
                 : container;
 
-            const player = new Vimeo.Player(target, {
+            const defaultOptions = {
                 id: parseInt(videoId, 10),
                 autoplay: true,
                 dnt: true,
@@ -156,7 +378,14 @@ function createVimeoPlayer(container, videoId, startTime, modalId) {
                 portrait: false,
                 badge: false,
                 vimeo_logo: false,
+            };
+            const options = sitchco.hooks.applyFilters('sitchco/video/playerVars/vimeo', defaultOptions, {
+                url: url,
+                videoId: videoId,
+                displayMode: displayMode,
             });
+
+            const player = new Vimeo.Player(target, options);
 
             player.ready().then(function () {
                 if (modalId) {
@@ -177,6 +406,45 @@ function createVimeoPlayer(container, videoId, startTime, modalId) {
                 if (startTime > 0) {
                     player.setCurrentTime(startTime);
                 }
+            });
+
+            player.on('play', function () {
+                registerActivePlayer(videoId, player, 'vimeo', url);
+                sitchco.hooks.doAction('video-play', {
+                    id: videoId,
+                    provider: 'vimeo',
+                    url: url,
+                });
+
+                startMilestonePolling(videoId, player, 'vimeo', url);
+            });
+
+            player.on('pause', function () {
+                sitchco.hooks.doAction('video-pause', {
+                    id: videoId,
+                    provider: 'vimeo',
+                    url: url,
+                });
+
+                stopMilestonePolling(videoId);
+            });
+
+            player.on('ended', function () {
+                sitchco.hooks.doAction('video-progress', {
+                    id: videoId,
+                    provider: 'vimeo',
+                    url: url,
+                    milestone: 100,
+                });
+
+                sitchco.hooks.doAction('video-ended', {
+                    id: videoId,
+                    provider: 'vimeo',
+                    url: url,
+                });
+
+                stopMilestonePolling(videoId);
+                activePlayers.delete(videoId);
             });
         })
         .catch(function (err) {
@@ -357,9 +625,9 @@ function handleModalShow(modal) {
     });
 
     if (provider === 'youtube') {
-        createYouTubePlayer(playerContainer, videoId, startTime, modalId);
+        createYouTubePlayer(playerContainer, videoId, startTime, modalId, url, 'modal');
     } else if (provider === 'vimeo') {
-        createVimeoPlayer(playerContainer, videoId, startTime, modalId);
+        createVimeoPlayer(playerContainer, videoId, startTime, modalId, url, 'modal');
     }
 }
 
@@ -395,9 +663,9 @@ function handlePlay(wrapper) {
     const url = wrapper.dataset.url;
     const videoId = wrapper.dataset.videoId;
     if (provider === 'youtube') {
-        createYouTubePlayer(playerContainer, videoId, extractYouTubeStartTime(url));
+        createYouTubePlayer(playerContainer, videoId, extractYouTubeStartTime(url), null, url, 'inline');
     } else if (provider === 'vimeo') {
-        createVimeoPlayer(playerContainer, videoId, extractVimeoStartTime(url));
+        createVimeoPlayer(playerContainer, videoId, extractVimeoStartTime(url), null, url, 'inline');
     }
 }
 
@@ -482,6 +750,20 @@ function initVideoBlock(wrapper) {
 // Register modal hooks at priority 20 (after UIModal core at 10).
 sitchco.hooks.addAction('ui-modal-show', handleModalShow, 20, 'video-block');
 sitchco.hooks.addAction('ui-modal-hide', handleModalHide, 20, 'video-block');
+
+// External pause request -- callers can pause a specific video by provider video ID.
+// SDK fires native pause event when pauseVideo()/pause() is called, which triggers
+// the onStateChange(PAUSED)/Vimeo 'pause' listener, so video-pause hook fires naturally.
+// (EXTN-02, NOOP-02)
+sitchco.hooks.addAction(
+    'video-request-pause',
+    function (videoId) {
+        pausePlayerById(videoId);
+        stopMilestonePolling(videoId);
+    },
+    10,
+    'video-block'
+);
 
 // Register with sitchco lifecycle (runs on DOMContentLoaded)
 sitchco.register(function initVideoBlocks() {
