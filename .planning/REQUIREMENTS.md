@@ -99,7 +99,7 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **EXTN-03**: JS action `video-ended` fires when a video reaches the end
 - [ ] **EXTN-04**: JS filter `sitchco/video/playerVars/youtube` allows overriding YouTube player parameters
 - [ ] **EXTN-05**: JS filter `sitchco/video/playerVars/vimeo` allows overriding Vimeo player parameters
-- [ ] **EXTN-06**: PHP filter `sitchco/video/play-icon/svg` allows replacing play button SVG markup
+- [x] **EXTN-06**: PHP filter `sitchco/video/play-icon/svg` allows replacing play button SVG markup
 
 ### No-Op Behavior
 
@@ -200,7 +200,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EXTN-03 | Phase 4 | Pending |
 | EXTN-04 | Phase 4 | Pending |
 | EXTN-05 | Phase 4 | Pending |
-| EXTN-06 | Phase 4 | Pending |
+| EXTN-06 | Phase 4 | Complete |
 | NOOP-02 | Phase 4 | Pending |
 
 **Coverage:**
