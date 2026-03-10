@@ -135,8 +135,6 @@ class VideoBlockRenderer
             }
         }
 
-        $play_button = self::buildPlayButton($provider, $play_icon_style, $play_icon_x, $play_icon_y, $video_title);
-
         // Wrapper attributes
         $wrapper_attrs = [
             'class' => 'sitchco-video',
@@ -197,16 +195,19 @@ class VideoBlockRenderer
                 // Fallback for backward compatibility — UIModal should be passed via VideoBlock::uiModal()
                 $uiModal = $GLOBALS['SitchcoContainer']->get(UIModal::class);
             }
-            $uiModal->loadModal(new ModalData($modal_id, $video_title, $modal_content, ModalType::VIDEO));
+            $modalData = new ModalData($modal_id, $video_title, $modal_content, ModalType::VIDEO);
+            $uiModal->loadModal($modalData);
 
             // Modal-only: render nothing on page
             if ($display_mode === 'modal-only') {
                 return '';
             }
 
-            // Modal mode: add modal trigger data attribute to wrapper
-            $wrapper_attrs['data-modal-id'] = $modal_id;
+            // Modal mode: use normalized ID (ModalData may prefix digit-leading IDs with "modal-")
+            $wrapper_attrs['data-modal-id'] = $modalData->id();
         }
+
+        $play_button = self::buildPlayButton($provider, $play_icon_style, $play_icon_x, $play_icon_y, $video_title);
 
         // Phase 5 - Accessibility attributes (ACCS-03)
         if ($click_behavior === 'poster') {
