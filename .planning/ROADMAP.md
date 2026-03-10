@@ -79,11 +79,11 @@ Plans:
   2. GTM dataLayer receives interaction events for video start, pause, and progress milestones (25%, 50%, 75%, 100%) with provider and URL metadata
   3. External JS code can subscribe to video-play, video-pause, and video-ended actions, and can programmatically pause a video by ID via the video-pause action
   4. External JS code can filter YouTube and Vimeo player parameters, and PHP code can filter the play icon SVG markup
-**Plans**: TBD
+**Plans:** 2 plans
 
 Plans:
-- [ ] 04-01: TBD
-- [ ] 04-02: TBD
+- [ ] 04-01-PLAN.md -- Player registry, mutual exclusion, JS lifecycle hooks (video-play/pause/ended/progress), milestone polling, JS player parameter filters, video-request-pause subscriber
+- [ ] 04-02-PLAN.md -- PHP play icon SVG filter (EXTN-06), HOOK_SUFFIX fix, PHPUnit tests
 
 ## Progress
 
