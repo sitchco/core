@@ -1,7 +1,7 @@
 {
     "apiVersion": 3,
     "name": "sitchco/video",
-    "title": "Video",
+    "title": "Video Embed",
     "category": "sitchco",
     "icon": "video-alt3",
     "description": "Privacy-respecting video embed with poster, play icon, and optional modal display.",

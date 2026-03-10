@@ -1,5 +1,5 @@
 import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps, InnerBlocks, InspectorControls, useInnerBlocksProps } from '@wordpress/block-editor';
+import { useBlockProps, InnerBlocks, InspectorControls } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
 import { Placeholder, TextControl, SelectControl, RangeControl, PanelBody, Spinner } from '@wordpress/components';
 import { useState, useEffect, useRef } from '@wordpress/element';
@@ -86,15 +86,19 @@ function Edit({ attributes, setAttributes, clientId }) {
     } = attributes;
     const isModalMode = displayMode === 'modal' || displayMode === 'modal-only';
     const isModalOnly = displayMode === 'modal-only';
-    const hasInnerBlocks = useSelect(
-        (select) => select('core/block-editor').getBlockCount(clientId) > 0,
-        [clientId]
-    );
+    const hasInnerBlocks = useSelect((select) => select('core/block-editor').getBlockCount(clientId) > 0, [clientId]);
 
     const [oembedData, setOembedData] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const abortControllerRef = useRef(null);
+    const videoTitleEditedRef = useRef(_videoTitleEdited);
+    const modalIdEditedRef = useRef(_modalIdEdited);
+
+    useEffect(() => {
+        videoTitleEditedRef.current = _videoTitleEdited;
+        modalIdEditedRef.current = _modalIdEdited;
+    }, [_videoTitleEdited, _modalIdEdited]);
 
     // Play icon style options are provider-conditional
     const playIconStyleOptions =
@@ -141,7 +145,6 @@ function Edit({ attributes, setAttributes, clientId }) {
 
     // oEmbed fetch with 500ms debounce
     useEffect(() => {
-        const provider = detectProvider(url);
         if (!url || !provider) {
             setOembedData(null);
             setIsLoading(false);
@@ -171,11 +174,11 @@ function Edit({ attributes, setAttributes, clientId }) {
                     setError(null);
 
                     // Auto-populate videoTitle if not manually edited
-                    if (response.title && !_videoTitleEdited) {
+                    if (response.title && !videoTitleEditedRef.current) {
                         setAttributes({ videoTitle: response.title });
                     }
                     // Auto-populate modalId if not manually edited
-                    if (response.title && !_modalIdEdited) {
+                    if (response.title && !modalIdEditedRef.current) {
                         setAttributes({ modalId: slugify(response.title) });
                     }
                 })
@@ -260,7 +263,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                         />
                     </PanelBody>
                 )}
-                {url && (
+                {url && !isModalOnly && (
                     <PanelBody title={__('Play Icon', 'sitchco')} initialOpen={true}>
                         <SelectControl
                             label={__('Icon Style', 'sitchco')}
@@ -333,26 +336,26 @@ function Edit({ attributes, setAttributes, clientId }) {
                 </div>
             )}
 
-            {url && !hasInnerBlocks && oembedData && oembedData.thumbnail_url && (
-                <div className={'sitchco-video__preview' + (isModalOnly ? ' sitchco-video__preview--modal-only' : '')}>
+            {url && !isModalOnly && !hasInnerBlocks && oembedData && oembedData.thumbnail_url && (
+                <div
+                    className="sitchco-video__preview"
+                    style={
+                        oembedData.width && oembedData.height
+                            ? { aspectRatio: `${oembedData.width} / ${oembedData.height}` }
+                            : undefined
+                    }
+                >
                     <img
                         className="sitchco-video__thumbnail"
-                        src={oembedData.thumbnail_url}
+                        src={
+                            provider === 'youtube'
+                                ? oembedData.thumbnail_url.replace(/\/hqdefault\.jpg$/, '/maxresdefault.jpg')
+                                : provider === 'vimeo'
+                                  ? oembedData.thumbnail_url.replace(/_\d+x\d+/, '_1280x720')
+                                  : oembedData.thumbnail_url
+                        }
                         alt={oembedData.title || ''}
                     />
-                    <div
-                        className={`sitchco-video__play-icon sitchco-video__play-button--${playIconStyle}`}
-                        aria-hidden="true"
-                        style={{
-                            position: 'absolute',
-                            left: `${playIconX}%`,
-                            top: `${playIconY}%`,
-                            transform: 'translate(-50%, -50%)',
-                        }}
-                    >
-                        {getPlayIconSvg(provider)}
-                    </div>
-                    {isModalOnly && <span className="sitchco-video__badge">{__('Modal Only', 'sitchco')}</span>}
                 </div>
             )}
 
@@ -363,11 +366,36 @@ function Edit({ attributes, setAttributes, clientId }) {
             )}
 
             {isModalOnly ? (
-                <p className="sitchco-video__modal-only-notice">
-                    {__('Modal Only mode -- block content is not visible on the page.', 'sitchco')}
-                </p>
+                <Placeholder icon="video-alt3" label={__('Modal Only', 'sitchco')}>
+                    {url && (
+                        <>
+                            <p>
+                                <strong>{__('Modal ID:', 'sitchco')}</strong>{' '}
+                                {modalId || __('(auto-generated from title)', 'sitchco')}
+                            </p>
+                            <p>
+                                <strong>{__('URL:', 'sitchco')}</strong> {url}
+                            </p>
+                        </>
+                    )}
+                </Placeholder>
             ) : (
                 <InnerBlocks />
+            )}
+
+            {url && !isModalOnly && (
+                <div
+                    className={`sitchco-video__play-icon sitchco-video__play-button--${playIconStyle}`}
+                    aria-hidden="true"
+                    style={{
+                        position: 'absolute',
+                        left: `${playIconX}%`,
+                        top: `${playIconY}%`,
+                        transform: 'translate(-50%, -50%)',
+                    }}
+                >
+                    {getPlayIconSvg(provider)}
+                </div>
             )}
         </div>
     );

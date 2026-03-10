@@ -11,6 +11,7 @@
 use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\ModalType;
 use Sitchco\Modules\UIModal\UIModal;
+use Sitchco\Utils\Cache;
 
 if (empty($attributes['url'])) {
     echo $content;
@@ -27,13 +28,36 @@ if (!function_exists('sitchco_video_get_cached_oembed_data')) {
     function sitchco_video_get_cached_oembed_data(string $url): ?object
     {
         $cache_key = 'sitchco_voembed_' . md5($url);
-        $cached = get_transient($cache_key);
-        if ($cached !== false) {
-            return $cached ?: null;
+        $result = Cache::rememberTransient(
+            $cache_key,
+            function () use ($url) {
+                return _wp_oembed_get_object()->get_data($url, []) ?: '';
+            },
+            30 * DAY_IN_SECONDS,
+        );
+
+        return $result ?: null;
+    }
+}
+
+/**
+ * Upgrade oEmbed thumbnail URL to high-resolution variant.
+ *
+ * YouTube returns hqdefault.jpg (480x360 with letterbox bars) — upgrade to maxresdefault.jpg (1280x720).
+ * Vimeo returns tiny thumbnails (295x166) — rewrite CDN dimensions to 1280x720.
+ */
+if (!function_exists('sitchco_video_upgrade_thumbnail_url')) {
+    function sitchco_video_upgrade_thumbnail_url(string $url, string $provider): string
+    {
+        if ($provider === 'youtube') {
+            $url = preg_replace('#/hqdefault\.jpg$#', '/maxresdefault.jpg', $url);
         }
-        $oembed = _wp_oembed_get_object()->get_data($url, []);
-        set_transient($cache_key, $oembed ?: '', 30 * DAY_IN_SECONDS);
-        return $oembed ?: null;
+
+        if ($provider === 'vimeo') {
+            $url = preg_replace('/_\d+x\d+/', '_1280x720', $url);
+        }
+
+        return $url;
     }
 }
 
@@ -84,12 +108,12 @@ if ($has_inner_blocks) {
 } else {
     $oembed = sitchco_video_get_cached_oembed_data($url);
     if ($oembed && !empty($oembed->thumbnail_url)) {
+        $thumbnail_url = sitchco_video_upgrade_thumbnail_url($oembed->thumbnail_url, $provider);
+
         $poster_html = sprintf(
-            '<img class="sitchco-video__poster-img" src="%s" alt="%s" width="%s" height="%s" loading="lazy">',
-            esc_url($oembed->thumbnail_url),
+            '<img class="sitchco-video__poster-img" src="%s" alt="%s" loading="lazy">',
+            esc_url($thumbnail_url),
             esc_attr($oembed->title ?? ''),
-            esc_attr($oembed->width ?? ''),
-            esc_attr($oembed->height ?? ''),
         );
         $poster_style =
             $oembed->width && $oembed->height
@@ -103,9 +127,13 @@ if ($has_inner_blocks) {
 
 // Play icon SVG via sprite <use>
 $icon_name = $provider === 'youtube' ? 'youtube-play' : 'generic-play';
+$icon_width = '68';
 $icon_height = $provider === 'youtube' ? '48' : '68';
 $svg = sprintf(
-    '<svg class="sitchco-video__play-icon-svg" aria-hidden="true" width="68" height="%s"><use href="#icon-%s"></use></svg>',
+    '<svg class="sitchco-video__play-icon-svg" aria-hidden="true" width="%s" height="%s" viewBox="0 0 %s %s"><use href="#icon-%s"></use></svg>',
+    $icon_width,
+    $icon_height,
+    $icon_width,
     $icon_height,
     esc_attr($icon_name),
 );
@@ -143,7 +171,10 @@ if ($display_mode === 'modal' || $display_mode === 'modal-only') {
 
     // Always resolve oEmbed data for modal dialog content (even if InnerBlocks used for page poster)
     $modal_oembed = $oembed ?? sitchco_video_get_cached_oembed_data($url);
-    $thumb_url = $modal_oembed && !empty($modal_oembed->thumbnail_url) ? $modal_oembed->thumbnail_url : '';
+    $thumb_url =
+        $modal_oembed && !empty($modal_oembed->thumbnail_url)
+            ? sitchco_video_upgrade_thumbnail_url($modal_oembed->thumbnail_url, $provider)
+            : '';
     $aspect_w = $modal_oembed && !empty($modal_oembed->width) ? $modal_oembed->width : 16;
     $aspect_h = $modal_oembed && !empty($modal_oembed->height) ? $modal_oembed->height : 9;
 

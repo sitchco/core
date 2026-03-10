@@ -10,6 +10,7 @@ return [
         'wp-i18n',
         'wp-api-fetch',
         'wp-url',
+        'wp-data',
     ],
     'version' => '1.0.0',
 ];
