@@ -70,14 +70,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Mutual Exclusion
 
-- [ ] **MXCL-01**: Starting a second video (inline or modal) pauses the first
-- [ ] **MXCL-02**: Opening a video modal pauses any currently playing inline video
+- [x] **MXCL-01**: Starting a second video (inline or modal) pauses the first
+- [x] **MXCL-02**: Opening a video modal pauses any currently playing inline video
 
 ### Analytics
 
-- [ ] **ANLT-01**: GTM interaction event fires on video start: `{action: 'start', provider, url, id}`
-- [ ] **ANLT-02**: GTM interaction events fire at progress milestones: 25%, 50%, 75%, 100%
-- [ ] **ANLT-03**: GTM interaction event fires on video pause: `{action: 'pause'}`
+- [x] **ANLT-01**: GTM interaction event fires on video start: `{action: 'start', provider, url, id}`
+- [x] **ANLT-02**: GTM interaction events fire at progress milestones: 25%, 50%, 75%, 100%
+- [x] **ANLT-03**: GTM interaction event fires on video pause: `{action: 'pause'}`
 
 ### Privacy
 
@@ -94,17 +94,17 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Extension Points
 
-- [ ] **EXTN-01**: JS action `video-play` fires when a video starts playing with `{id, provider, url}` payload
-- [ ] **EXTN-02**: JS action `video-pause` allows external code to pause a video by ID
-- [ ] **EXTN-03**: JS action `video-ended` fires when a video reaches the end
-- [ ] **EXTN-04**: JS filter `sitchco/video/playerVars/youtube` allows overriding YouTube player parameters
-- [ ] **EXTN-05**: JS filter `sitchco/video/playerVars/vimeo` allows overriding Vimeo player parameters
+- [x] **EXTN-01**: JS action `video-play` fires when a video starts playing with `{id, provider, url}` payload
+- [x] **EXTN-02**: JS action `video-pause` allows external code to pause a video by ID
+- [x] **EXTN-03**: JS action `video-ended` fires when a video reaches the end
+- [x] **EXTN-04**: JS filter `sitchco/video/playerVars/youtube` allows overriding YouTube player parameters
+- [x] **EXTN-05**: JS filter `sitchco/video/playerVars/vimeo` allows overriding Vimeo player parameters
 - [x] **EXTN-06**: PHP filter `sitchco/video/play-icon/svg` allows replacing play button SVG markup
 
 ### No-Op Behavior
 
 - [x] **NOOP-01**: Video block with no URL set renders InnerBlocks without play icon or click-to-play behavior
-- [ ] **NOOP-02**: Video block does not auto-pause on visibility changes (external code uses `video-pause` hook)
+- [x] **NOOP-02**: Video block does not auto-pause on visibility changes (external code uses `video-pause` hook)
 
 ## v2 Requirements
 
@@ -190,18 +190,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TRIG-03 | Phase 3 | Complete |
 | TRIG-04 | Phase 3 | Complete |
 | ACCS-04 | Phase 3 | Complete |
-| MXCL-01 | Phase 4 | Pending |
-| MXCL-02 | Phase 4 | Pending |
-| ANLT-01 | Phase 4 | Pending |
-| ANLT-02 | Phase 4 | Pending |
-| ANLT-03 | Phase 4 | Pending |
-| EXTN-01 | Phase 4 | Pending |
-| EXTN-02 | Phase 4 | Pending |
-| EXTN-03 | Phase 4 | Pending |
-| EXTN-04 | Phase 4 | Pending |
-| EXTN-05 | Phase 4 | Pending |
+| MXCL-01 | Phase 4 | Complete |
+| MXCL-02 | Phase 4 | Complete |
+| ANLT-01 | Phase 4 | Complete |
+| ANLT-02 | Phase 4 | Complete |
+| ANLT-03 | Phase 4 | Complete |
+| EXTN-01 | Phase 4 | Complete |
+| EXTN-02 | Phase 4 | Complete |
+| EXTN-03 | Phase 4 | Complete |
+| EXTN-04 | Phase 4 | Complete |
+| EXTN-05 | Phase 4 | Complete |
 | EXTN-06 | Phase 4 | Complete |
-| NOOP-02 | Phase 4 | Pending |
+| NOOP-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 60 total
