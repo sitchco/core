@@ -114,9 +114,9 @@ class VideoBlockTest extends TestCase
             'Poster img should have sitchco-video__poster-img class',
         );
         $this->assertStringContainsString(
-            'https://img.youtube.com/vi/oembed_thumb_test/hqdefault.jpg',
+            'https://img.youtube.com/vi/oembed_thumb_test/maxresdefault.jpg',
             $output,
-            'Poster img src should be the oEmbed thumbnail URL',
+            'Poster img src should be the upgraded (maxresdefault) oEmbed thumbnail URL',
         );
         $this->restoreHttp();
     }
@@ -702,8 +702,8 @@ class VideoBlockTest extends TestCase
         $module = $this->container->get(VideoBlock::class);
         $renderFile = $module->blocksPath()->append('video/render.php')->value();
 
-        // Mock $block as a simple object (render.php receives $block but Phase 1 doesn't use it)
         $block = new \stdClass();
+        $block->inner_blocks = $content !== '' ? [true] : [];
 
         ob_start();
         // Scope the include so that $attributes, $content, $block are available
