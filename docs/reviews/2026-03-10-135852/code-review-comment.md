@@ -109,7 +109,7 @@ function slugify(str) {
 // slugify("...") -> "", slugify("...") -> ""
 ```
 
-Fix: add a non-empty fallback (e.g., use video ID) or adopt transliteration.
+Fix: fall back to the video ID (always available, always ASCII) when `slugify()` returns empty. The PHP renderer already uses `sanitize_title()` as a fallback, so the server side is already correct.
 
 **Verify:** Create a video block with a non-Latin title. The modalId should be non-empty and the modal should open.
 
@@ -135,17 +135,17 @@ The `$GLOBALS['SitchcoContainer']` fallback is unreachable — the only caller a
 
 ### `view.js:42-56` — YouTube API promise never rejects
 
-`ytAPIPromise` has no `reject` parameter. `sitchco.loadScript()`'s rejection is discarded. If the YouTube CDN is unreachable, the promise hangs forever, the poster is already hidden, and the user sees a black box with no recovery. Wire `loadScript()`'s rejection and optionally add a timeout.
+`ytAPIPromise` has no `reject` parameter. `sitchco.loadScript()`'s rejection is discarded. If the YouTube CDN is unreachable, the promise hangs forever, the poster is already hidden, and the user sees a black box with no recovery. Wire `loadScript()`'s rejection and add a 10-second timeout. On failure, restore the poster image and show an error message overlay so the user can retry.
 
-**Verify:** Block the YouTube CDN URL and attempt playback. Should show an error state, not a permanent black box.
+**Verify:** Block the YouTube CDN URL and attempt playback. Should restore poster and show an error message after 10 seconds.
 
 ---
 
 ### `editor.jsx:20-24` / `VideoBlockRenderer.php:64-78` — Provider and URL validation gaps
 
-The editor broadly matches any `youtube.com/` or `vimeo.com/` URL, but the runtime extractor only handles specific patterns. Playlist, channel, and `live/` URLs get provider-tagged but produce empty video IDs, resulting in a broken player on click. Tighten editor detection, expand extraction regexes, or add an empty-video-ID guard.
+The editor broadly matches any `youtube.com/` or `vimeo.com/` URL, but the runtime extractor only handles specific patterns. Playlist, channel, and `live/` URLs get provider-tagged but produce empty video IDs, resulting in a broken player on click. Handle oEmbed 404 errors in the editor by showing a "URL not supported" message (WP core's oEmbed proxy already rejects unsupported URL formats). Add an empty-video-ID guard in the PHP renderer as a safety net.
 
-**Verify:** Paste a YouTube playlist URL. Block should either reject it or handle it gracefully.
+**Verify:** Paste a YouTube playlist URL. Editor should display an error. Paste a channel URL — should also show an error.
 
 ---
 
