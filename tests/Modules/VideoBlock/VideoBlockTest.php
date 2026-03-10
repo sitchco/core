@@ -48,8 +48,6 @@ class VideoBlockTest extends TestCase
             'playIconX' => 50,
             'playIconY' => 50,
             'clickBehavior' => 'poster',
-            '_videoTitleEdited' => false,
-            '_modalIdEdited' => false,
         ];
         $content = '<p>Inner blocks content here</p>';
         $output = $this->renderBlock($attributes, $content);
@@ -69,8 +67,6 @@ class VideoBlockTest extends TestCase
             'playIconX' => 50,
             'playIconY' => 50,
             'clickBehavior' => 'poster',
-            '_videoTitleEdited' => false,
-            '_modalIdEdited' => false,
         ];
         $content = '<p>Inner blocks content here</p>';
         $output = $this->renderBlock($attributes, $content);
@@ -661,8 +657,6 @@ class VideoBlockTest extends TestCase
                 'playIconX' => 50,
                 'playIconY' => 50,
                 'clickBehavior' => 'poster',
-                '_videoTitleEdited' => false,
-                '_modalIdEdited' => false,
             ],
             $overrides,
         );
