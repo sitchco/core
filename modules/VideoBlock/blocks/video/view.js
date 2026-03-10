@@ -96,6 +96,12 @@ function createYouTubePlayer(container, videoId, startTime, modalId) {
                             if (entry) {
                                 entry.player = event.target;
                                 entry.loading = false;
+
+                                if (entry.cancelled) {
+                                    entry.cancelled = false;
+                                    event.target.pauseVideo();
+                                    return;
+                                }
                             }
 
                             container.classList.add('sitchco-video__modal-player--ready');
@@ -158,6 +164,12 @@ function createVimeoPlayer(container, videoId, startTime, modalId) {
                     if (entry) {
                         entry.player = player;
                         entry.loading = false;
+
+                        if (entry.cancelled) {
+                            entry.cancelled = false;
+                            player.pause();
+                            return;
+                        }
                     }
 
                     container.classList.add('sitchco-video__modal-player--ready');
@@ -209,12 +221,32 @@ function extractYouTubeStartTime(url) {
 
 /**
  * Extract start time (in seconds) from a Vimeo URL.
- * Handles: #t=90s, #t=90
+ * Handles: #t=90s, #t=90, #t=1m30s, #t=1h2m30s
  */
 function extractVimeoStartTime(url) {
     const hash = url.split('#')[1] || '';
-    const match = hash.match(/t=(\d+)s?/);
-    return match ? parseInt(match[1], 10) : 0;
+    const tMatch = hash.match(/t=([\dhms]+)/);
+    if (!tMatch) {
+        return 0;
+    }
+
+    const t = tMatch[1];
+    const hMatch = t.match(/(\d+)h/);
+    const mMatch = t.match(/(\d+)m/);
+    const sMatch = t.match(/(\d+)s?$/);
+    let seconds = 0;
+    if (hMatch) {
+        seconds += parseInt(hMatch[1], 10) * 3600;
+    }
+    if (mMatch) {
+        seconds += parseInt(mMatch[1], 10) * 60;
+    }
+    if (sMatch && !mMatch && !hMatch) {
+        seconds = parseInt(sMatch[1], 10);
+    } else if (sMatch) {
+        seconds += parseInt(sMatch[1], 10);
+    }
+    return seconds;
 }
 
 /**
@@ -258,10 +290,18 @@ function bindKeyboardTrigger(element, callback, options) {
  * Handle modal hide event from UIModal hook.
  * Pauses video on any close method (Escape, backdrop, close button).
  * Skips non-video modals (no modalPlayers entry).
+ * If the SDK is still loading, sets a cancellation flag so the onReady
+ * callback won't autoplay after the modal has already been closed.
  */
 function handleModalHide(modal) {
     const entry = modalPlayers.get(modal.id);
-    if (!entry || !entry.player) {
+    if (!entry) {
+        return;
+    }
+    if (!entry.player) {
+        if (entry.loading) {
+            entry.cancelled = true;
+        }
         return;
     }
     if (entry.provider === 'youtube') {
@@ -289,6 +329,8 @@ function handleModalShow(modal) {
     const entry = modalPlayers.get(modalId);
     // Resume existing player
     if (entry && entry.player) {
+        entry.cancelled = false;
+
         if (entry.provider === 'youtube') {
             entry.player.playVideo();
         } else {
@@ -298,6 +340,7 @@ function handleModalShow(modal) {
     }
     // Prevent double-creation during SDK load
     if (entry && entry.loading) {
+        entry.cancelled = false;
         return;
     }
 
@@ -325,6 +368,11 @@ function handleModalShow(modal) {
  * Locks dimensions (INLN-02), hides poster (INLN-03), creates player.
  */
 function handlePlay(wrapper) {
+    // Guard against double activation (e.g. rapid clicks in poster mode)
+    if (wrapper.classList.contains('sitchco-video--playing')) {
+        return;
+    }
+
     // INLN-02: Lock dimensions before any DOM changes to prevent layout shift
     wrapper.style.width = wrapper.offsetWidth + 'px';
     wrapper.style.height = wrapper.offsetHeight + 'px';
@@ -403,6 +451,12 @@ function initVideoBlock(wrapper) {
     } else {
         // Default: poster click mode -- entire wrapper is the click target
         clickTarget = wrapper;
+        // Suppress pointer events on the poster div so child interactive elements
+        // (links, buttons inside InnerBlocks) don't intercept the wrapper click.
+        const posterEl = wrapper.querySelector('.sitchco-video__poster');
+        if (posterEl) {
+            posterEl.style.pointerEvents = 'none';
+        }
     }
 
     // Click handler (once: true ensures single activation)
