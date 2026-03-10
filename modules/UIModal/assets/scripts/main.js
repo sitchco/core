@@ -96,10 +96,11 @@ addAction(
 document.addEventListener('DOMContentLoaded', function () {
     // Set up cancel/close event listeners on each dialog
     document.querySelectorAll('dialog.sitchco-modal').forEach((modal) => {
-        // Prevent Escape close when blockdismiss is active
+        // Route Escape-key close through hideModal() so the ui-modal-hide hook fires
         modal.addEventListener('cancel', (e) => {
-            if (modal.classList.contains('sitchco-modal--blockdismiss')) {
-                e.preventDefault();
+            e.preventDefault();
+            if (!modal.classList.contains('sitchco-modal--blockdismiss')) {
+                hideModal(modal);
             }
         });
 
