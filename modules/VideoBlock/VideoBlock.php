@@ -11,16 +11,15 @@ class VideoBlock extends Module
 
     const HOOK_SUFFIX = 'video-block';
 
-    private ?UIModal $uiModal = null;
+    public function __construct(private UIModal $uiModal) {}
 
     public function init(): void
     {
         // Block is auto-registered by BlockRegistrationModuleExtension
         // via block.json discovery in blocks/video/.
-        $this->uiModal = $GLOBALS['SitchcoContainer']->get(UIModal::class);
     }
 
-    public function uiModal(): ?UIModal
+    public function uiModal(): UIModal
     {
         return $this->uiModal;
     }
