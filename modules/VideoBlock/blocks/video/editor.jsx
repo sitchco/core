@@ -475,12 +475,7 @@ function Edit({ attributes, setAttributes, clientId }) {
 }
 
 function Save() {
-    const blockProps = useBlockProps.save();
-    return (
-        <div {...blockProps}>
-            <InnerBlocks.Content />
-        </div>
-    );
+    return <InnerBlocks.Content />;
 }
 
 registerBlockType(metadata.name, {
