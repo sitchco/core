@@ -287,7 +287,7 @@ function Edit({ attributes, setAttributes, clientId }) {
             return null;
         }
         return (
-            <Notice status="warning" isDismissible={false}>
+            <Notice status="warning" isDismissible={false} className="sitchco-video__embed-warning">
                 {error}
             </Notice>
         );
@@ -332,6 +332,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                         placeholder="https://youtube.com/watch?v=..."
                         __nextHasNoMarginBottom
                     />
+                    {renderWarning()}
                     <SelectControl
                         label={__('Display Mode', 'sitchco')}
                         value={displayMode}
@@ -454,8 +455,6 @@ function Edit({ attributes, setAttributes, clientId }) {
             ) : (
                 <InnerBlocks />
             )}
-
-            {renderWarning()}
 
             {url && !isModalOnly && (!error || hasInnerBlocks) && (
                 <div

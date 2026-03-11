@@ -64,6 +64,10 @@
         text-align: center;
     }
 
+    &__embed-warning {
+        margin-bottom: 16px;
+    }
+
     &__placeholder {
         padding: 16px;
         text-align: center;
