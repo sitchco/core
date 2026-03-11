@@ -66,7 +66,10 @@ function getPlayIconSvg(provider) {
 
 function Edit({ attributes, setAttributes, clientId }) {
     const { provider } = attributes;
-    const blockProps = useBlockProps(provider ? { 'data-provider': provider } : {});
+    const blockProps = useBlockProps({
+        className: 'sitchco-video',
+        ...(provider ? { 'data-provider': provider } : {}),
+    });
     const { url, displayMode, videoTitle, modalId, playIconStyle, playIconX, playIconY, clickBehavior } = attributes;
     const isModalMode = displayMode === 'modal' || displayMode === 'modal-only';
     const isModalOnly = displayMode === 'modal-only';
@@ -400,7 +403,7 @@ function Edit({ attributes, setAttributes, clientId }) {
 
             {url && !isModalOnly && (
                 <div
-                    className={`sitchco-video__play-icon sitchco-video__play-button--${playIconStyle}`}
+                    className={`sitchco-video__play-button sitchco-video__play-button--${playIconStyle}`}
                     aria-hidden="true"
                     style={{
                         position: 'absolute',

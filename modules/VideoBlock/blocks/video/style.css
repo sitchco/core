@@ -80,9 +80,26 @@
         object-fit: cover;
     }
 
+    /*
+     * Play button theme API — three-tier custom property cascade.
+     * All properties are set on .sitchco-video__play-button (no modifier classes needed).
+     *
+     * Tier 1 (simple):  --sitchco-video-play-color
+     *   Single brand color. Applied as bg on dark, fg on light.
+     *
+     * Tier 2 (granular): --sitchco-video-play-{dark,light}-{bg,fg}
+     *   Per-variant overrides. Takes precedence over --play-color when set.
+     *
+     * YouTube variants (dark/light/red) are protected at higher specificity
+     * via [data-provider='youtube'] below — theme overrides cannot affect them.
+     *
+     * Example theme usage:
+     *   .sitchco-video__play-button { --sitchco-video-play-color: purple; }
+     *   .sitchco-video__play-button { --sitchco-video-play-dark-bg: navy; --sitchco-video-play-dark-fg: gold; }
+     */
     &__play-button {
-        --sitchco-play-bg: rgba(0, 0, 0, 0.8);
-        --sitchco-play-fg: #fff;
+        --sitchco-play-bg: var(--sitchco-video-play-dark-bg, var(--sitchco-video-play-color, rgba(0, 0, 0, 0.8)));
+        --sitchco-play-fg: var(--sitchco-video-play-dark-fg, #fff);
         position: absolute;
         background: none;
         border: none;
@@ -94,8 +111,8 @@
         max-width: 80px;
 
         &--light {
-            --sitchco-play-bg: rgba(255, 255, 255, 0.8);
-            --sitchco-play-fg: #212121;
+            --sitchco-play-bg: var(--sitchco-video-play-light-bg, rgba(255, 255, 255, 0.8));
+            --sitchco-play-fg: var(--sitchco-video-play-light-fg, var(--sitchco-video-play-color, #212121));
         }
 
         &--red {
