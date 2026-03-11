@@ -19,7 +19,7 @@ class VideoBlockRenderer
      * Fetch oEmbed data with transient caching.
      *
      * Uses WP_oEmbed::get_data() for structured data (not wp_oembed_get() which returns HTML).
-     * Caches results for 30 days. Caches empty string for failures to avoid retrying on every load.
+     * Caches results for 30 days. Caches null for failures with a 1-hour TTL to allow recovery.
      */
     public static function getCachedOembedData(string $url): ?object
     {
@@ -27,9 +27,10 @@ class VideoBlockRenderer
         $result = Cache::rememberTransient(
             $cache_key,
             function () use ($url) {
-                return _wp_oembed_get_object()->get_data($url, []) ?: '';
+                return _wp_oembed_get_object()->get_data($url, []) ?: null;
             },
             30 * DAY_IN_SECONDS,
+            HOUR_IN_SECONDS,
         );
 
         return $result ?: null;
@@ -41,14 +42,20 @@ class VideoBlockRenderer
      * YouTube returns hqdefault.jpg (480x360 with letterbox bars) — upgrade to maxresdefault.jpg (1280x720).
      * Vimeo returns tiny thumbnails (295x166) — rewrite CDN dimensions to 1280x720.
      */
-    public static function upgradeThumbnailUrl(string $url, string $provider): string
-    {
+    public static function upgradeThumbnailUrl(
+        string $url,
+        string $provider,
+        ?int $width = null,
+        ?int $height = null,
+    ): string {
         if ($provider === 'youtube') {
             $url = preg_replace('#/hqdefault\.jpg$#', '/maxresdefault.jpg', $url);
         }
 
         if ($provider === 'vimeo') {
-            $url = preg_replace('/_\d+x\d+/', '_1280x720', $url);
+            $isPortrait = $width && $height && $height > $width;
+            $dims = $isPortrait ? '720x1280' : '1280x720';
+            $url = preg_replace('/_\d+x\d+/', '_' . $dims, $url);
         }
 
         return $url;
@@ -117,8 +124,17 @@ class VideoBlockRenderer
             $poster_style = '';
         } else {
             $oembed = self::getCachedOembedData($url);
+            // Detect domain-level embedding restrictions (e.g. Vimeo domain_status_code: 403)
+            if ($oembed && isset($oembed->domain_status_code) && $oembed->domain_status_code >= 400) {
+                $oembed = null;
+            }
             if ($oembed && !empty($oembed->thumbnail_url)) {
-                $thumbnail_url = self::upgradeThumbnailUrl($oembed->thumbnail_url, $provider);
+                $thumbnail_url = self::upgradeThumbnailUrl(
+                    $oembed->thumbnail_url,
+                    $provider,
+                    (int) $oembed->width,
+                    (int) $oembed->height,
+                );
 
                 $escaped_thumb = esc_url($thumbnail_url);
                 $escaped_title = esc_attr($oembed->title ?? '');
@@ -135,6 +151,9 @@ class VideoBlockRenderer
             }
         }
 
+        // Detect oEmbed failure (no InnerBlocks and oEmbed returned nothing)
+        $oembed_failed = !$has_inner_blocks && $oembed === null;
+
         // Wrapper attributes
         $wrapper_attrs = [
             'class' => 'sitchco-video',
@@ -149,8 +168,8 @@ class VideoBlockRenderer
             'data-video-title' => $video_title,
         ];
 
-        // Phase 4 - Modal side effects
-        if ($display_mode === 'modal' || $display_mode === 'modal-only') {
+        // Phase 4 - Modal side effects (skip when oEmbed failed — no player to show in modal)
+        if (($display_mode === 'modal' || $display_mode === 'modal-only') && !$oembed_failed) {
             $modal_id = $attributes['modalId'] ?? '';
             if (empty($modal_id)) {
                 $modal_id = sanitize_title($video_title);
@@ -160,7 +179,12 @@ class VideoBlockRenderer
             $modal_oembed = $oembed ?? self::getCachedOembedData($url);
             $thumb_url =
                 $modal_oembed && !empty($modal_oembed->thumbnail_url)
-                    ? self::upgradeThumbnailUrl($modal_oembed->thumbnail_url, $provider)
+                    ? self::upgradeThumbnailUrl(
+                        $modal_oembed->thumbnail_url,
+                        $provider,
+                        (int) ($modal_oembed->width ?? 0),
+                        (int) ($modal_oembed->height ?? 0),
+                    )
                     : '';
             $aspect_w = $modal_oembed && !empty($modal_oembed->width) ? $modal_oembed->width : 16;
             $aspect_h = $modal_oembed && !empty($modal_oembed->height) ? $modal_oembed->height : 9;
@@ -205,6 +229,28 @@ class VideoBlockRenderer
 
             // Modal mode: use normalized ID (ModalData may prefix digit-leading IDs with "modal-")
             $wrapper_attrs['data-modal-id'] = $modalData->id();
+        }
+
+        // oEmbed failure: return link fallback (before play button / accessibility / normal render)
+        if ($oembed_failed) {
+            // Modal-only with no oEmbed: nothing to render
+            if ($display_mode === 'modal-only') {
+                return '';
+            }
+
+            $wrapper_attrs['data-video-unavailable'] = 'true';
+            $wrapper_attributes = get_block_wrapper_attributes($wrapper_attrs);
+
+            $provider_label = $provider === 'youtube' ? 'YouTube' : 'Vimeo';
+            $escaped_url = esc_url($url);
+            $escaped_label = esc_html(sprintf('Watch on %s', $provider_label));
+
+            return sprintf(
+                '<div %s><a class="sitchco-video__fallback-link" href="%s" target="_blank" rel="noopener noreferrer"><div class="sitchco-video__placeholder-poster"></div><span class="sitchco-video__fallback-label">%s</span></a></div>',
+                $wrapper_attributes,
+                $escaped_url,
+                $escaped_label,
+            );
         }
 
         $play_button = self::buildPlayButton($provider, $play_icon_style, $play_icon_x, $play_icon_y, $video_title);

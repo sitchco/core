@@ -191,6 +191,31 @@ function stopMilestonePolling(videoId) {
     }
 }
 
+/**
+ * Replace a video container's content with an error fallback.
+ * Cleans up milestone polling and active player entry for the given videoId.
+ *
+ * @param {Element} container - The element to replace content in.
+ * @param {string} url - Original video URL for the fallback link.
+ * @param {string} provider - 'youtube' or 'vimeo'.
+ * @param {string} videoId - Provider video ID.
+ */
+function showErrorFallback(container, url, provider, videoId) {
+    stopMilestonePolling(videoId);
+    activePlayers.delete(videoId);
+
+    var providerLabel = provider === 'youtube' ? 'YouTube' : 'Vimeo';
+    container.innerHTML =
+        '<div class="sitchco-video__runtime-error">' +
+        '<p class="sitchco-video__runtime-error-message">This video couldn\u2019t be loaded.</p>' +
+        '<a class="sitchco-video__runtime-error-link" href="' +
+        url +
+        '" target="_blank" rel="noopener noreferrer">Watch on ' +
+        providerLabel +
+        '</a>' +
+        '</div>';
+}
+
 function loadYouTubeAPI() {
     if (ytAPIPromise) {
         return ytAPIPromise;
@@ -286,6 +311,14 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
 
                         event.target.playVideo();
                     },
+                    onError: function () {
+                        showErrorFallback(
+                            modalId ? container : target.parentElement || target,
+                            url,
+                            'youtube',
+                            videoId
+                        );
+                    },
                     onStateChange: function (event) {
                         if (event.data === YT.PlayerState.PLAYING) {
                             registerActivePlayer(videoId, event.target, 'youtube', url);
@@ -327,6 +360,7 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
         })
         .catch(function (err) {
             console.error('sitchco-video: YouTube SDK load failed', err);
+            showErrorFallback(modalId ? container : target, url, 'youtube', videoId);
         });
 }
 
@@ -387,26 +421,31 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
 
             const player = new Vimeo.Player(target, options);
 
-            player.ready().then(function () {
-                if (modalId) {
-                    const entry = modalPlayers.get(modalId);
-                    if (entry) {
-                        entry.player = player;
-                        entry.loading = false;
+            player
+                .ready()
+                .then(function () {
+                    if (modalId) {
+                        const entry = modalPlayers.get(modalId);
+                        if (entry) {
+                            entry.player = player;
+                            entry.loading = false;
 
-                        if (entry.cancelled) {
-                            entry.cancelled = false;
-                            player.pause();
-                            return;
+                            if (entry.cancelled) {
+                                entry.cancelled = false;
+                                player.pause();
+                                return;
+                            }
                         }
-                    }
 
-                    container.classList.add('sitchco-video__modal-player--ready');
-                }
-                if (startTime > 0) {
-                    player.setCurrentTime(startTime);
-                }
-            });
+                        container.classList.add('sitchco-video__modal-player--ready');
+                    }
+                    if (startTime > 0) {
+                        player.setCurrentTime(startTime);
+                    }
+                })
+                .catch(function () {
+                    showErrorFallback(modalId ? container : target.parentElement || target, url, 'vimeo', videoId);
+                });
 
             player.on('play', function () {
                 registerActivePlayer(videoId, player, 'vimeo', url);
@@ -429,6 +468,10 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
                 stopMilestonePolling(videoId);
             });
 
+            player.on('error', function () {
+                showErrorFallback(modalId ? container : target.parentElement || target, url, 'vimeo', videoId);
+            });
+
             player.on('ended', function () {
                 sitchco.hooks.doAction('video-progress', {
                     id: videoId,
@@ -449,6 +492,7 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
         })
         .catch(function (err) {
             console.error('sitchco-video: Vimeo SDK load failed', err);
+            showErrorFallback(container, url, 'vimeo', videoId);
         });
 }
 
@@ -675,6 +719,11 @@ function handlePlay(wrapper) {
  * Handles both inline mode (play in-place) and modal mode (open dialog).
  */
 function initVideoBlock(wrapper) {
+    // Skip blocks flagged as unavailable by server-side fallback
+    if (wrapper.dataset.videoUnavailable) {
+        return;
+    }
+
     const displayMode = wrapper.dataset.displayMode;
     if (displayMode === 'modal') {
         // Modal mode: click poster -> open modal (not inline play)

@@ -44,12 +44,14 @@ function slugify(text, fallback) {
  *
  * Mirrors VideoBlockRenderer::upgradeThumbnailUrl() in PHP.
  */
-function upgradeThumbnailUrl(url, provider) {
+function upgradeThumbnailUrl(url, provider, width, height) {
     if (provider === 'youtube') {
         return url.replace(/\/hqdefault\.jpg$/, '/maxresdefault.jpg');
     }
     if (provider === 'vimeo') {
-        return url.replace(/_\d+x\d+/, '_1280x720');
+        const isPortrait = width && height && height > width;
+        const dims = isPortrait ? '720x1280' : '1280x720';
+        return url.replace(/_\d+x\d+/, '_' + dims);
     }
     return url;
 }
@@ -157,6 +159,20 @@ function Edit({ attributes, setAttributes, clientId }) {
                 signal: controller.signal,
             })
                 .then((response) => {
+                    // Detect domain-level embedding restrictions (Vimeo returns domain_status_code: 403)
+                    if (response.domain_status_code >= 400) {
+                        setError(
+                            __(
+                                'This video cannot be embedded on this domain. Update its embed settings to include this site.',
+                                'sitchco'
+                            )
+                        );
+
+                        setOembedData(null);
+                        setIsLoading(false);
+                        return;
+                    }
+
                     setOembedData(response);
                     setIsLoading(false);
                     setError(null);
@@ -190,7 +206,13 @@ function Edit({ attributes, setAttributes, clientId }) {
                         return;
                     }
 
-                    setError(err.message || __('Failed to fetch video data.', 'sitchco'));
+                    setError(
+                        __(
+                            'Video preview unavailable. Check that the URL is valid and the video allows embedding.',
+                            'sitchco'
+                        )
+                    );
+
                     setOembedData(null);
                     setIsLoading(false);
                 });
@@ -217,13 +239,24 @@ function Edit({ attributes, setAttributes, clientId }) {
         );
     };
 
+    const oembedAspectRatio =
+        oembedData?.width && oembedData?.height ? `${oembedData.width} / ${oembedData.height}` : '16 / 9';
+
+    // Canvas style: aspect-ratio
+    const canvasStyle = {
+        aspectRatio: oembedAspectRatio,
+        background: '#000',
+    };
+
     const renderLoading = () => {
         if (!url || !isLoading) {
             return null;
         }
         return (
-            <div className="sitchco-video__loading">
-                <Spinner />
+            <div className="sitchco-video__canvas" style={canvasStyle}>
+                <div className="sitchco-video__loading">
+                    <Spinner />
+                </div>
             </div>
         );
     };
@@ -233,8 +266,10 @@ function Edit({ attributes, setAttributes, clientId }) {
             return null;
         }
         return (
-            <div className="sitchco-video__error">
-                <p>{error}</p>
+            <div className="sitchco-video__canvas" style={canvasStyle}>
+                <div className="sitchco-video__error sitchco-video__error--canvas">
+                    <p>{error}</p>
+                </div>
             </div>
         );
     };
@@ -246,15 +281,11 @@ function Edit({ attributes, setAttributes, clientId }) {
         return (
             <div
                 className="sitchco-video__preview"
-                style={
-                    oembedData.width && oembedData.height
-                        ? { aspectRatio: `${oembedData.width} / ${oembedData.height}` }
-                        : undefined
-                }
+                style={oembedData.width && oembedData.height ? { aspectRatio: oembedAspectRatio } : undefined}
             >
                 <img
                     className="sitchco-video__thumbnail"
-                    src={upgradeThumbnailUrl(oembedData.thumbnail_url, provider)}
+                    src={upgradeThumbnailUrl(oembedData.thumbnail_url, provider, oembedData.width, oembedData.height)}
                     alt={oembedData.title || ''}
                 />
             </div>
@@ -397,11 +428,15 @@ function Edit({ attributes, setAttributes, clientId }) {
                         </>
                     )}
                 </Placeholder>
+            ) : url && !hasInnerBlocks && !oembedData?.thumbnail_url && !isLoading && !error ? (
+                <div className="sitchco-video__canvas" style={canvasStyle}>
+                    <InnerBlocks />
+                </div>
             ) : (
                 <InnerBlocks />
             )}
 
-            {url && !isModalOnly && (
+            {url && !isModalOnly && !error && (
                 <div
                     className={`sitchco-video__play-button sitchco-video__play-button--${playIconStyle}`}
                     aria-hidden="true"

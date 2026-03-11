@@ -731,6 +731,231 @@ class VideoBlockTest extends TestCase
         $this->restoreHttp();
     }
 
+    // --- oEmbed Failure / Fallback ---
+
+    public function test_render_oembed_failure_renders_link_fallback(): void
+    {
+        $url = 'https://vimeo.com/999999999';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'vimeo', 'videoTitle' => 'Broken Video']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'sitchco-video__fallback-link',
+            $output,
+            'oEmbed failure should render fallback link',
+        );
+        $this->assertStringContainsString('Watch on Vimeo', $output, 'Fallback should show "Watch on Vimeo" label');
+        $this->assertStringNotContainsString('<button', $output, 'oEmbed failure should NOT render play button');
+        $this->restoreHttp();
+    }
+
+    public function test_render_oembed_failure_no_interactive_attributes(): void
+    {
+        $url = 'https://vimeo.com/999999998';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $output = $this->renderBlock(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'vimeo',
+                'videoTitle' => 'Broken Video',
+                'clickBehavior' => 'poster',
+            ]),
+            '',
+        );
+
+        $this->assertStringNotContainsString('role="button"', $output, 'oEmbed failure should NOT have role="button"');
+        $this->assertStringNotContainsString('tabindex="0"', $output, 'oEmbed failure should NOT have tabindex');
+        $this->assertStringNotContainsString(
+            'aria-label="Play video:',
+            $output,
+            'oEmbed failure should NOT have play aria-label on wrapper',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_render_oembed_failure_with_inner_blocks_still_renders_normally(): void
+    {
+        $url = 'https://vimeo.com/999999997';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'vimeo', 'videoTitle' => 'Custom Poster Video']),
+            '<p>Custom poster</p>',
+        );
+
+        $this->assertStringContainsString(
+            '<p>Custom poster</p>',
+            $output,
+            'InnerBlocks content should still render when oEmbed fails',
+        );
+        $this->assertStringContainsString(
+            '<button',
+            $output,
+            'Play button should still render with InnerBlocks even when oEmbed fails',
+        );
+        $this->assertStringNotContainsString(
+            'sitchco-video__fallback-link',
+            $output,
+            'Fallback link should NOT appear when InnerBlocks are present',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_mode_oembed_failure_no_modal_queued(): void
+    {
+        $url = 'https://vimeo.com/999999996';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'vimeo',
+                'videoTitle' => 'Modal Broken Video',
+                'displayMode' => 'modal',
+                'modalId' => 'modal-broken',
+            ]),
+            '',
+        );
+
+        $this->assertStringNotContainsString(
+            '<dialog',
+            $result['footer'],
+            'oEmbed failure in modal mode should NOT queue a dialog',
+        );
+        $this->assertStringContainsString(
+            'sitchco-video__fallback-link',
+            $result['page'],
+            'oEmbed failure in modal mode should render link fallback on page',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_render_oembed_failure_has_unavailable_data_attribute(): void
+    {
+        $url = 'https://vimeo.com/999999995';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'vimeo', 'videoTitle' => 'Unavailable Video']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'data-video-unavailable="true"',
+            $output,
+            'oEmbed failure should have data-video-unavailable attribute',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_only_oembed_failure_renders_nothing(): void
+    {
+        $url = 'https://vimeo.com/999999994';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'vimeo',
+                'videoTitle' => 'Modal Only Broken',
+                'displayMode' => 'modal-only',
+                'modalId' => 'modal-only-broken',
+            ]),
+            '',
+        );
+
+        $this->assertEmpty($result['page'], 'Modal-only with oEmbed failure should render empty page');
+        $this->assertEmpty($result['footer'], 'Modal-only with oEmbed failure should render empty footer');
+        $this->restoreHttp();
+    }
+
+    // --- Domain Restriction ---
+
+    public function test_render_domain_restricted_renders_fallback(): void
+    {
+        $url = 'https://vimeo.com/1167868106/c189f4fa10';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'type' => 'video',
+            'provider_name' => 'Vimeo',
+            'width' => 240,
+            'height' => 426,
+            'domain_status_code' => 403,
+            'video_id' => 1167868106,
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'vimeo', 'videoTitle' => 'Restricted Video']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'sitchco-video__fallback-link',
+            $output,
+            'Domain-restricted video should render fallback link',
+        );
+        $this->assertStringContainsString('Watch on Vimeo', $output, 'Fallback should show "Watch on Vimeo" label');
+        $this->assertStringNotContainsString(
+            '<button',
+            $output,
+            'Domain-restricted video should NOT render play button',
+        );
+        $this->assertStringContainsString(
+            'data-video-unavailable="true"',
+            $output,
+            'Domain-restricted video should have data-video-unavailable attribute',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_mode_domain_restricted_no_modal_queued(): void
+    {
+        $url = 'https://vimeo.com/1167868107/abc123';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'type' => 'video',
+            'provider_name' => 'Vimeo',
+            'width' => 240,
+            'height' => 426,
+            'domain_status_code' => 403,
+            'video_id' => 1167868107,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'vimeo',
+                'videoTitle' => 'Modal Restricted',
+                'displayMode' => 'modal',
+                'modalId' => 'modal-restricted',
+            ]),
+            '',
+        );
+
+        $this->assertStringNotContainsString(
+            '<dialog',
+            $result['footer'],
+            'Domain-restricted video in modal mode should NOT queue a dialog',
+        );
+        $this->assertStringContainsString(
+            'sitchco-video__fallback-link',
+            $result['page'],
+            'Domain-restricted video in modal mode should render link fallback on page',
+        );
+        $this->restoreHttp();
+    }
+
     // --- Helpers ---
 
     private function makeAttributes(array $overrides = []): array
@@ -754,6 +979,18 @@ class VideoBlockTest extends TestCase
     private function deleteOembedTransient(string $url): void
     {
         delete_transient('sitchco_voembed_' . md5($url));
+    }
+
+    private function fakeOembedFailure(): void
+    {
+        $this->fakeHttp(function () {
+            return [
+                'response' => ['code' => 404, 'message' => 'Not Found'],
+                'body' => '',
+                'headers' => [],
+                'cookies' => [],
+            ];
+        });
     }
 
     private function fakeOembedResponse(string $url, array $data): void
