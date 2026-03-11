@@ -1,7 +1,15 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { useBlockProps, InnerBlocks, InspectorControls } from '@wordpress/block-editor';
 import { useSelect } from '@wordpress/data';
-import { Placeholder, TextControl, SelectControl, RangeControl, PanelBody, Spinner } from '@wordpress/components';
+import {
+    Placeholder,
+    TextControl,
+    SelectControl,
+    RangeControl,
+    PanelBody,
+    Spinner,
+    Notice,
+} from '@wordpress/components';
 import { useState, useEffect, useRef } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
@@ -262,7 +270,7 @@ function Edit({ attributes, setAttributes, clientId }) {
     };
 
     const renderError = () => {
-        if (!url || !error) {
+        if (!url || !error || hasInnerBlocks) {
             return null;
         }
         return (
@@ -271,6 +279,17 @@ function Edit({ attributes, setAttributes, clientId }) {
                     <p>{error}</p>
                 </div>
             </div>
+        );
+    };
+
+    const renderWarning = () => {
+        if (!url || !error || !hasInnerBlocks) {
+            return null;
+        }
+        return (
+            <Notice status="warning" isDismissible={false}>
+                {error}
+            </Notice>
         );
     };
 
@@ -436,7 +455,9 @@ function Edit({ attributes, setAttributes, clientId }) {
                 <InnerBlocks />
             )}
 
-            {url && !isModalOnly && !error && (
+            {renderWarning()}
+
+            {url && !isModalOnly && (!error || hasInnerBlocks) && (
                 <div
                     className={`sitchco-video__play-button sitchco-video__play-button--${playIconStyle}`}
                     aria-hidden="true"
