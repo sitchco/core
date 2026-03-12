@@ -225,7 +225,7 @@ function loadYouTubeAPI() {
         return ytAPIPromise;
     }
 
-    ytAPIPromise = new Promise(function (resolve) {
+    ytAPIPromise = new Promise(function (resolve, reject) {
         const prev = window.onYouTubeIframeAPIReady;
 
         window.onYouTubeIframeAPIReady = function () {
@@ -236,7 +236,10 @@ function loadYouTubeAPI() {
             resolve(window.YT);
         };
 
-        sitchco.loadScript('youtube-iframe-api', 'https://www.youtube.com/iframe_api');
+        sitchco.loadScript('youtube-iframe-api', 'https://www.youtube.com/iframe_api').catch(function (err) {
+            ytAPIPromise = null;
+            reject(err);
+        });
     });
     return ytAPIPromise;
 }

@@ -73,6 +73,11 @@ class SvgSprite extends Module
                 $matches = $this->findSvgPaths($path);
                 $icons = array_map(fn(FilePath $match) => str_replace('icon-', '', $match->name()), $matches);
                 $this->addIcons($icons, $path);
+                $sprite = $this->getSpritePath($path);
+                if ($sprite->exists()) {
+                    $contents = file_get_contents($sprite->value());
+                    add_action('wp_body_open', fn() => print $contents, 20);
+                }
                 continue;
             }
             // For production build, read generated icon list and output sprite in body

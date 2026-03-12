@@ -6,8 +6,7 @@
     --modal-text-align: center;
     --modal-container-bg: #fff;
     --modal-container-color: #000;
-    --modal-container-padding: 3rem;
-    --modal-container-mobile-padding: 1rem;
+    --modal-container-padding: 1rem;
     --modal-box-container-bg: var(--modal-container-bg);
     --modal-box-border-radius: 0px;
     --modal-box-size: 80%;
@@ -15,8 +14,12 @@
     --modal-close-size: 2rem;
     --modal-close-color: var(--modal-container-color);
     --modal-close-color-hover: var(--modal-close-color);
-    --modal-close-top: calc(var(--modal-container-padding) - var(--modal-close-size));
-    --modal-close-right: calc(var(--modal-container-padding) - var(--modal-close-size));
+    --modal-close-top: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
+    --modal-close-right: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
+
+    @media (min-width: 576px) {
+        --modal-container-padding: 3rem;
+    }
 
     border: none;
     padding: 0;
@@ -86,16 +89,12 @@
         display: flex;
         flex-flow: column wrap;
         width: 100%;
-        padding: var(--modal-container-mobile-padding);
+        padding: var(--modal-container-padding);
         align-items: center;
         pointer-events: auto;
         overflow-y: auto;
         background: var(--modal-container-bg);
         color: var(--modal-container-color);
-
-        @media (min-width: 576px) {
-            padding: var(--modal-container-padding);
-        }
 
         .sitchco-modal--box & {
             background-color: var(--modal-box-container-bg);
