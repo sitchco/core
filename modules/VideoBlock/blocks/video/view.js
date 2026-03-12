@@ -261,14 +261,15 @@ function loadYouTubeAPI() {
  */
 function createYouTubePlayer(container, videoId, startTime, modalId, url, displayMode) {
     modalId = modalId || null;
-    const target = modalId
-        ? (function () {
-              const wrapper = document.createElement('div');
-              wrapper.className = 'sitchco-video__player';
-              container.appendChild(wrapper);
-              return wrapper;
-          })()
-        : container;
+    const target = (function () {
+        const child = document.createElement('div');
+        if (modalId) {
+            child.className = 'sitchco-video__player';
+        }
+
+        container.appendChild(child);
+        return child;
+    })();
 
     loadYouTubeAPI()
         .then(function (YT) {
@@ -312,12 +313,7 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
                         event.target.playVideo();
                     },
                     onError: function () {
-                        showErrorFallback(
-                            modalId ? container : target.parentElement || target,
-                            url,
-                            'youtube',
-                            videoId
-                        );
+                        showErrorFallback(container, url, 'youtube', videoId);
                     },
                     onStateChange: function (event) {
                         if (event.data === YT.PlayerState.PLAYING) {
@@ -360,7 +356,7 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
         })
         .catch(function (err) {
             console.error('sitchco-video: YouTube SDK load failed', err);
-            showErrorFallback(modalId ? container : target, url, 'youtube', videoId);
+            showErrorFallback(container, url, 'youtube', videoId);
         });
 }
 
@@ -444,7 +440,7 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
                     }
                 })
                 .catch(function () {
-                    showErrorFallback(modalId ? container : target.parentElement || target, url, 'vimeo', videoId);
+                    showErrorFallback(container, url, 'vimeo', videoId);
                 });
 
             player.on('play', function () {
@@ -469,7 +465,7 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
             });
 
             player.on('error', function () {
-                showErrorFallback(modalId ? container : target.parentElement || target, url, 'vimeo', videoId);
+                showErrorFallback(container, url, 'vimeo', videoId);
             });
 
             player.on('ended', function () {
