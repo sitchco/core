@@ -156,8 +156,7 @@ Override CSS custom properties on `.sitchco-modal` or a specific modal ID:
     --modal-text-align: center;
     --modal-container-bg: #fff;
     --modal-container-color: #000;
-    --modal-container-padding: 3rem;
-    --modal-container-mobile-padding: 1rem;
+    --modal-container-padding: 1rem;       /* 3rem at ≥576px */
     --modal-box-container-bg: var(--modal-container-bg);
     --modal-box-border-radius: 0;
     --modal-box-size: 80%;
@@ -165,8 +164,8 @@ Override CSS custom properties on `.sitchco-modal` or a specific modal ID:
     --modal-close-size: 2rem;
     --modal-close-color: var(--modal-container-color);
     --modal-close-color-hover: var(--modal-close-color);
-    --modal-close-top: calc(var(--modal-container-padding) - var(--modal-close-size));
-    --modal-close-right: calc(var(--modal-container-padding) - var(--modal-close-size));
+    --modal-close-top: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
+    --modal-close-right: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
 }
 ```
 

@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Route Escape-key close through hideModal() so the ui-modal-hide hook fires
         modal.addEventListener('cancel', (e) => {
             e.preventDefault();
+
             if (!modal.classList.contains('sitchco-modal--blockdismiss')) {
                 hideModal(modal);
             }

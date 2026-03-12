@@ -63,4 +63,14 @@ class ModalDataTest extends TestCase
         $this->assertStringContainsString('full content of the modal', $withContent->content());
         $this->assertStringContainsString('Short summary', $withExcerpt->content());
     }
+
+    public function test_video_type_modal_from_raw_strings(): void
+    {
+        $modal = new ModalData('test-video', 'Video Title', '<div>player</div>', ModalType::VIDEO);
+
+        $this->assertEquals('test-video', $modal->id());
+        $this->assertEquals('Video Title', $modal->heading());
+        $this->assertEquals('<div>player</div>', $modal->content());
+        $this->assertEquals(ModalType::VIDEO, $modal->type);
+    }
 }
