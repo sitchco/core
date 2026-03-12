@@ -4,6 +4,7 @@ namespace Sitchco\Tests\Modules\VideoBlock;
 
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\VideoBlock\VideoBlock;
+use Sitchco\Modules\VideoBlock\VideoBlockRenderer;
 use Sitchco\Tests\TestCase;
 use WP_Block_Type_Registry;
 
@@ -154,7 +155,7 @@ class VideoBlockTest extends TestCase
         $this->restoreHttp();
     }
 
-    public function test_play_button_aria_label(): void
+    public function test_play_button_aria_label_icon_mode(): void
     {
         $url = 'https://www.youtube.com/watch?v=aria_test';
         $this->deleteOembedTransient($url);
@@ -166,15 +167,20 @@ class VideoBlockTest extends TestCase
         ]);
 
         $output = $this->renderBlock(
-            $this->makeAttributes(['url' => $url, 'provider' => 'youtube', 'videoTitle' => 'Test Title']),
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Test Title',
+                'clickBehavior' => 'icon',
+            ]),
             '',
         );
 
-        $this->assertStringContainsString('<button', $output, 'Output should contain a button element');
+        $this->assertStringContainsString('<button', $output, 'Icon mode should render a button element');
         $this->assertStringContainsString(
             'aria-label="Play video: Test Title"',
             $output,
-            'Play button should have aria-label with video title',
+            'Icon mode play button should have aria-label with video title',
         );
         $this->restoreHttp();
     }
@@ -215,6 +221,18 @@ class VideoBlockTest extends TestCase
             $output,
             'Poster click mode wrapper should have aria-label',
         );
+        // Play icon should be presentational (no nested interactive elements)
+        $this->assertStringNotContainsString(
+            '<button',
+            $output,
+            'Poster click mode should NOT render a <button> (ARIA nested interactive violation)',
+        );
+        $this->assertStringContainsString('<span', $output, 'Poster click mode play icon should be a <span>');
+        $this->assertStringContainsString(
+            'aria-hidden="true"',
+            $output,
+            'Poster click mode play icon should have aria-hidden="true"',
+        );
         $this->restoreHttp();
     }
 
@@ -243,6 +261,13 @@ class VideoBlockTest extends TestCase
             'role="button"',
             $output,
             'Icon click mode wrapper should NOT have role="button"',
+        );
+        // Play icon should be an interactive <button> in icon mode
+        $this->assertStringContainsString('<button', $output, 'Icon click mode should render play icon as a <button>');
+        $this->assertStringContainsString(
+            'aria-label="Play video: Icon Click Test"',
+            $output,
+            'Icon click mode play button should have aria-label',
         );
         $this->restoreHttp();
     }
@@ -369,7 +394,11 @@ class VideoBlockTest extends TestCase
             $result['page'],
             'Modal mode should show poster image',
         );
-        $this->assertStringContainsString('<button', $result['page'], 'Modal mode should show play button');
+        $this->assertStringContainsString(
+            'sitchco-video__play-button',
+            $result['page'],
+            'Modal mode should show play icon',
+        );
         $this->restoreHttp();
     }
 
@@ -452,6 +481,36 @@ class VideoBlockTest extends TestCase
         );
 
         $this->assertStringContainsString('id="my-video-title"', $result['footer'], 'Modal ID should be slugified');
+        $this->restoreHttp();
+    }
+
+    public function test_modal_id_derived_from_video_title_when_empty(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=empty_modal01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/empty_modal01/hqdefault.jpg',
+            'title' => 'Empty Modal ID Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'My Great Video',
+                'displayMode' => 'modal',
+                'modalId' => '',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'id="my-great-video"',
+            $result['footer'],
+            'When modalId is empty, dialog ID should be derived from sanitize_title(videoTitle)',
+        );
         $this->restoreHttp();
     }
 
@@ -731,6 +790,53 @@ class VideoBlockTest extends TestCase
         $this->restoreHttp();
     }
 
+    // --- Utility Functions ---
+
+    /**
+     * @dataProvider vimeoThumbnailProvider
+     */
+    public function test_upgradeThumbnailUrl_vimeo_landscape_and_portrait(
+        string $input,
+        int $width,
+        int $height,
+        string $expected,
+    ): void {
+        $this->assertSame($expected, VideoBlockRenderer::upgradeThumbnailUrl($input, 'vimeo', $width, $height));
+    }
+
+    public static function vimeoThumbnailProvider(): array
+    {
+        return [
+            'landscape' => [
+                'https://i.vimeocdn.com/video/123_295x166.jpg',
+                1920,
+                1080,
+                'https://i.vimeocdn.com/video/123_1280x720.jpg',
+            ],
+            'portrait' => [
+                'https://i.vimeocdn.com/video/456_295x166.jpg',
+                720,
+                1280,
+                'https://i.vimeocdn.com/video/456_720x1280.jpg',
+            ],
+            'square (landscape fallback)' => [
+                'https://i.vimeocdn.com/video/789_295x166.jpg',
+                1080,
+                1080,
+                'https://i.vimeocdn.com/video/789_1280x720.jpg',
+            ],
+        ];
+    }
+
+    public function test_extractVideoId_vimeo_video_path(): void
+    {
+        $this->assertSame(
+            '789012',
+            VideoBlockRenderer::extractVideoId('https://vimeo.com/video/789012', 'vimeo'),
+            'Should extract ID from vimeo.com/video/ID URL pattern',
+        );
+    }
+
     // --- oEmbed Failure / Fallback ---
 
     public function test_render_oembed_failure_renders_link_fallback(): void
@@ -797,9 +903,9 @@ class VideoBlockTest extends TestCase
             'InnerBlocks content should still render when oEmbed fails',
         );
         $this->assertStringContainsString(
-            '<button',
+            'sitchco-video__play-button',
             $output,
-            'Play button should still render with InnerBlocks even when oEmbed fails',
+            'Play icon should still render with InnerBlocks even when oEmbed fails',
         );
         $this->assertStringNotContainsString(
             'sitchco-video__fallback-link',
@@ -952,6 +1058,72 @@ class VideoBlockTest extends TestCase
             'sitchco-video__fallback-link',
             $result['page'],
             'Domain-restricted video in modal mode should render link fallback on page',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- Provider Detection Fallback ---
+
+    public function test_render_derives_provider_when_attribute_missing(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=drvprov_01x';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/drvprov_01x/hqdefault.jpg',
+            'title' => 'Derived Provider Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => '', 'videoTitle' => 'Derived Provider Test']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'data-provider="youtube"',
+            $output,
+            'Provider should be derived from URL when attribute is empty',
+        );
+        $this->assertStringContainsString(
+            'data-video-id="drvprov_01x"',
+            $output,
+            'Video ID should be extracted using derived provider',
+        );
+        $this->assertStringContainsString(
+            'maxresdefault.jpg',
+            $output,
+            'Thumbnail should be upgraded using derived provider',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_render_derives_vimeo_provider_when_attribute_missing(): void
+    {
+        $url = 'https://vimeo.com/123456789';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://i.vimeocdn.com/video/123456789_295x166.jpg',
+            'title' => 'Vimeo Derived Test',
+            'width' => 1920,
+            'height' => 1080,
+            'provider_name' => 'Vimeo',
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => '', 'videoTitle' => 'Vimeo Derived Test']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'data-provider="vimeo"',
+            $output,
+            'Provider should be derived as vimeo from URL when attribute is empty',
+        );
+        $this->assertStringContainsString(
+            'data-video-id="123456789"',
+            $output,
+            'Vimeo video ID should be extracted using derived provider',
         );
         $this->restoreHttp();
     }

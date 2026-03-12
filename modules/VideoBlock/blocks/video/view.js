@@ -64,35 +64,43 @@ const milestonesFired = new Map();
 const MILESTONES = [25, 50, 75];
 
 /**
- * Pause a player by its provider video ID.
- * No-ops if the videoId is not in the activePlayers registry.
+ * Auto-incrementing counter for unique player instance IDs.
+ * Used as the key in activePlayers and pollIntervals so that multiple
+ * player instances of the same provider video ID don't collide.
+ */
+let instanceCounter = 0;
+
+/**
+ * Pause all player instances matching a provider video ID.
+ * Called by the video-request-pause hook for external coordination.
  *
  * @param {string} videoId - Provider video ID.
  */
 function pausePlayerById(videoId) {
-    const entry = activePlayers.get(videoId);
-    if (!entry) {
-        return;
-    }
-    if (entry.provider === 'youtube') {
-        entry.player.pauseVideo();
-    } else {
-        entry.player.pause();
-    }
+    activePlayers.forEach(function (entry) {
+        if (entry.videoId === videoId) {
+            if (entry.provider === 'youtube') {
+                entry.player.pauseVideo();
+            } else {
+                entry.player.pause();
+            }
+        }
+    });
 }
 
 /**
  * Register a player as active, pausing all other active players first.
  * Implements mutual exclusion (MXCL-01, MXCL-02): only one video plays at a time.
  *
+ * @param {string} instanceId - Unique player instance ID.
  * @param {string} videoId - Provider video ID.
  * @param {Object} player - SDK player instance.
  * @param {'youtube'|'vimeo'} provider - Player provider.
  * @param {string} url - Original video URL.
  */
-function registerActivePlayer(videoId, player, provider, url) {
+function registerActivePlayer(instanceId, videoId, player, provider, url) {
     activePlayers.forEach(function (entry, id) {
-        if (id !== videoId) {
+        if (id !== instanceId) {
             if (entry.provider === 'youtube') {
                 entry.player.pauseVideo();
             } else {
@@ -101,10 +109,11 @@ function registerActivePlayer(videoId, player, provider, url) {
         }
     });
 
-    activePlayers.set(videoId, {
+    activePlayers.set(instanceId, {
         player: player,
         provider: provider,
         url: url,
+        videoId: videoId,
     });
 }
 
@@ -142,13 +151,14 @@ function checkMilestones(videoId, provider, url, current, duration) {
  * Start polling for milestone progress on a playing video.
  * Polls every 1 second. No-ops if polling is already active for this videoId.
  *
+ * @param {string} instanceId - Unique player instance ID.
  * @param {string} videoId - Provider video ID.
  * @param {Object} player - SDK player instance.
  * @param {'youtube'|'vimeo'} provider - Player provider.
  * @param {string} url - Original video URL.
  */
-function startMilestonePolling(videoId, player, provider, url) {
-    if (pollIntervals.has(videoId)) {
+function startMilestonePolling(instanceId, videoId, player, provider, url) {
+    if (pollIntervals.has(instanceId)) {
         return;
     }
     if (!milestonesFired.has(videoId)) {
@@ -174,20 +184,20 @@ function startMilestonePolling(videoId, player, provider, url) {
         }, 1000);
     }
 
-    pollIntervals.set(videoId, intervalId);
+    pollIntervals.set(instanceId, intervalId);
 }
 
 /**
  * Stop milestone polling for a video.
  * Does NOT clear milestonesFired -- milestones fire at most once per page load.
  *
- * @param {string} videoId - Provider video ID.
+ * @param {string} instanceId - Unique player instance ID.
  */
-function stopMilestonePolling(videoId) {
-    const intervalId = pollIntervals.get(videoId);
+function stopMilestonePolling(instanceId) {
+    const intervalId = pollIntervals.get(instanceId);
     if (intervalId !== undefined) {
         clearInterval(intervalId);
-        pollIntervals.delete(videoId);
+        pollIntervals.delete(instanceId);
     }
 }
 
@@ -198,11 +208,11 @@ function stopMilestonePolling(videoId) {
  * @param {Element} container - The element to replace content in.
  * @param {string} url - Original video URL for the fallback link.
  * @param {string} provider - 'youtube' or 'vimeo'.
- * @param {string} videoId - Provider video ID.
+ * @param {string} instanceId - Unique player instance ID.
  */
-function showErrorFallback(container, url, provider, videoId) {
-    stopMilestonePolling(videoId);
-    activePlayers.delete(videoId);
+function showErrorFallback(container, url, provider, instanceId) {
+    stopMilestonePolling(instanceId);
+    activePlayers.delete(instanceId);
 
     var providerLabel = provider === 'youtube' ? 'YouTube' : 'Vimeo';
     container.innerHTML =
@@ -264,6 +274,7 @@ function loadYouTubeAPI() {
  */
 function createYouTubePlayer(container, videoId, startTime, modalId, url, displayMode) {
     modalId = modalId || null;
+    const instanceId = 'v' + ++instanceCounter;
     const target = (function () {
         const child = document.createElement('div');
         if (modalId) {
@@ -316,18 +327,18 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
                         event.target.playVideo();
                     },
                     onError: function () {
-                        showErrorFallback(container, url, 'youtube', videoId);
+                        showErrorFallback(container, url, 'youtube', instanceId);
                     },
                     onStateChange: function (event) {
                         if (event.data === YT.PlayerState.PLAYING) {
-                            registerActivePlayer(videoId, event.target, 'youtube', url);
+                            registerActivePlayer(instanceId, videoId, event.target, 'youtube', url);
                             sitchco.hooks.doAction('video-play', {
                                 id: videoId,
                                 provider: 'youtube',
                                 url: url,
                             });
 
-                            startMilestonePolling(videoId, event.target, 'youtube', url);
+                            startMilestonePolling(instanceId, videoId, event.target, 'youtube', url);
                         } else if (event.data === YT.PlayerState.PAUSED) {
                             sitchco.hooks.doAction('video-pause', {
                                 id: videoId,
@@ -335,7 +346,7 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
                                 url: url,
                             });
 
-                            stopMilestonePolling(videoId);
+                            stopMilestonePolling(instanceId);
                         } else if (event.data === YT.PlayerState.ENDED) {
                             sitchco.hooks.doAction('video-progress', {
                                 id: videoId,
@@ -350,8 +361,8 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
                                 url: url,
                             });
 
-                            stopMilestonePolling(videoId);
-                            activePlayers.delete(videoId);
+                            stopMilestonePolling(instanceId);
+                            activePlayers.delete(instanceId);
                         }
                     },
                 },
@@ -359,7 +370,7 @@ function createYouTubePlayer(container, videoId, startTime, modalId, url, displa
         })
         .catch(function (err) {
             console.error('sitchco-video: YouTube SDK load failed', err);
-            showErrorFallback(container, url, 'youtube', videoId);
+            showErrorFallback(container, url, 'youtube', instanceId);
         });
 }
 
@@ -391,6 +402,7 @@ function loadVimeoSDK() {
  */
 function createVimeoPlayer(container, videoId, startTime, modalId, url, displayMode) {
     modalId = modalId || null;
+    const instanceId = 'v' + ++instanceCounter;
     loadVimeoSDK()
         .then(function () {
             const target = modalId
@@ -447,14 +459,14 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
                 });
 
             player.on('play', function () {
-                registerActivePlayer(videoId, player, 'vimeo', url);
+                registerActivePlayer(instanceId, videoId, player, 'vimeo', url);
                 sitchco.hooks.doAction('video-play', {
                     id: videoId,
                     provider: 'vimeo',
                     url: url,
                 });
 
-                startMilestonePolling(videoId, player, 'vimeo', url);
+                startMilestonePolling(instanceId, videoId, player, 'vimeo', url);
             });
 
             player.on('pause', function () {
@@ -464,11 +476,11 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
                     url: url,
                 });
 
-                stopMilestonePolling(videoId);
+                stopMilestonePolling(instanceId);
             });
 
             player.on('error', function () {
-                showErrorFallback(container, url, 'vimeo', videoId);
+                showErrorFallback(container, url, 'vimeo', instanceId);
             });
 
             player.on('ended', function () {
@@ -485,13 +497,13 @@ function createVimeoPlayer(container, videoId, startTime, modalId, url, displayM
                     url: url,
                 });
 
-                stopMilestonePolling(videoId);
-                activePlayers.delete(videoId);
+                stopMilestonePolling(instanceId);
+                activePlayers.delete(instanceId);
             });
         })
         .catch(function (err) {
             console.error('sitchco-video: Vimeo SDK load failed', err);
-            showErrorFallback(container, url, 'vimeo', videoId);
+            showErrorFallback(container, url, 'vimeo', instanceId);
         });
 }
 
@@ -665,6 +677,7 @@ function handleModalShow(modal) {
         player: null,
         provider: provider,
         loading: true,
+        cancelled: false,
     });
 
     if (provider === 'youtube') {
@@ -767,11 +780,11 @@ function initVideoBlock(wrapper) {
     } else {
         // Default: poster click mode -- entire wrapper is the click target
         clickTarget = wrapper;
-        // Suppress pointer events on the poster div so child interactive elements
-        // (links, buttons inside InnerBlocks) don't intercept the wrapper click.
+        // Make poster inert so child interactive elements (links, buttons inside
+        // InnerBlocks) can't intercept clicks or receive keyboard focus.
         const posterEl = wrapper.querySelector('.sitchco-video__poster');
         if (posterEl) {
-            posterEl.style.pointerEvents = 'none';
+            posterEl.inert = true;
         }
     }
 
@@ -807,7 +820,12 @@ sitchco.hooks.addAction(
     'video-request-pause',
     function (videoId) {
         pausePlayerById(videoId);
-        stopMilestonePolling(videoId);
+        // Stop milestone polling for all instances of this video ID
+        activePlayers.forEach(function (entry, instanceId) {
+            if (entry.videoId === videoId) {
+                stopMilestonePolling(instanceId);
+            }
+        });
     },
     10,
     'video-block'

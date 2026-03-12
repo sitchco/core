@@ -257,7 +257,7 @@ function Edit({ attributes, setAttributes, clientId }) {
     };
 
     const renderLoading = () => {
-        if (!url || !isLoading) {
+        if (!url || !isLoading || isModalOnly) {
             return null;
         }
         return (
@@ -270,7 +270,7 @@ function Edit({ attributes, setAttributes, clientId }) {
     };
 
     const renderError = () => {
-        if (!url || !error || hasInnerBlocks) {
+        if (!url || !error || hasInnerBlocks || isModalOnly) {
             return null;
         }
         return (
@@ -312,7 +312,7 @@ function Edit({ attributes, setAttributes, clientId }) {
     };
 
     const renderEmptyState = () => {
-        if (!url || isLoading || error || oembedData) {
+        if (!url || isLoading || error || oembedData || isModalOnly) {
             return null;
         }
         return (
@@ -456,7 +456,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                 <InnerBlocks />
             )}
 
-            {url && !isModalOnly && (!error || hasInnerBlocks) && (
+            {url && !isModalOnly && !isLoading && (!error || hasInnerBlocks) && (
                 <div
                     className={`sitchco-video__play-button sitchco-video__play-button--${playIconStyle}`}
                     aria-hidden="true"
@@ -465,6 +465,7 @@ function Edit({ attributes, setAttributes, clientId }) {
                         left: `${playIconX}%`,
                         top: `${playIconY}%`,
                         transform: 'translate(-50%, -50%)',
+                        pointerEvents: 'none',
                     }}
                 >
                     {getPlayIconSvg(provider)}

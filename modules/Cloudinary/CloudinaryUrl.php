@@ -17,13 +17,7 @@ class CloudinaryUrl
     private string $cloudName;
     private string $folder;
 
-    public function __construct()
-    {
-        if ($this->isConfigured()) {
-            $this->cloudName = CLOUDINARY_CLOUD_NAME;
-            $this->folder = CLOUDINARY_FOLDER;
-        }
-    }
+    public function __construct() {}
 
     public function isConfigured(): bool
     {
@@ -35,6 +29,13 @@ class CloudinaryUrl
 
     public function buildUrl(string $src, ?ImageTransform $transform = null): string
     {
+        if (!$this->isConfigured()) {
+            return $src;
+        }
+        if (!isset($this->cloudName)) {
+            $this->cloudName = CLOUDINARY_CLOUD_NAME;
+            $this->folder = CLOUDINARY_FOLDER;
+        }
         $relativePath = $this->extractRelativePath($src);
         if ($relativePath === null) {
             return $src;

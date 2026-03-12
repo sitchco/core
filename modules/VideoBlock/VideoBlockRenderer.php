@@ -62,6 +62,24 @@ class VideoBlockRenderer
     }
 
     /**
+     * Detect video provider from URL.
+     *
+     * Mirrors the JS detectProvider() in editor.jsx so that blocks created
+     * programmatically (e.g. wp_insert_post) without a provider attribute
+     * still render correctly.
+     */
+    public static function detectProvider(string $url): string
+    {
+        if (preg_match('#(?:youtube\.com|youtu\.be)/#i', $url)) {
+            return 'youtube';
+        }
+        if (preg_match('#vimeo\.com/#i', $url)) {
+            return 'vimeo';
+        }
+        return '';
+    }
+
+    /**
      * Extract video ID from URL.
      */
     public static function extractVideoId(string $url, string $provider): string
@@ -104,7 +122,7 @@ class VideoBlockRenderer
 
         // Phase 2 - Extract attributes into local vars
         $url = $attributes['url'];
-        $provider = $attributes['provider'] ?? '';
+        $provider = $attributes['provider'] ?? '' ?: self::detectProvider($url);
         $video_title = $attributes['videoTitle'] ?? '';
         $play_icon_style = $attributes['playIconStyle'] ?? 'dark';
         $play_icon_x = $attributes['playIconX'] ?? 50;
@@ -216,7 +234,7 @@ class VideoBlockRenderer
 
             // Queue modal for wp_footer rendering via UIModal
             if ($uiModal === null) {
-                // Fallback for backward compatibility — UIModal should be passed via VideoBlock::uiModal()
+                // Defensive fallback — UIModal should be injected via VideoBlock::uiModal()
                 $uiModal = $GLOBALS['SitchcoContainer']->get(UIModal::class);
             }
             $modalData = new ModalData($modal_id, $video_title, $modal_content, ModalType::VIDEO);
@@ -253,7 +271,14 @@ class VideoBlockRenderer
             );
         }
 
-        $play_button = self::buildPlayButton($provider, $play_icon_style, $play_icon_x, $play_icon_y, $video_title);
+        $play_button = self::buildPlayButton(
+            $provider,
+            $play_icon_style,
+            $play_icon_x,
+            $play_icon_y,
+            $video_title,
+            $click_behavior,
+        );
 
         // Phase 5 - Accessibility attributes (ACCS-03)
         if ($click_behavior === 'poster') {
@@ -277,11 +302,17 @@ class VideoBlockRenderer
     /**
      * Build the play button HTML with SVG icon.
      *
-     * @param string     $provider       Video provider (youtube, vimeo, etc.)
+     * In poster click mode, the wrapper div is the interactive element (role="button"),
+     * so the play icon is rendered as a presentational <span> to avoid nested interactive
+     * elements (ARIA 1.2 violation). In icon click mode, the play icon is the sole
+     * interactive element and renders as a <button>.
+     *
+     * @param string     $provider        Video provider (youtube, vimeo, etc.)
      * @param string     $play_icon_style Icon style variant (dark/light)
-     * @param int|float  $play_icon_x    Horizontal position percentage
-     * @param int|float  $play_icon_y    Vertical position percentage
-     * @param string     $video_title    Video title for accessibility label
+     * @param int|float  $play_icon_x     Horizontal position percentage
+     * @param int|float  $play_icon_y     Vertical position percentage
+     * @param string     $video_title     Video title for accessibility label
+     * @param string     $click_behavior  Click behavior mode (poster or icon)
      */
     private static function buildPlayButton(
         string $provider,
@@ -289,6 +320,7 @@ class VideoBlockRenderer
         int|float $play_icon_x,
         int|float $play_icon_y,
         string $video_title,
+        string $click_behavior,
     ): string {
         // Play icon SVG via sprite <use>
         $icon_name = $provider === 'youtube' ? 'youtube-play' : 'generic-play';
@@ -304,12 +336,26 @@ class VideoBlockRenderer
 
         $svg = apply_filters(VideoBlock::hookName('play_icon_svg'), $svg, $provider, $play_icon_style);
 
-        return sprintf(
-            '<button class="sitchco-video__play-button sitchco-video__play-button--%s" aria-label="%s" style="position:absolute;left:%s%%;top:%s%%;transform:translate(-50%%,-50%%)">%s</button>',
-            esc_attr($play_icon_style),
-            esc_attr(sprintf('Play video: %s', $video_title)),
+        $style = sprintf(
+            'position:absolute;left:%s%%;top:%s%%;transform:translate(-50%%,-50%%)',
             esc_attr($play_icon_x),
             esc_attr($play_icon_y),
+        );
+
+        if ($click_behavior === 'poster') {
+            return sprintf(
+                '<span class="sitchco-video__play-button sitchco-video__play-button--%s" aria-hidden="true" style="%s">%s</span>',
+                esc_attr($play_icon_style),
+                $style,
+                $svg,
+            );
+        }
+
+        return sprintf(
+            '<button type="button" class="sitchco-video__play-button sitchco-video__play-button--%s" aria-label="%s" style="%s">%s</button>',
+            esc_attr($play_icon_style),
+            esc_attr(sprintf('Play video: %s', $video_title)),
+            $style,
             $svg,
         );
     }

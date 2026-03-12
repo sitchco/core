@@ -293,7 +293,7 @@ No iframe or embed preview is loaded.
 #### N3. Carousel slides away from a playing video
 
 **Trigger:** A video is playing inline inside a carousel slide. The carousel advances to a different slide.  
-**Expected:** Video continues playing (audio still audible). The video block does not auto-pause on visibility changes. External code (e.g., a carousel module) may pause the video by calling `sitchco.hooks.doAction('video-pause', id)`.
+**Expected:** Video continues playing (audio still audible). The video block does not auto-pause on visibility changes. External code (e.g., a carousel module) may pause the video by calling `sitchco.hooks.doAction('video-request-pause', id)`.
 
 #### N4. Video block with no URL set
 
@@ -319,11 +319,24 @@ These hooks preserve the platform's multi-site extensibility pattern. The video 
 
 ### Coordination Hooks (JS — `sitchco.hooks`)
 
-| Hook | Type | Purpose |
-|------|------|---------|
-| `video-play` | Action | Fired when a video starts playing. Payload: `{id, provider, url}` |
-| `video-pause` | Action | Pause a video by ID. External code (carousels, other components) can call this to request a video pause. Payload: video element or ID |
-| `video-ended` | Action | Fired when a video reaches the end. Payload: `{id, provider, url}` |
+#### Lifecycle Events
+
+Fired by the video block when player state changes. External code subscribes via `addAction` to observe.
+
+| Hook | Purpose |
+|------|---------|
+| `video-play` | Fired when a video starts playing. Payload: `{id, provider, url}` |
+| `video-pause` | Fired when a video pauses (user action or programmatic). Payload: `{id, provider, url}` |
+| `video-progress` | Fired when playback crosses a milestone percentage. Payload: `{id, provider, url, percent}` |
+| `video-ended` | Fired when a video reaches the end. Payload: `{id, provider, url}` |
+
+#### Command Hooks
+
+Called by external code (carousels, other components) to control video playback. The video block subscribes internally.
+
+| Hook | Purpose |
+|------|---------|
+| `video-request-pause` | Pause a video by provider ID. Triggers native SDK pause, which in turn fires the `video-pause` lifecycle event. |
 
 ### Customization Filters
 
@@ -331,12 +344,12 @@ These hooks preserve the platform's multi-site extensibility pattern. The video 
 |--------|---------|---------|
 | `sitchco/video/playerVars/youtube` | JS | Override YouTube IFrame API player parameters |
 | `sitchco/video/playerVars/vimeo` | JS | Override Vimeo Player SDK embed parameters |
-| `sitchco/video/play-icon/svg` | PHP | Replace play button SVG markup |
+| `sitchco/video/play_icon_svg` | PHP | Replace play button SVG markup |
 
 ## Out of Scope (v1)
 
 - Modal title/description display beyond accessibility heading (can be added later as visible block attributes)
-- Carousel slide-change auto-pause (the carousel component decides its own policy and can use the `video-pause` hook)
+- Carousel slide-change auto-pause (the carousel component decides its own policy and can use the `video-request-pause` hook)
 - Custom end-state behavior (provider defaults are fine)
 - Background video / self-hosted video (separate system)
 - Consent management / CMP integration (the click-to-load architecture and `video-play` hook provide natural interception points for a future consent layer — e.g., checking CMP status at click time and opening the video URL in a new window instead of loading the SDK when the user has opted out)

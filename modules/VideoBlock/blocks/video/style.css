@@ -16,14 +16,6 @@
         object-fit: cover;
     }
 
-    &__play-icon {
-        pointer-events: none;
-        z-index: 1;
-        line-height: 0;
-        width: 13%;
-        max-width: 80px;
-    }
-
     &__canvas {
         position: relative;
         overflow: hidden;
@@ -132,7 +124,7 @@
         z-index: 2;
         line-height: 0;
         width: 13%;
-        max-width: 80px;
+        max-width: 68px;
 
         &--light {
             --sitchco-play-bg: var(--sitchco-video-play-light-bg, rgba(255, 255, 255, 0.8));
@@ -324,6 +316,12 @@
 
     &::backdrop {
         background: rgb(0 0 0 / 0.85);
+    }
+
+    &[open]::backdrop {
+        @starting-style {
+            background: transparent;
+        }
     }
 }
 
