@@ -12,6 +12,8 @@ use Sitchco\Framework\Module;
  */
 class Flash extends Module
 {
+    public const HOOK_SUFFIX = 'flash';
+
     protected AdminNotificationService $service;
     public function __construct(AdminNotificationService $service)
     {

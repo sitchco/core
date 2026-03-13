@@ -196,6 +196,15 @@ class ModuleRegistry
     public function addModules(array|string $classnames): static
     {
         $valid_classnames = array_filter((array) $classnames, fn($c) => is_subclass_of($c, Module::class));
+        $valid_classnames = array_filter($valid_classnames, function ($classname) {
+            if ($classname::HOOK_SUFFIX === '') {
+                Logger::warning(
+                    "Module {$classname} must define a non-empty HOOK_SUFFIX constant. Skipping registration.",
+                );
+                return false;
+            }
+            return true;
+        });
         $dependency_classnames = ArrayUtil::arrayMapFlat(fn($c) => $c::DEPENDENCIES, $valid_classnames);
 
         if (count($dependency_classnames)) {

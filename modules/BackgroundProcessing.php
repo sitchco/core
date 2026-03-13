@@ -15,6 +15,8 @@ use Sitchco\Utils\Hooks;
 
 class BackgroundProcessing extends Module
 {
+    public const HOOK_SUFFIX = 'background-processing';
+
     public const FEATURES = ['savePermalinksRequestEvent', 'savePostQueueEvent', 'processPostsAfterSavePermalinks'];
 
     protected Container $Container;

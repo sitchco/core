@@ -8,6 +8,8 @@ use Sitchco\Framework\ModuleAssets;
 
 class BlockConfig extends Module
 {
+    public const HOOK_SUFFIX = 'block-config';
+
     const FEATURES = ['enableBlockFilter', 'postTypeBlockVisibility', 'registerBlockCategory'];
 
     /**
@@ -28,12 +30,12 @@ class BlockConfig extends Module
             if (empty($customBlocks)) {
                 return;
             }
-            $assets->enqueueScript('custom-block-visibility', 'block-visibility.js', [
+            $assets->enqueueScript(static::hookName('block-visibility'), 'block-visibility.js', [
                 'wp-blocks',
                 'wp-dom-ready',
                 'wp-edit-post',
             ]);
-            $assets->inlineScriptData('custom-block-visibility', 'blockVisibility', $customBlocks);
+            $assets->inlineScriptData(static::hookName('block-visibility'), 'blockVisibility', $customBlocks);
         });
     }
 

@@ -11,6 +11,8 @@ use Sitchco\Support\DateTime;
 
 class PostModel extends Module
 {
+    public const HOOK_SUFFIX = 'post-model';
+
     public const DEPENDENCIES = [TimberModule::class];
 
     public const POST_CLASSES = [Post::class, Page::class];

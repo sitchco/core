@@ -28,8 +28,8 @@ class UIModal extends Module
             return $paths;
         });
         $this->registerAssets(function (ModuleAssets $assets) {
-            $assets->registerScript(static::HOOK_SUFFIX, 'main.js', ['sitchco/ui-framework']);
-            $assets->registerStyle(static::HOOK_SUFFIX, 'main.css');
+            $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
+            $assets->registerStyle(static::hookName(), 'main.css');
         });
     }
 
@@ -65,8 +65,8 @@ class UIModal extends Module
     public function unloadModals(): void
     {
         if (count($this->modalsLoaded)) {
-            $this->assets()->enqueueScript(static::HOOK_SUFFIX);
-            $this->assets()->enqueueStyle(static::HOOK_SUFFIX);
+            $this->assets()->enqueueScript(static::hookName());
+            $this->assets()->enqueueStyle(static::hookName());
         }
         foreach ($this->modalsLoaded as $modal) {
             $attributes = apply_filters(

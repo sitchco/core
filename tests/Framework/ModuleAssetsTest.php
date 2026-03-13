@@ -142,54 +142,58 @@ class ModuleAssetsTest extends TestCase
 
     public function test_registerScript()
     {
+        $handle = ModuleTester::hookName('test');
         $this->resetWPDependencies();
-        $this->prodAssets->registerScript('test', 'test.js');
-        $registered = wp_scripts()->registered['sitchco/test'];
+        $this->prodAssets->registerScript($handle, 'test.js');
+        $registered = wp_scripts()->registered[$handle];
         $this->assertStringEndsWith('dist/assets/test-abcde.js', $registered->src);
         $this->resetWPDependencies();
-        $this->devAssets->registerScript('test', 'test.js');
-        $registered = wp_scripts()->registered['sitchco/test'];
+        $this->devAssets->registerScript($handle, 'test.js');
+        $registered = wp_scripts()->registered[$handle];
         $this->assertEquals('https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js', $registered->src);
     }
 
     public function test_enqueueScript()
     {
+        $handle = ModuleTester::hookName('test');
         $this->resetWPDependencies();
-        $this->prodAssets->enqueueScript('test', 'test.js');
+        $this->prodAssets->enqueueScript($handle, 'test.js');
         $this->assertAssetOutputs(
             wp_scripts(),
-            'sitchco/test',
-            '<script src="http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-abcde.js" id="sitchco/test-js">',
+            $handle,
+            '<script src="http://example.org/wp-content/mu-plugins/sitchco-core/tests/dist/assets/test-abcde.js" id="sitchco/module-tester/test-js">',
         );
         $this->resetWPDependencies();
-        $this->devAssets->enqueueScript('test', 'test.js');
+        $this->devAssets->enqueueScript($handle, 'test.js');
         $this->assertAssetOutputs(
             wp_scripts(),
-            'sitchco/test',
-            '<script src="https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js" id="sitchco/test-js" type="module">',
+            $handle,
+            '<script src="https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js" id="sitchco/module-tester/test-js" type="module">',
         );
         $this->assertViteClientEnqueued();
     }
 
     public function test_registerStyle()
     {
+        $handle = ModuleTester::hookName('test');
         $this->resetWPDependencies();
-        $this->prodAssets->registerStyle('test', 'test.css');
-        $registered = wp_styles()->registered['sitchco/test'];
+        $this->prodAssets->registerStyle($handle, 'test.css');
+        $registered = wp_styles()->registered[$handle];
         $this->assertStringEndsWith('dist/assets/test-abcde.css', $registered->src);
         $this->resetWPDependencies();
-        $this->devAssets->registerStyle('test', 'test.css');
-        $registered = wp_styles()->registered['sitchco/test'];
+        $this->devAssets->registerStyle($handle, 'test.css');
+        $registered = wp_styles()->registered[$handle];
         $this->assertEquals('https://example.org:5173/Fakes/ModuleTester/assets/styles/test.css', $registered->src);
     }
 
     public function test_enqueueStyle()
     {
+        $handle = ModuleTester::hookName('test');
         $this->resetWPDependencies();
-        $this->prodAssets->enqueueStyle('test', 'test.css');
-        $this->assertTrue(wp_style_is('sitchco/test'));
+        $this->prodAssets->enqueueStyle($handle, 'test.css');
+        $this->assertTrue(wp_style_is($handle));
         $this->resetWPDependencies();
-        $this->devAssets->enqueueStyle('test', 'test.css');
+        $this->devAssets->enqueueStyle($handle, 'test.css');
         $this->assertViteClientEnqueued();
     }
 
@@ -229,17 +233,19 @@ class ModuleAssetsTest extends TestCase
 
     public function test_inlineScript_prod()
     {
+        $handle = ModuleTester::hookName('test');
         $inline_js = 'window.test = true';
-        $this->prodAssets->enqueueScript('test', 'test.js');
-        $this->prodAssets->inlineScript('test', $inline_js);
-        $registered = wp_scripts()->registered['sitchco/test'];
+        $this->prodAssets->enqueueScript($handle, 'test.js');
+        $this->prodAssets->inlineScript($handle, $inline_js);
+        $registered = wp_scripts()->registered[$handle];
         $this->assertEquals($inline_js, $registered->extra['before'][1]);
     }
 
     public function test_inlineScript_dev()
     {
-        $this->devAssets->enqueueScript('test', 'test.js');
-        $this->devAssets->inlineScriptData('test', 'test', ['key' => 'value']);
+        $handle = ModuleTester::hookName('test');
+        $this->devAssets->enqueueScript($handle, 'test.js');
+        $this->devAssets->inlineScriptData($handle, 'test', ['key' => 'value']);
         ob_start();
         do_action('wp_head');
         $html_out = ob_get_clean();

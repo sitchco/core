@@ -10,6 +10,8 @@ use Sitchco\Modules\TimberModule;
 
 class TermModel extends Module
 {
+    public const HOOK_SUFFIX = 'term-model';
+
     public const DEPENDENCIES = [TimberModule::class];
 
     public function init(): void

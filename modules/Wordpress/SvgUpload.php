@@ -12,6 +12,8 @@ use Sitchco\Framework\Module;
  */
 class SvgUpload extends Module
 {
+    public const HOOK_SUFFIX = 'svg-upload';
+
     public function init(): void
     {
         add_filter('upload_mimes', [$this, 'uploadMimes']);

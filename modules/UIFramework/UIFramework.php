@@ -7,13 +7,9 @@ use Sitchco\Framework\ModuleAssets;
 
 class UIFramework extends Module
 {
+    public const HOOK_SUFFIX = 'ui-framework';
+
     const FEATURES = ['loadAssets', 'loadEditorAssets'];
-
-    const HANDLE = 'ui-framework';
-
-    const HOOKS_HANDLE = 'sitchco/hooks';
-    const EDITOR_HANDLE = 'editor-ui-framework';
-    const EDITOR_FLUSH_HANDLE = 'ui-editor-flush';
 
     protected const NO_JS_SCRIPT = "
             document.documentElement.classList.remove('no-js');
@@ -44,11 +40,17 @@ class UIFramework extends Module
     public function init(): void
     {
         $this->registerAssets(function (ModuleAssets $assets) {
-            $assets->registerScript(static::HOOKS_HANDLE, 'hooks.js', ['wp-hooks']);
-            $assets->registerScript(static::HANDLE, 'main.js', [static::HOOKS_HANDLE]);
-            $assets->registerScript(static::EDITOR_HANDLE, 'editor-ui-main.js', [static::HOOKS_HANDLE]);
-            $assets->registerScript(static::EDITOR_FLUSH_HANDLE, false);
-            $assets->registerStyle(static::HANDLE, 'main.css');
+            $assets->registerScript(static::hookName('hooks'), 'hooks.js', ['wp-hooks']);
+            $assets->registerScript(static::hookName(), 'main.js', [static::hookName('hooks')]);
+            $assets->registerScript(static::hookName('editor'), 'editor-ui-main.js', [static::hookName('hooks')]);
+            $assets->registerScript(static::hookName('editor-flush'), false);
+            $assets->registerStyle(static::hookName(), 'main.css');
+
+            // Backwards-compat aliases for old handle names
+            wp_register_script('sitchco/editor-ui-framework', false, [static::hookName('editor')]);
+            wp_register_script('sitchco/hooks', false, [static::hookName('hooks')]);
+            wp_register_script('sitchco/ui-editor-flush', false, [static::hookName('editor-flush')]);
+
             add_filter(
                 'language_attributes',
                 fn($attributes) => !str_contains($attributes, 'class=')
@@ -62,24 +64,24 @@ class UIFramework extends Module
     public function loadEditorAssets(): void
     {
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript(static::EDITOR_HANDLE);
+            $assets->enqueueScript(static::hookName('editor'));
         }, 1);
 
         // Enqueue flush as the very last editor script.
         // No dependencies needed — WordPress outputs queue items in enqueue order,
         // so PHP_INT_MAX ensures this inline script appears after all other editor scripts.
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript(static::EDITOR_FLUSH_HANDLE);
-            $assets->inlineScript(static::EDITOR_FLUSH_HANDLE, static::EDITOR_FLUSH_SCRIPT);
+            $assets->enqueueScript(static::hookName('editor-flush'));
+            $assets->inlineScript(static::hookName('editor-flush'), static::EDITOR_FLUSH_SCRIPT);
         }, PHP_INT_MAX);
     }
 
     public function loadAssets(): void
     {
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
-            $assets->enqueueScript(static::HANDLE);
-            $assets->enqueueStyle(static::HANDLE);
-            $assets->inlineScript(static::HANDLE, static::NO_JS_SCRIPT, 'before');
+            $assets->enqueueScript(static::hookName());
+            $assets->enqueueStyle(static::hookName());
+            $assets->inlineScript(static::hookName(), static::NO_JS_SCRIPT, 'before');
         });
     }
 }

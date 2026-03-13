@@ -14,6 +14,8 @@ use WP_Query;
  */
 class AcfPostTypeAdminSort extends Module
 {
+    public const HOOK_SUFFIX = 'acf-post-type-admin-sort';
+
     protected AcfSettings $settings;
 
     const DEPENDENCIES = [AcfPostTypeAdminColumns::class];
