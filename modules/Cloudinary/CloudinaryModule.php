@@ -10,6 +10,8 @@ use WP_HTML_Tag_Processor;
 
 class CloudinaryModule extends Module
 {
+    public const HOOK_SUFFIX = 'cloudinary';
+
     public function __construct(private CloudinaryUrl $cloudinaryUrl) {}
 
     public function init(): void

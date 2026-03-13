@@ -10,6 +10,8 @@ use Sitchco\Utils\Str;
 
 class SvgSprite extends Module
 {
+    public const HOOK_SUFFIX = 'svg-sprite';
+
     protected array $iconList;
 
     public function __construct(protected ConfigRegistry $configRegistry) {}

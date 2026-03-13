@@ -8,6 +8,8 @@ use Sitchco\Utils\Template;
 
 class Stream extends Module
 {
+    public const HOOK_SUFFIX = 'stream';
+
     public function init(): void
     {
         add_filter('wp_stream_settings_option_fields', [$this, 'filterDefaultMax']);

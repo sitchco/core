@@ -7,6 +7,8 @@ use Sitchco\Framework\Module;
 
 class BlockManager extends Module
 {
+    public const HOOK_SUFFIX = 'block-manager';
+
     public function __construct(private readonly ConfigRegistry $configRegistry) {}
 
     public function init()

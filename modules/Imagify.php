@@ -12,6 +12,8 @@ use Sitchco\Framework\Module;
  */
 class Imagify extends Module
 {
+    public const HOOK_SUFFIX = 'imagify';
+
     /**
      * Initialize the Imagify integration.
      * @return void

@@ -10,6 +10,8 @@ use Sitchco\Framework\Module;
  */
 class WPRocket extends Module
 {
+    public const HOOK_SUFFIX = 'wp-rocket';
+
     public function init(): void
     {
         add_filter('before_rocket_htaccess_rules', [$this, 'forceTrailingSlash']);

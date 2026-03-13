@@ -12,6 +12,8 @@ use Sitchco\Framework\Module;
  */
 class AmazonCloudfront extends Module
 {
+    public const HOOK_SUFFIX = 'amazon-cloudfront';
+
     public function init(): void
     {
         add_filter('user_can_richedit', [$this, 'enableAmazonCloudfrontUserAgent']);

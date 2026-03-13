@@ -7,6 +7,8 @@ use Sitchco\Framework\Module;
 
 class AdminTools extends Module
 {
+    public const HOOK_SUFFIX = 'admin-tools';
+
     const FEATURES = ['resetMetaBoxOrder'];
     /**
      * Enables the user meta box order reset.

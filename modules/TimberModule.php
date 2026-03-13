@@ -18,6 +18,8 @@ use Traversable;
  */
 class TimberModule extends Module
 {
+    public const HOOK_SUFFIX = 'timber';
+
     public function init(): void
     {
         if (class_exists('Timber\Timber')) {

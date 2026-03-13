@@ -3,10 +3,8 @@
 namespace Sitchco\Framework;
 
 use Sitchco\Support\FilePath;
-use Sitchco\Support\HookName;
 use Sitchco\Utils\Cache;
 use Sitchco\Utils\Logger;
-use Sitchco\Utils\Hooks;
 
 class ModuleAssets
 {
@@ -14,8 +12,6 @@ class ModuleAssets
 
     public readonly FilePath $moduleAssetsPath;
     public readonly FilePath $blocksPath;
-
-    public readonly string $namespace;
 
     public readonly ?FilePath $productionBuildPath;
     public readonly ?FilePath $devBuildPath;
@@ -30,7 +26,6 @@ class ModuleAssets
     {
         $this->moduleAssetsPath = $module->assetsPath();
         $this->blocksPath = $module->blocksPath();
-        $this->namespace = $module::hookName();
         $this->productionBuildPath = $this->moduleAssetsPath->findAncestor(SITCHCO_CONFIG_FILENAME);
         if (wp_get_environment_type() !== 'local' || is_admin()) {
             $this->isDevServer = false;
@@ -77,7 +72,6 @@ class ModuleAssets
 
     public function registerScript(string $handle, string|false $src, array $deps = []): void
     {
-        $handle = $this->namespacedHandle($handle);
         if (false !== $src) {
             $src = $this->scriptUrl($src);
             if (!$src) {
@@ -89,7 +83,6 @@ class ModuleAssets
 
     public function enqueueScript(string $handle, string $src = '', array $deps = []): void
     {
-        $handle = $this->namespacedHandle($handle);
         if ($src) {
             $src = $this->scriptUrl($src);
         }
@@ -99,7 +92,6 @@ class ModuleAssets
 
     public function registerStyle(string $handle, string $src, array $deps = [], $media = 'all'): void
     {
-        $handle = $this->namespacedHandle($handle);
         $src = $this->styleUrl($src);
         if (!$src) {
             return;
@@ -110,7 +102,6 @@ class ModuleAssets
 
     public function enqueueStyle(string $handle, string $src = '', array $deps = [], $media = 'all'): void
     {
-        $handle = $this->namespacedHandle($handle);
         if ($src) {
             $src = $this->styleUrl($src);
         }
@@ -141,7 +132,6 @@ class ModuleAssets
 
     public function inlineScript(string $handle, string $content, $position = null): void
     {
-        $handle = $this->namespacedHandle($handle);
         if (!$this->isDevServer) {
             wp_add_inline_script($handle, $content, $position);
             return;
@@ -285,14 +275,5 @@ class ModuleAssets
         }
         $namespace = $this->productionBuildPath->name();
         wp_enqueue_script_module("$namespace/vite-client", $this->devBuildUrl . '/@vite/client', [], null);
-    }
-
-    private function namespacedHandle(string $handle): string
-    {
-        if (!str_starts_with($handle, $this->namespace)) {
-            $joined = HookName::join($this->namespace, $handle);
-            $handle = str_ends_with($this->namespace, "/$handle") ? $this->namespace : $joined;
-        }
-        return $handle;
     }
 }
