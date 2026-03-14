@@ -31,5 +31,11 @@ if ($context['is_preview']) {
     return $module->renderModalContent(ModalData::fromPost($post, $type, true));
 }
 
-$module->loadModal(ModalData::fromPost($post, $type));
-return '';
+$modal = $module->loadModal(ModalData::fromPost($post, $type));
+
+/**
+ * Return HTML comment to avoid automatically removing any assets enqueued by modal's post content
+ * when the block content itself is empty
+ * @see WP_Block:::render()
+ */
+return sprintf('<!-- modal:%s -->', $modal ? $modal->id() : 'error');
