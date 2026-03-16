@@ -3,7 +3,6 @@
 namespace Sitchco\Tests\Modules\UIModal;
 
 use Sitchco\Modules\UIModal\ModalData;
-use Sitchco\Modules\UIModal\ModalType;
 use Sitchco\Tests\TestCase;
 use Timber\Timber;
 
@@ -11,13 +10,13 @@ class ModalDataTest extends TestCase
 {
     public function test_id_prefixes_digit_starting_ids()
     {
-        $normal = new ModalData('about-us', '', '', ModalType::BOX);
+        $normal = new ModalData('about-us', '', '', 'box');
         $this->assertEquals('about-us', $normal->id());
 
-        $digitPrefixed = new ModalData('42-things', '', '', ModalType::BOX);
+        $digitPrefixed = new ModalData('42-things', '', '', 'box');
         $this->assertEquals('modal-42-things', $digitPrefixed->id());
 
-        $allDigit = new ModalData('123', '', '', ModalType::BOX);
+        $allDigit = new ModalData('123', '', '', 'box');
         $this->assertEquals('modal-123', $allDigit->id());
     }
 
@@ -29,7 +28,7 @@ class ModalDataTest extends TestCase
             'post_content' => '<h2>Section Title</h2><p>Body text</p>',
         ]);
         $post = Timber::get_post($post_id);
-        $modal = ModalData::fromPost($post, ModalType::BOX);
+        $modal = ModalData::fromPost($post, 'box');
 
         $this->assertEmpty($modal->heading());
     }
@@ -42,7 +41,7 @@ class ModalDataTest extends TestCase
             'post_content' => '<p>Just a paragraph of content.</p>',
         ]);
         $post = Timber::get_post($post_id);
-        $modal = ModalData::fromPost($post, ModalType::CENTERED);
+        $modal = ModalData::fromPost($post, 'full');
 
         $this->assertEquals('Modal Title', $modal->heading());
     }
@@ -57,20 +56,16 @@ class ModalDataTest extends TestCase
         ]);
         $post = Timber::get_post($post_id);
 
-        $withContent = ModalData::fromPost($post, ModalType::BOX);
-        $withExcerpt = ModalData::fromPost($post, ModalType::BOX, excerpt: true);
+        $withContent = ModalData::fromPost($post, 'box');
+        $withExcerpt = ModalData::fromPost($post, 'box', excerpt: true);
 
         $this->assertStringContainsString('full content of the modal', $withContent->content());
         $this->assertStringContainsString('Short summary', $withExcerpt->content());
     }
 
-    public function test_video_type_modal_from_raw_strings(): void
+    public function test_string_type_passthrough(): void
     {
-        $modal = new ModalData('test-video', 'Video Title', '<div>player</div>', ModalType::VIDEO);
-
-        $this->assertEquals('test-video', $modal->id());
-        $this->assertEquals('Video Title', $modal->heading());
-        $this->assertEquals('<div>player</div>', $modal->content());
-        $this->assertEquals(ModalType::VIDEO, $modal->type);
+        $modal = new ModalData('test-custom', 'Title', '<p>content</p>', 'custom-type');
+        $this->assertEquals('custom-type', $modal->type);
     }
 }

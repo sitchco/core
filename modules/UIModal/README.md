@@ -6,18 +6,19 @@ Focus trapping, scroll locking, and background inertness are handled natively by
 
 ## Modal Types
 
-| Type | Enum | Description |
-|------|------|-------------|
-| Box | `ModalType::BOX` | Centered box over a semi-transparent backdrop. 80% width on desktop, full-width on mobile. |
-| Centered | `ModalType::CENTERED` | Full-screen centered layout. |
-| Video | `ModalType::VIDEO` | Full-screen layout optimized for video content. |
+| Type | Key | Description |
+|------|-----|-------------|
+| Box | `box` | Centered box over a semi-transparent backdrop. Max-width constrained on desktop, full-width on mobile. |
+| Full | `full` | Full-screen layout filling the viewport. No backdrop. |
+
+Custom types can be registered by modules or themes via `registerType()`. A type with no CSS inherits box layout at all breakpoints.
 
 ## Usage: Gutenberg Block
 
 Add the **Modal** block (`sitchco/modal`) in the editor. It exposes two ACF fields:
 
 - **Post** — select the post whose content becomes the modal body
-- **Type** — `box` (default), `centered`, or `video`
+- **Type** — `box` (default) or `full`, plus any theme-registered types
 
 In the editor, the block renders an inline preview showing a truncated excerpt and the modal's slug ID. On the front end, nothing renders inline — the modal is appended to `wp_footer` and stays hidden until triggered.
 
@@ -28,14 +29,44 @@ Inject `UIModal` from the container and call `loadModal()` with a `ModalData` in
 ```php
 use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\UIModal;
-use Sitchco\Modules\UIModal\ModalType;
 
 $module = $container->get(UIModal::class);
 $post = \Timber\Timber::get_post($postId);
-$module->loadModal(ModalData::fromPost($post, ModalType::CENTERED));
+$module->loadModal(ModalData::fromPost($post, 'full'));
 ```
 
 Assets are only enqueued when at least one modal has been loaded.
+
+## Custom Types
+
+### Registering a Type
+
+Modules can register custom types via `registerType()`. Types with a `label` appear in the block editor dropdown. Types without a label are module-only (usable programmatically but not selectable by editors).
+
+```php
+// In a module's init() — requires DEPENDENCIES = [UIModal::class]
+$this->uiModal->registerType('slideshow', ['label' => 'Slideshow']);
+
+// Module-only type (no dropdown entry)
+$this->uiModal->registerType('video');
+```
+
+Last-write-wins: a child theme can override a type registered by its parent to change the label or options.
+
+### Styling a Custom Type
+
+Custom types are styled via CSS custom property overrides on the type's modifier class. No structural CSS is needed for common layout patterns.
+
+```css
+.sitchco-modal--slideshow {
+    --modal-container-flex: 1 0 auto;
+    --modal-container-margin: 0;
+    --modal-container-max-width: none;
+    --modal-backdrop-color: var(--modal-bg-color);
+}
+```
+
+A type with no CSS inherits box layout (centered, max-width constrained) at all breakpoints.
 
 ## Triggering a Modal
 
@@ -147,25 +178,30 @@ sitchco.hooks.doAction('ui-modal-hide', modal);
 
 ## CSS Customization
 
-Override CSS custom properties on `.sitchco-modal` or a specific modal ID:
+Override CSS custom properties on `.sitchco-modal` or a type modifier class:
 
 ```css
 .sitchco-modal {
-    --modal-bg-color: rgb(0 0 0 / 0.7);
-    --modal-max-width: 980px;
-    --modal-text-align: center;
+    /* Layout (type-overridable) */
+    --modal-backdrop-color: transparent;
+    --modal-container-flex: 0 0 auto;
+    --modal-container-margin: auto;
+    --modal-container-width: 100%;
+    --modal-container-max-width: var(--modal-max-width);   /* 980px */
+    --modal-box-gap: 2rem;
+
+    /* Container appearance */
     --modal-container-bg: #fff;
     --modal-container-color: #000;
     --modal-container-padding: 1rem;       /* 3rem at ≥576px */
-    --modal-box-container-bg: var(--modal-container-bg);
-    --modal-box-border-radius: 0;
-    --modal-box-size: 80%;
-    --modal-box-padding: calc((100 - 80) * 0.5vh);
+    --modal-container-border-radius: 0px;
+
+    /* Global */
+    --modal-bg-color: rgb(0 0 0 / 0.7);
+    --modal-max-width: 980px;
     --modal-close-size: 2rem;
     --modal-close-color: var(--modal-container-color);
     --modal-close-color-hover: var(--modal-close-color);
-    --modal-close-top: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
-    --modal-close-right: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
 }
 ```
 
@@ -182,8 +218,7 @@ Open/close animations use `@starting-style` and `transition-behavior: allow-disc
 
 ```
 UIModal/
-├── UIModal.php           # Module class: registration, loading, rendering
-├── ModalType.php         # Enum: BOX, CENTERED, VIDEO
+├── UIModal.php           # Module class: type registry, loading, rendering
 ├── ModalData.php         # Readonly value object for modal ID, heading, content, and type
 ├── acf-json/             # ACF field group for the block
 ├── blocks/modal/         # Gutenberg block (block.json, block.php, block.twig, style.css)

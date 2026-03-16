@@ -20,17 +20,38 @@ class UIModal extends Module
      */
     protected array $modalsLoaded = [];
 
+    private array $types = [];
+
     public function init(): void
     {
+        $this->registerType('box', ['label' => 'Box (default)']);
+        $this->registerType('full', ['label' => 'Full Screen']);
         add_action('wp_footer', [$this, 'unloadModals']);
         add_filter('timber/locations', function ($paths) {
             $paths[] = [__DIR__ . '/templates'];
             return $paths;
         });
+        add_filter('acf/prepare_field/key=field_698f2ded17b67', [$this, 'typeFieldChoices']);
         $this->registerAssets(function (ModuleAssets $assets) {
             $assets->registerScript(static::HOOK_SUFFIX, 'main.js', ['sitchco/ui-framework']);
             $assets->registerStyle(static::HOOK_SUFFIX, 'main.css');
         });
+    }
+
+    public function registerType(string $key, array $options = []): void
+    {
+        $this->types[$key] = $options;
+    }
+
+    public function isRegistered(string $key): bool
+    {
+        return isset($this->types[$key]);
+    }
+
+    public function typeFieldChoices(array $field): array
+    {
+        $field['choices'] = array_filter(array_map(fn(array $options) => $options['label'] ?? null, $this->types));
+        return $field;
     }
 
     public function filterModalPostQuery(array $query): void
@@ -73,7 +94,7 @@ class UIModal extends Module
                 static::hookName('attributes'),
                 [
                     'id' => $modal->id(),
-                    'class' => 'sitchco-modal sitchco-modal--' . $modal->type->value,
+                    'class' => 'sitchco-modal sitchco-modal--' . $modal->type,
                 ],
                 $modal,
             );

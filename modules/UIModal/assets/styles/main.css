@@ -3,14 +3,16 @@
 .sitchco-modal {
     --modal-bg-color: rgb(0 0 0 / 0.7);
     --modal-max-width: 980px;
-    --modal-text-align: center;
+    --modal-backdrop-color: transparent;
+    --modal-container-flex: 0 0 auto;
+    --modal-container-margin: auto;
+    --modal-container-width: 100%;
+    --modal-container-max-width: var(--modal-max-width);
     --modal-container-bg: #fff;
     --modal-container-color: #000;
     --modal-container-padding: 1rem;
-    --modal-box-container-bg: var(--modal-container-bg);
-    --modal-box-border-radius: 0px;
-    --modal-box-size: 80%;
-    --modal-box-padding: calc((100 - 80) * 0.5vh);
+    --modal-container-border-radius: 0px;
+    --modal-box-gap: 2rem;
     --modal-close-size: 2rem;
     --modal-close-color: var(--modal-container-color);
     --modal-close-color-hover: var(--modal-close-color);
@@ -21,6 +23,8 @@
         --modal-container-padding: 3rem;
     }
 
+    display: flex;
+    flex-direction: column;
     border: none;
     padding: 0;
     max-width: none;
@@ -54,7 +58,7 @@
     }
 
     &::backdrop {
-        background: transparent;
+        background: var(--modal-backdrop-color);
         transition:
             background-color var(--transition-duration) var(--transition-timing-out),
             display var(--transition-duration) allow-discrete,
@@ -66,57 +70,44 @@
             background-color var(--transition-duration) var(--transition-timing-in),
             display var(--transition-duration) allow-discrete,
             overlay var(--transition-duration) allow-discrete;
+
+        @starting-style {
+            background: transparent;
+        }
     }
 
     &--box {
-        &::backdrop {
-            background: var(--modal-bg-color);
-        }
-
-        &[open]::backdrop {
-            @starting-style {
-                background: transparent;
-            }
-        }
+        --modal-backdrop-color: var(--modal-bg-color);
 
         @media (min-width: 576px) {
-            padding: var(--modal-box-padding) 0;
+            padding: var(--modal-box-gap);
         }
+    }
+
+    &--full {
+        --modal-container-flex: 1 0 auto;
+        --modal-container-margin: 0;
+        --modal-container-max-width: none;
     }
 
     &__container {
         position: relative;
         display: flex;
         flex-flow: column wrap;
-        width: 100%;
+        flex: var(--modal-container-flex);
+        margin: var(--modal-container-margin);
+        width: var(--modal-container-width);
+        max-width: var(--modal-container-max-width);
         padding: var(--modal-container-padding);
-        align-items: center;
+        border-radius: var(--modal-container-border-radius);
         pointer-events: auto;
-        overflow-y: auto;
         background: var(--modal-container-bg);
         color: var(--modal-container-color);
-
-        .sitchco-modal--box & {
-            background-color: var(--modal-box-container-bg);
-            border-radius: var(--modal-box-border-radius);
-
-            @media (min-width: 992px) {
-                width: var(--modal-box-size);
-                max-width: var(--modal-max-width);
-                height: auto;
-                margin: auto;
-            }
-        }
-
-        &::-webkit-scrollbar {
-            display: none;
-        }
     }
 
     &__content {
         width: 100%;
         max-width: var(--modal-max-width);
-        text-align: var(--modal-text-align);
         margin: auto;
     }
 
@@ -155,8 +146,7 @@
 
 @media (prefers-reduced-motion: reduce) {
     .sitchco-modal,
-    .sitchco-modal::backdrop,
-    .sitchco-modal__container {
+    .sitchco-modal::backdrop {
         transition-duration: 0s;
     }
 }

@@ -41,11 +41,7 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "box": "Box (default)",
-                "centered": "Centered (Full Screen)",
-                "video": "Video (Full Screen)"
-            },
+            "choices": {},
             "default_value": "box",
             "return_format": "value",
             "multiple": 0,
