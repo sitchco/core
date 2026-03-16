@@ -46,11 +46,6 @@ class UIFramework extends Module
             $assets->registerScript(static::hookName('editor-flush'), false);
             $assets->registerStyle(static::hookName(), 'main.css');
 
-            // Backwards-compat aliases for old handle names
-            wp_register_script('sitchco/editor-ui-framework', false, [static::hookName('editor')]);
-            wp_register_script('sitchco/hooks', false, [static::hookName('hooks')]);
-            wp_register_script('sitchco/ui-editor-flush', false, [static::hookName('editor-flush')]);
-
             add_filter(
                 'language_attributes',
                 fn($attributes) => !str_contains($attributes, 'class=')
