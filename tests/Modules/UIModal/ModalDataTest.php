@@ -68,4 +68,65 @@ class ModalDataTest extends TestCase
         $modal = new ModalData('test-custom', 'Title', '<p>content</p>', 'custom-type');
         $this->assertEquals('custom-type', $modal->type);
     }
+
+    public function test_inline_style_recovery_captures_orphaned_styles(): void
+    {
+        $wp_styles = wp_styles();
+        wp_register_style('test-recovery-orphan', false);
+        $wp_styles->done[] = 'test-recovery-orphan';
+
+        add_filter('the_content', function ($content) {
+            wp_add_inline_style('test-recovery-orphan', '.orphan { color: red; }');
+            return $content;
+        });
+
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Recovery Test',
+            'post_name' => 'recovery-test',
+            'post_content' => '<p>Content</p>',
+        ]);
+        $post = Timber::get_post($post_id);
+        $modal = ModalData::fromPost($post, 'box');
+
+        $this->assertStringContainsString('<style>', $modal->content());
+        $this->assertStringContainsString('.orphan { color: red; }', $modal->content());
+    }
+
+    public function test_inline_style_recovery_no_orphans_skips_style_block(): void
+    {
+        $wp_styles = wp_styles();
+        wp_register_style('test-recovery-clean', false);
+        $wp_styles->done[] = 'test-recovery-clean';
+
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Clean Test',
+            'post_name' => 'clean-test',
+            'post_content' => '<p>No orphans here</p>',
+        ]);
+        $post = Timber::get_post($post_id);
+        $modal = ModalData::fromPost($post, 'box');
+
+        $this->assertStringNotContainsString('<style>', $modal->content());
+    }
+
+    public function test_inline_style_recovery_skips_handles_printed_during_render(): void
+    {
+        wp_register_style('test-recovery-printed', false);
+        wp_add_inline_style('test-recovery-printed', '.printed { color: blue; }');
+
+        add_filter('the_content', function ($content) {
+            wp_styles()->done[] = 'test-recovery-printed';
+            return $content;
+        });
+
+        $post_id = $this->factory()->post->create([
+            'post_title' => 'Printed Test',
+            'post_name' => 'printed-test',
+            'post_content' => '<p>Block prints its own styles</p>',
+        ]);
+        $post = Timber::get_post($post_id);
+        $modal = ModalData::fromPost($post, 'box');
+
+        $this->assertStringNotContainsString('.printed { color: blue; }', $modal->content());
+    }
 }

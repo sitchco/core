@@ -35,17 +35,18 @@ readonly class ModalData
     private static function renderContentWithInlineStyleRecovery(Post $post): string
     {
         $wp_styles = wp_styles();
+        $done_before = $wp_styles->done;
         $snapshot = [];
-        foreach ($wp_styles->done as $handle) {
+        foreach ($done_before as $handle) {
             $snapshot[$handle] = $wp_styles->get_data($handle, 'after') ?: [];
         }
 
         $content = $post->content();
 
         $orphaned = [];
-        foreach ($wp_styles->done as $handle) {
+        foreach ($done_before as $handle) {
             $after = $wp_styles->get_data($handle, 'after') ?: [];
-            $previous = $snapshot[$handle] ?? [];
+            $previous = $snapshot[$handle];
             $new_entries = array_slice($after, count($previous));
             if ($new_entries) {
                 $orphaned[$handle] = $new_entries;

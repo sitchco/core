@@ -85,6 +85,7 @@
     }
 
     &--full {
+        --modal-backdrop-color: transparent;
         --modal-container-flex: 1 0 auto;
         --modal-container-margin: 0;
         --modal-container-max-width: none;
