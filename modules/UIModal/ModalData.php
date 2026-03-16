@@ -23,8 +23,41 @@ readonly class ModalData
         if (!preg_match('/<h[1-6][\s>]/i', $post->post_content)) {
             $heading = $post->title();
         }
-        $content = $excerpt ? $post->excerpt() : $post->content();
+        $content = $excerpt ? $post->excerpt() : self::renderContentWithInlineStyleRecovery($post);
         return new self($post->slug, $heading, $content, $type);
+    }
+
+    /**
+     * Renders post content and recovers any inline CSS that was added to already-printed style handles.
+     * When do_blocks() runs after wp_head, wp_add_inline_style() on done handles is silently dropped.
+     * This captures those orphaned styles and appends them as a <style> block.
+     */
+    private static function renderContentWithInlineStyleRecovery(Post $post): string
+    {
+        $wp_styles = wp_styles();
+        $snapshot = [];
+        foreach ($wp_styles->done as $handle) {
+            $snapshot[$handle] = $wp_styles->get_data($handle, 'after') ?: [];
+        }
+
+        $content = $post->content();
+
+        $orphaned = [];
+        foreach ($wp_styles->done as $handle) {
+            $after = $wp_styles->get_data($handle, 'after') ?: [];
+            $previous = $snapshot[$handle] ?? [];
+            $new_entries = array_slice($after, count($previous));
+            if ($new_entries) {
+                $orphaned[$handle] = $new_entries;
+            }
+        }
+
+        if ($orphaned) {
+            $css = implode("\n", array_merge(...array_values($orphaned)));
+            $content .= "\n<style>\n{$css}\n</style>";
+        }
+
+        return $content;
     }
 
     public function id(): string
