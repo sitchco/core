@@ -48,6 +48,11 @@ class UIModal extends Module
         return isset($this->types[$key]);
     }
 
+    public function isLoaded(string $id): bool
+    {
+        return isset($this->modalsLoaded[$id]);
+    }
+
     public function typeFieldChoices(array $field): array
     {
         $field['choices'] = array_filter(array_map(fn(array $options) => $options['label'] ?? null, $this->types));

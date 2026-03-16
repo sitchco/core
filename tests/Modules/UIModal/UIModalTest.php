@@ -2,6 +2,7 @@
 
 namespace Sitchco\Tests\Modules\UIModal;
 
+use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Tests\TestCase;
 
@@ -44,5 +45,18 @@ class UIModalTest extends TestCase
         $this->assertArrayNotHasKey('test-internal', $field['choices']);
         $this->assertEquals('Box (default)', $field['choices']['box']);
         $this->assertEquals('Full Screen', $field['choices']['full']);
+    }
+
+    public function test_isLoaded_returns_false_when_no_modals_loaded(): void
+    {
+        $this->assertFalse($this->module->isLoaded('nonexistent'));
+    }
+
+    public function test_isLoaded_returns_true_after_loadModal(): void
+    {
+        $modal = new ModalData('test-modal', 'Test', '<p>Content</p>', 'box');
+        $this->module->loadModal($modal);
+        $this->assertTrue($this->module->isLoaded('test-modal'));
+        $this->assertFalse($this->module->isLoaded('other-modal'));
     }
 }
