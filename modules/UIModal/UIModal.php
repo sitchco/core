@@ -54,10 +54,11 @@ class UIModal extends Module
         return $field;
     }
 
-    public function filterModalPostQuery(array $query): void
+    public function filterModalPostQuery(array|callable $query): void
     {
         add_filter('acf/fields/post_object/query/key=field_698f2dc017b66', function ($args) use ($query) {
-            return array_merge($args, $query);
+            $resolved = is_callable($query) ? $query() : $query;
+            return array_merge($args, $resolved);
         });
     }
 
