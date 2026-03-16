@@ -102,6 +102,7 @@ class ModuleRegistry
     public function activateModules(array $module_configs): array
     {
         $this->addModules(array_keys($module_configs));
+        $module_configs = array_intersect_key($module_configs, array_flip($this->registeredModuleClassnames));
 
         $this->registrationPass($module_configs);
         $this->extensionPass();
