@@ -7,7 +7,6 @@
 
 use Psr\Container\ContainerInterface;
 use Sitchco\Modules\UIModal\ModalData;
-use Sitchco\Modules\UIModal\ModalType;
 use Sitchco\Modules\UIModal\UIModal;
 
 if (empty($context['fields']['post'])) {
@@ -17,9 +16,9 @@ $post = \Timber\Timber::get_post($context['fields']['post']);
 if (!$post) {
     return '';
 }
-$type = ModalType::tryFrom($context['fields']['type'] ?? '') ?? ModalType::BOX;
-
 $module = $container->get(UIModal::class);
+$rawType = $context['fields']['type'] ?? '';
+$type = $module->isRegistered($rawType) ? $rawType : 'box';
 
 static $pre_content_filter = false;
 
