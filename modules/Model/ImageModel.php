@@ -13,6 +13,8 @@ use WP_Post;
 
 class ImageModel extends Module
 {
+    public const HOOK_SUFFIX = 'image-model';
+
     public const DEPENDENCIES = [TimberModule::class];
 
     public const POST_CLASSES = [Post::class, Page::class];

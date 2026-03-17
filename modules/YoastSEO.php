@@ -10,6 +10,8 @@ use Sitchco\Framework\Module;
  */
 class YoastSEO extends Module
 {
+    public const HOOK_SUFFIX = 'yoast-seo';
+
     const FEATURES = ['proDashboardInactive'];
 
     public function init(): void

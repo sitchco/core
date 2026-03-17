@@ -10,6 +10,8 @@ use Sitchco\Utils\Acf;
 
 class AcfOptions extends Module
 {
+    public const HOOK_SUFFIX = 'acf-options';
+
     public function __construct(protected ModuleRegistry $moduleRegistry) {}
 
     public function init(): void

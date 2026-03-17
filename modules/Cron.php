@@ -39,6 +39,8 @@ use Sitchco\Utils\Hooks;
  */
 class Cron extends Module
 {
+    public const HOOK_SUFFIX = 'cron';
+
     public const HOOKS = [
         'minutely' => 'sitchco_cron_minutely',
         'hourly' => 'sitchco_cron_hourly',

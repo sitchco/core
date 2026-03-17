@@ -9,6 +9,8 @@ use Sitchco\Tests\Fakes\PostTester;
 
 class ModuleTester extends Module
 {
+    public const HOOK_SUFFIX = 'module-tester';
+
     const DEPENDENCIES = [ParentModuleTester::class];
 
     public const POST_CLASSES = [PostTester::class];

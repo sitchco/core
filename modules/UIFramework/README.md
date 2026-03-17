@@ -12,9 +12,9 @@ The module ships three entry scripts:
 
 | Script | Handle | Context | Purpose |
 |--------|--------|---------|---------|
-| `hooks.js` | `sitchco/hooks` | Both | Isolated hooks instance shared across all contexts |
+| `hooks.js` | `sitchco/ui-framework/hooks` | Both | Isolated hooks instance shared across all contexts |
 | `main.js` | `sitchco/ui-framework` | Frontend | Frontend lifecycle, event normalization, utilities |
-| `editor-ui-main.js` | `sitchco/editor-ui-framework` | Block Editor | Editor lifecycle with two-phase pipeline |
+| `editor-ui-main.js` | `sitchco/ui-framework/editor` | Block Editor | Editor lifecycle with two-phase pipeline |
 
 `hooks.js` is a dependency of both `main.js` and `editor-ui-main.js`, ensuring the same `sitchco.hooks` instance is available everywhere without duplication.
 
@@ -66,7 +66,7 @@ The block editor has its own two-phase pipeline that fires synchronously before 
 
 ### How It Works
 
-1. `sitchco/editor-ui-framework` is enqueued at priority **1** on `enqueue_block_editor_assets`
+1. `sitchco/ui-framework/editor` is enqueued at priority **1** on `enqueue_block_editor_assets`
 2. Module scripts enqueue at the default priority (10) — no priority juggling needed
 3. At `PHP_INT_MAX`, a flush script fires `sitchco.editorFlush()`, executing all registered phases in order
 4. A `DOMContentLoaded` fallback catches edge cases where the PHP flush doesn't fire
@@ -117,11 +117,11 @@ sitchco.editorReady(() => {
 
 ### Script Dependencies
 
-Editor modules should depend on `sitchco/editor-ui-framework` (not `sitchco/ui-framework`). The framework handles the rest:
+Editor modules should depend on `sitchco/ui-framework/editor` (not `sitchco/ui-framework`). The framework handles the rest:
 
 ```php
 $assets->registerScript('my-editor-script', 'editor-ui.js', [
-    'sitchco/editor-ui-framework',
+    'sitchco/ui-framework/editor',
 ]);
 ```
 

@@ -8,6 +8,7 @@ use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\ModuleRegistry;
 use Sitchco\Tests\Fakes\ModuleTester\ModuleTester;
 use Sitchco\Tests\Fakes\ParentModuleTester;
+use Sitchco\Tests\Fakes\EmptyHookSuffixModule;
 use Sitchco\Tests\Fakes\PostTester;
 
 class CoreMuPluginTest extends TestCase
@@ -51,6 +52,19 @@ class CoreMuPluginTest extends TestCase
         ]);
         $post = \Timber\Timber::get_post($post_id);
         $this->assertInstanceOf(PostTester::class, $post);
+    }
+
+    function test_empty_hook_suffix_module_is_rejected()
+    {
+        $registry = new ModuleRegistry($this->container);
+        $module_configs = [
+            EmptyHookSuffixModule::class => true,
+        ];
+
+        $active_modules = $registry->activateModules($module_configs);
+
+        $this->assertArrayNotHasKey(EmptyHookSuffixModule::class, $active_modules);
+        $this->assertEmpty($active_modules);
     }
 
     function test_active_module_path()

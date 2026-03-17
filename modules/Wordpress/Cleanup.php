@@ -13,6 +13,8 @@ use Sitchco\Framework\Module;
  */
 class Cleanup extends Module
 {
+    public const HOOK_SUFFIX = 'cleanup';
+
     /** @var array<string> List of features supported by this class. */
     public const FEATURES = [
         'obscurity',
