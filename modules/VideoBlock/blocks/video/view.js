@@ -214,16 +214,22 @@ function showErrorFallback(container, url, provider, instanceId) {
     stopMilestonePolling(instanceId);
     activePlayers.delete(instanceId);
 
-    var providerLabel = provider === 'youtube' ? 'YouTube' : 'Vimeo';
-    container.innerHTML =
-        '<div class="sitchco-video__runtime-error">' +
-        '<p class="sitchco-video__runtime-error-message">This video couldn\u2019t be loaded.</p>' +
-        '<a class="sitchco-video__runtime-error-link" href="' +
-        url +
-        '" target="_blank" rel="noopener noreferrer">Watch on ' +
-        providerLabel +
-        '</a>' +
-        '</div>';
+    const providerLabel = provider === 'youtube' ? 'YouTube' : 'Vimeo';
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'sitchco-video__runtime-error';
+    const message = document.createElement('p');
+    message.className = 'sitchco-video__runtime-error-message';
+    message.textContent = 'This video couldn\u2019t be loaded.';
+    const link = document.createElement('a');
+    link.className = 'sitchco-video__runtime-error-link';
+    link.href = url;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Watch on ' + providerLabel;
+    errorDiv.appendChild(message);
+    errorDiv.appendChild(link);
+    container.innerHTML = '';
+    container.appendChild(errorDiv);
 }
 
 function loadYouTubeAPI() {

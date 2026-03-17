@@ -189,7 +189,10 @@ class VideoBlockRenderer
         if (($display_mode === 'modal' || $display_mode === 'modal-only') && !$oembed_failed) {
             $modal_id = $attributes['modalId'] ?? '';
             if (empty($modal_id)) {
-                $modal_id = sanitize_title($video_title);
+                $modal_id = sanitize_title($video_title) ?: $video_id;
+            }
+            if (empty($modal_id)) {
+                $display_mode = 'inline';
             }
 
             // Always resolve oEmbed data for modal dialog content (even if InnerBlocks used for page poster)
