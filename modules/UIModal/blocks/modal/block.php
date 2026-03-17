@@ -17,8 +17,7 @@ if (!$post) {
     return '';
 }
 $module = $container->get(UIModal::class);
-$rawType = $context['fields']['type'] ?? '';
-$type = $module->isRegistered($rawType) ? $rawType : 'box';
+$type = $context['fields']['type'] ?? '';
 
 static $pre_content_filter = false;
 

@@ -75,4 +75,9 @@ readonly class ModalData
     {
         return $this->content;
     }
+
+    public function withType(string $type): self
+    {
+        return new self($this->id, $this->heading, $this->content, $type);
+    }
 }

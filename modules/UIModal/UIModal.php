@@ -15,6 +15,8 @@ class UIModal extends Module
 
     const HOOK_SUFFIX = 'ui-modal';
 
+    const DEFAULT_TYPE = 'box';
+
     /**
      * @var array<string, ModalData>
      */
@@ -24,7 +26,7 @@ class UIModal extends Module
 
     public function init(): void
     {
-        $this->registerType('box', ['label' => 'Box (default)']);
+        $this->registerType(static::DEFAULT_TYPE, ['label' => 'Box (default)']);
         $this->registerType('full', ['label' => 'Full Screen']);
         add_action('wp_footer', [$this, 'unloadModals']);
         add_filter('timber/locations', function ($paths) {
@@ -46,6 +48,11 @@ class UIModal extends Module
     public function isRegistered(string $key): bool
     {
         return isset($this->types[$key]);
+    }
+
+    public function resolveType(string $type): string
+    {
+        return $this->isRegistered($type) ? $type : static::DEFAULT_TYPE;
     }
 
     public function isLoaded(string $id): bool
@@ -74,6 +81,10 @@ class UIModal extends Module
             return null;
         }
         if (!isset($this->modalsLoaded[$id])) {
+            $resolvedType = $this->resolveType($modal->type);
+            if ($resolvedType !== $modal->type) {
+                $modal = $modal->withType($resolvedType);
+            }
             $this->modalsLoaded[$id] = $modal;
         }
         return $this->modalsLoaded[$id];

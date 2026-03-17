@@ -59,4 +59,39 @@ class UIModalTest extends TestCase
         $this->assertTrue($this->module->isLoaded('test-modal'));
         $this->assertFalse($this->module->isLoaded('other-modal'));
     }
+
+    public function test_default_type_is_registered(): void
+    {
+        $this->assertTrue($this->module->isRegistered(UIModal::DEFAULT_TYPE));
+    }
+
+    public function test_resolveType_returns_registered_type(): void
+    {
+        $this->assertEquals('box', $this->module->resolveType('box'));
+        $this->assertEquals('full', $this->module->resolveType('full'));
+    }
+
+    public function test_resolveType_falls_back_to_default_for_unregistered(): void
+    {
+        $this->assertEquals(UIModal::DEFAULT_TYPE, $this->module->resolveType('nonexistent'));
+    }
+
+    public function test_resolveType_falls_back_to_default_for_empty_string(): void
+    {
+        $this->assertEquals(UIModal::DEFAULT_TYPE, $this->module->resolveType(''));
+    }
+
+    public function test_loadModal_resolves_unregistered_type_to_default(): void
+    {
+        $modal = new ModalData('test-fallback', 'Test', '<p>Content</p>', 'nonexistent');
+        $loaded = $this->module->loadModal($modal);
+        $this->assertEquals(UIModal::DEFAULT_TYPE, $loaded->type);
+    }
+
+    public function test_loadModal_preserves_registered_type(): void
+    {
+        $modal = new ModalData('test-preserve', 'Test', '<p>Content</p>', 'full');
+        $loaded = $this->module->loadModal($modal);
+        $this->assertEquals('full', $loaded->type);
+    }
 }

@@ -69,6 +69,18 @@ class ModalDataTest extends TestCase
         $this->assertEquals('custom-type', $modal->type);
     }
 
+    public function test_withType_returns_new_instance_with_changed_type(): void
+    {
+        $original = new ModalData('test-modal', 'Title', '<p>content</p>', 'box');
+        $changed = $original->withType('full');
+
+        $this->assertEquals('full', $changed->type);
+        $this->assertEquals('test-modal', $changed->id());
+        $this->assertEquals('Title', $changed->heading());
+        $this->assertEquals('<p>content</p>', $changed->content());
+        $this->assertEquals('box', $original->type);
+    }
+
     public function test_inline_style_recovery_captures_orphaned_styles(): void
     {
         $wp_styles = wp_styles();
