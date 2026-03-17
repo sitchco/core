@@ -24,6 +24,7 @@ use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\UIPopover\UIPopover;
+use Sitchco\Modules\VideoBlock\VideoBlock;
 use Sitchco\Modules\Wordpress\BlockConfig;
 use Sitchco\Modules\Wordpress\Cleanup;
 use Sitchco\Modules\Wordpress\SearchRewrite;
@@ -62,6 +63,7 @@ return [
         AcfLifecycle::class,
         PostLifecycle::class,
         UIModal::class,
+        VideoBlock::class,
         UIPopover::class,
         CacheInvalidation::class,
     ],
