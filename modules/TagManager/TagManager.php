@@ -23,7 +23,6 @@ class TagManager extends Module
         add_action('wp_head', fn() => $this->renderDataLayerInit(), 4);
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
-        // @todo M4: Interaction tracking — delegated click handler, data-gtm context resolution
         // @todo M5: data-gtm attribute helper — gtm_attr() Twig function, structural labels in parent theme
         // @todo M6: Hook subscribers — modal, form, hash state change
         // @todo M7: UTM persistence + outbound link decoration — driven by $settings->gtm_decorate_outbound and $settings->gtm_outbound_domains
