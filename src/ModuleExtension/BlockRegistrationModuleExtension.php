@@ -91,12 +91,14 @@ class BlockRegistrationModuleExtension implements ModuleExtension
             }
 
             $module->filterBlockAssets($moduleBlocks);
+            $registrationArgs = $module->blockRegistrationArgs();
 
             // Register each block using register_block_type which accepts a directory containing block.json.
             foreach ($moduleBlocks as $blockName => $relativeDir) {
                 // Rebuild the full path using the base blocks directory and the relative directory.
                 $fullPath = $blocksPath->append($relativeDir)->value();
-                register_block_type($fullPath);
+                $args = $registrationArgs[$blockName] ?? [];
+                register_block_type($fullPath, $args);
             }
         }
     }
