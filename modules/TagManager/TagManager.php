@@ -20,7 +20,7 @@ class TagManager extends Module
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
         });
 
-        add_action('wp_head', fn() => $this->renderDataLayerInit(), 0);
+        add_action('wp_head', fn() => $this->renderDataLayerInit(), 4);
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
         // @todo M4: Interaction tracking — delegated click handler, data-gtm context resolution

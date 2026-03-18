@@ -20,7 +20,7 @@
 
 9. **No reset push needed.** GA4 doesn't need it. With multiple named events (Option A), each event type is self-contained — no stale DL variable cross-contamination between event types.
 
-10. **Pre-GTM `dataLayer.push()` is safe and deterministic.** PHP outputs page metadata in `wp_head` at priority 0, before GTM snippet at priority 1. WordPress full page reloads make load-order deterministic.
+10. **Pre-GTM `dataLayer.push()` is safe and deterministic.** PHP outputs page metadata in `wp_head` at priority 4, before GTM snippet at priority 5. WordPress full page reloads make load-order deterministic.
 
 11. **`ConfigRegistry::normalizeData()` converts numeric-keyed arrays to associative.** `['example.com']` becomes `['example.com' => true]`. All consumers must use associative form and read via `Object.keys()`.
 
@@ -98,7 +98,7 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 
 **Expected:**
 1. PHP outputs `window.dataLayer = window.dataLayer || [];` followed by a push containing `wp_post_type`, `wp_post_id`, and `wp_slug`.
-2. Push occurs in `wp_head` at priority 0. GTM snippet loads at priority 1.
+2. Push occurs in `wp_head` at priority 4. GTM snippet loads at priority 5.
 3. Push is a non-event Data Layer variable update (no `event` key) — values available to all subsequent triggers.
 4. On bfcache restore, metadata persists in the dataLayer from the original page load — no re-push needed.
 

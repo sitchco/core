@@ -152,7 +152,7 @@ Script injection is handled by a separate ScriptInjection module (CPT-based).
 
 - `init()`: Register assets via `$this->registerAssets()`. All behavioral setup branches on `TagManagerSettings` values. The ACF options page and field groups are created in the CMS and synced to `acf-json/` — no PHP registration code.
 - GTM container injection (M2): Hook `wp_head` (priority 1) and `wp_body_open` (priority 1) for GTM snippets, gated by `$settings->gtm_container_ids` being non-empty. Pass container config to JS via `$assets->inlineScriptData()`.
-- Page metadata push (M3): Hook `wp_head` (priority 0) for `dataLayer` initialization and page metadata push (`wp_post_type`, `wp_post_id`, `wp_slug`), gated by `$settings->gtm_container_ids` being non-empty.
+- Page metadata push (M3): Hook `wp_head` (priority 4) for `dataLayer` initialization and page metadata push (`wp_post_type`, `wp_post_id`, `wp_slug`), gated by `$settings->gtm_container_ids` being non-empty.
 
 ### JS Side
 
