@@ -28,7 +28,7 @@
 
 13. **Native Gutenberg block.** This is a native WordPress block (not ACF), registered via `block.json` with a React `edit` component. The InnerBlocks flexibility, conditional inspector UI, and oEmbed preview fetching require full control over the editor experience. This is the first native block in sitchco-core and establishes the pattern for future blocks that need rich editor interactions beyond what ACF block mode provides.
 
-14. **oEmbed metadata populates block defaults.** When a URL is entered, the oEmbed response provides the video title and thumbnail. The title auto-populates the block's title attribute (used for accessibility labels and modal headings). In modal modes, the modal ID auto-generates as a slugified version of the title. Both are editable. This ensures accessibility and deep-linking work out of the box with zero additional author effort.
+14. **oEmbed metadata populates block defaults.** When a URL is entered, the oEmbed response provides the video title and thumbnail. The title auto-populates the block's title attribute (used for accessibility labels and modal headings). The modal ID auto-generates as a slugified version of the title regardless of display mode, so the value is ready if the author switches to a modal mode later. Both are editable. This ensures accessibility and deep-linking work out of the box with zero additional author effort.
 
 ## Chosen Approach
 
@@ -66,7 +66,7 @@ $uiModal->loadModal($modalData);
 
 - The thumbnail is displayed as the poster preview with the provider-appropriate play icon (YouTube branded or generic).
 - The video title is extracted and stored as the `videoTitle` block attribute (editable by the author).
-- If the display mode is Modal or Modal Only, the modal ID auto-generates as a slugified version of the title (editable by the author).
+- The modal ID auto-generates as a slugified version of the title (editable by the author). This happens regardless of display mode so the value is ready if the author switches to a modal mode later.
 
 No iframe or embed preview is loaded.  
 **Must NOT:** Load an iframe in the editor. Must NOT make direct client-side requests to YouTube/Vimeo. Must NOT overwrite a title or modal ID that the author has already manually edited.
@@ -85,8 +85,9 @@ No iframe or embed preview is loaded.
 #### A4. Author adds a custom poster (InnerBlocks override)
 
 **Trigger:** Author adds block(s) inside the video wrapper (e.g., Kadence image, core/image, core/group with overlays).  
-**Expected:** The InnerBlocks content replaces the auto-fetched oEmbed thumbnail as the poster. The play icon overlay renders on top of whatever is inside. The auto-fetch is bypassed.  
-**Must NOT:** Restrict InnerBlocks to specific block types. Must NOT fetch oEmbed data when InnerBlocks are present.
+**Expected:** The InnerBlocks content replaces the auto-fetched oEmbed thumbnail as the poster. The play icon overlay renders on top of whatever is inside. The editor still fetches oEmbed data for title/modalId auto-populate regardless of InnerBlocks presence.
+**Editor must NOT:** Restrict InnerBlocks to specific block types. Must NOT use oEmbed thumbnail as poster preview when InnerBlocks are present.
+**Frontend must NOT:** Render oEmbed poster when InnerBlocks are present. Must NOT inspect InnerBlocks content.
 
 #### A5. Author positions the play icon
 
@@ -183,8 +184,8 @@ No iframe or embed preview is loaded.
 #### F2. Video block with InnerBlocks present
 
 **Trigger:** Author has placed any block(s) inside the video wrapper.  
-**Expected:** InnerBlocks content is rendered as the poster. The oEmbed auto-fetch is not executed. The wrapper does not inspect what the InnerBlocks contain.  
-**Must NOT:** Fetch oEmbed data when InnerBlocks are present. Must NOT inspect InnerBlocks content.
+**Expected:** InnerBlocks content is rendered as the poster. The server-side oEmbed auto-fetch poster is skipped. The wrapper does not inspect what the InnerBlocks contain.
+**Frontend must NOT:** Render oEmbed poster when InnerBlocks are present. Must NOT inspect InnerBlocks content.
 
 ### Modal-Only Mode
 
