@@ -12,17 +12,64 @@ class TagManager extends Module
 
     public const DEPENDENCIES = [UIFramework::class];
 
+    public function __construct(protected TagManagerSettings $settings) {}
+
     public function init(): void
     {
         $this->registerAssets(function (ModuleAssets $assets) {
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
         });
 
-        // @todo M2: GTM container injection — render head/body snippets when $settings->gtm_container_ids is non-empty
+        add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
+        add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
+
         // @todo M3: Page metadata push — dataLayer init + wp_post_type/wp_post_id/wp_slug in wp_head (priority 0)
         // @todo M4: Interaction tracking — delegated click handler, data-gtm context resolution
         // @todo M5: data-gtm attribute helper — gtm_attr() Twig function, structural labels in parent theme
         // @todo M6: Hook subscribers — modal, form, hash state change
         // @todo M7: UTM persistence + outbound link decoration — driven by $settings->gtm_decorate_outbound and $settings->gtm_outbound_domains
+    }
+
+    protected function getContainerIds(): array
+    {
+        if (!apply_filters(static::hookName('enable-gtm'), true)) {
+            return [];
+        }
+        $ids = $this->settings->gtm_container_ids;
+        return array_filter(array_column($ids ?: [], 'container_id'));
+    }
+
+    protected function renderContainerSnippets(string $method): void
+    {
+        foreach ($this->getContainerIds() as $id) {
+            echo $this->$method($id);
+        }
+    }
+
+    protected function headSnippet(string $id): string
+    {
+        $id = esc_js($id);
+        return <<<HTML
+        <!-- Google Tag Manager -->
+        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+        j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+        'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+        })(window,document,'script','dataLayer','{$id}');</script>
+        <!-- End Google Tag Manager -->
+
+        HTML;
+    }
+
+    protected function bodySnippet(string $id): string
+    {
+        $id = esc_attr($id);
+        return <<<HTML
+        <!-- Google Tag Manager (noscript) -->
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={$id}"
+        height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+        <!-- End Google Tag Manager (noscript) -->
+
+        HTML;
     }
 }

@@ -4,7 +4,7 @@
 
 - [X] **M1: TagManager module scaffold and ACF options page** — Module class with asset registration and ACF options page for GTM settings. All behavioral branching driven by ACF field values — no per-feature toggles in config. ACF field group includes GTM container ID(s) repeater and outbound link decoration toggle + domain repeater. `🤝 Collaborative: ACF field groups created manually in admin UI.`
 
-- [ ] **M2: GTM container injection** — GTM head snippet and body `<noscript>` iframe render on the frontend, driven by ACF-configured container ID(s). Multiple containers supported. `enable-gtm` filter can disable injection. No staging snippet logic (deferred).
+- [X] **M2: GTM container injection** — GTM head snippet and body `<noscript>` iframe render on the frontend, driven by ACF-configured container ID(s). Multiple containers supported. `enable-gtm` filter can disable injection. No staging snippet logic (deferred).
 
 - [ ] **M3: Page metadata push** — `dataLayer` initialized and populated with `wp_post_type`, `wp_post_id`, and `wp_slug` in `wp_head` at priority 0, before the GTM snippet. Non-event variable update (no `event` key).
 
