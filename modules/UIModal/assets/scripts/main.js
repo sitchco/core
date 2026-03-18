@@ -74,6 +74,7 @@ addAction(
 
         document.body.classList.add('lock-scroll');
         modal.showModal();
+        modal.focus();
     },
     10,
     COMPONENT
