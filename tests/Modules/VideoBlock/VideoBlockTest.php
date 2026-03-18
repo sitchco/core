@@ -3,8 +3,11 @@
 namespace Sitchco\Tests\Modules\VideoBlock;
 
 use Sitchco\Modules\UIModal\UIModal;
+use Sitchco\Modules\VideoBlock\VideoAttributes;
 use Sitchco\Modules\VideoBlock\VideoBlock;
 use Sitchco\Modules\VideoBlock\VideoBlockRenderer;
+use Sitchco\Modules\VideoBlock\VideoOembedData;
+use Sitchco\Modules\VideoBlock\VideoProvider;
 use Sitchco\Tests\TestCase;
 use WP_Block_Type_Registry;
 
@@ -801,7 +804,7 @@ class VideoBlockTest extends TestCase
         int $height,
         string $expected,
     ): void {
-        $this->assertSame($expected, VideoBlockRenderer::upgradeThumbnailUrl($input, 'vimeo', $width, $height));
+        $this->assertSame($expected, VideoProvider::vimeo()->upgradeThumbnailUrl($input, $width, $height));
     }
 
     public static function vimeoThumbnailProvider(): array
@@ -830,11 +833,8 @@ class VideoBlockTest extends TestCase
 
     public function test_extractVideoId_vimeo_video_path(): void
     {
-        $this->assertSame(
-            '789012',
-            VideoBlockRenderer::extractVideoId('https://vimeo.com/video/789012', 'vimeo'),
-            'Should extract ID from vimeo.com/video/ID URL pattern',
-        );
+        $attrs = new VideoAttributes(['url' => 'https://vimeo.com/video/789012']);
+        $this->assertSame('789012', $attrs->videoId, 'Should extract ID from vimeo.com/video/ID URL pattern');
     }
 
     // --- oEmbed Failure / Fallback ---

@@ -8,11 +8,9 @@
  * @var WP_Block $block      Block instance
  */
 
-use Sitchco\Modules\VideoBlock\VideoBlock;
 use Sitchco\Modules\VideoBlock\VideoBlockRenderer;
 
-$videoBlock = $GLOBALS['SitchcoContainer']->get(VideoBlock::class);
-$output = VideoBlockRenderer::render($attributes, $content, $block, $videoBlock->uiModal());
+$output = $GLOBALS['SitchcoContainer']->get(VideoBlockRenderer::class)->render($attributes, $content, $block);
 
 if ($output !== '') {
     echo $output;

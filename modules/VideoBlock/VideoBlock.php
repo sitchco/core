@@ -11,15 +11,10 @@ class VideoBlock extends Module
 
     const HOOK_SUFFIX = 'video';
 
-    public function __construct(private UIModal $uiModal) {}
+    public function __construct(private readonly UIModal $uiModal) {}
 
     public function init(): void
     {
         $this->uiModal->registerType('video');
-    }
-
-    public function uiModal(): UIModal
-    {
-        return $this->uiModal;
     }
 }
