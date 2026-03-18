@@ -22,13 +22,11 @@
 
 10. **Pre-GTM `dataLayer.push()` is safe and deterministic.** PHP outputs page metadata in `wp_head` at priority 4, before GTM snippet at priority 5. WordPress full page reloads make load-order deterministic.
 
-11. **`ConfigRegistry::normalizeData()` converts numeric-keyed arrays to associative.** `['example.com']` becomes `['example.com' => true]`. All consumers must use associative form and read via `Object.keys()`.
-
 ## Chosen Approaches
 
-### Outbound Link Configuration: ACF Primary + Code Defaults + PHP Filter
+### Outbound Link Configuration: ACF Primary + PHP Filter
 
-ACF toggle ("Decorate outbound links with UTM parameters") and domain repeater on the TagManager options page is the primary configuration path. Placing this alongside GTM container setup creates a natural decision point during site setup. `sitchco.config.php` defaults under `tagManager.outboundDomains` merge with ACF values (deduplicated). PHP filter `sitchco/tag-manager/outbound-domains` receives merged values for programmatic override. Decoration uses static DOM pass + MutationObserver (not click-time, to avoid navigation race conditions).
+ACF toggle ("Decorate outbound links with UTM parameters") and domain repeater on the TagManager options page is the primary configuration path. Placing this alongside GTM container setup creates a natural decision point during site setup. PHP filter `sitchco/tag-manager/outbound-domains` receives ACF values for programmatic override. Decoration uses static DOM pass + MutationObserver (not click-time, to avoid navigation race conditions).
 
 ### dataLayer Event Schema: Multiple Named Events (Option A) + Context Walk
 
@@ -59,7 +57,7 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 **Expected:**
 1. On the TagManager ACF options page, admin checks "Decorate outbound links with UTM parameters."
 2. Admin enters domain(s) in the repeater field (placeholder: "telecharge.com").
-3. PHP merges ACF domains with any `sitchco.config.php` defaults (deduplicated), applies `apply_filters('sitchco/tag-manager/outbound-domains', $domains)`, passes to JS via `inlineScriptData`.
+3. PHP applies `apply_filters('sitchco/tag-manager/outbound-domains', $acfDomains)`, passes result to JS via `inlineScriptData`.
 4. JS reads `Object.keys(window.sitchco.tagManager.outboundDomains)`.
 5. On DOM ready, static pass decorates all `<a>` elements matching configured domains by appending stored UTM parameters (`utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`) from localStorage to the href.
 6. MutationObserver watches for dynamically inserted `<a>` elements and decorates matching ones immediately.
@@ -79,14 +77,14 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 
 #### S3. Programmatic Domain Override via PHP Filter
 
-**Trigger:** A mu-plugin or plugin needs to add/remove domains without touching ACF or `sitchco.config.php`.
+**Trigger:** A mu-plugin or plugin needs to add/remove domains without touching ACF.
 
 **Expected:**
 1. Code adds `add_filter('sitchco/tag-manager/outbound-domains', function($domains) { ... })`.
-2. Filter receives the merged ACF + config values as the base, returns modified array.
+2. Filter receives ACF values as the base, returns modified array.
 3. Final array passes to JS as normal.
 
-**Must NOT:** Override all sources entirely — filter receives merged values as the base.
+**Must NOT:** Override all sources entirely — filter receives ACF values as the base.
 
 ---
 

@@ -2,7 +2,6 @@
 
 namespace Sitchco\Modules\TagManager;
 
-use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\UIFramework\UIFramework;
@@ -13,10 +12,7 @@ class TagManager extends Module
 
     public const DEPENDENCIES = [UIFramework::class];
 
-    public function __construct(
-        protected TagManagerSettings $settings,
-        private readonly ConfigRegistry $configRegistry,
-    ) {}
+    public function __construct(protected TagManagerSettings $settings) {}
 
     public function init(): void
     {
@@ -56,10 +52,7 @@ class TagManager extends Module
             return [];
         }
         $acfDomains = array_filter(array_column($this->settings->gtm_outbound_domains ?: [], 'domain'));
-        $tagManagerConfig = $this->configRegistry->load('tagManager');
-        $configDomains = array_keys($tagManagerConfig['outboundDomains'] ?? []);
-        $merged = array_unique(array_merge($acfDomains, $configDomains));
-        $domains = apply_filters(static::hookName('outbound-domains'), $merged);
+        $domains = apply_filters(static::hookName('outbound-domains'), $acfDomains);
 
         return array_fill_keys(array_values(array_filter($domains)), true);
     }

@@ -14,7 +14,7 @@
 
 - [X] **M6: Hook subscribers (modal, form, hash)** — TagManager subscribes to existing UIFramework hooks: `ui-modal-show`/`ui-modal-hide` pushes `modal_open`/`modal_close`, `GFORM_CONFIRM` pushes `gform_submit`, `HASH_STATE_CHANGE` pushes `hash_change`. All events fire correctly and appear in `dataLayer`.
 
-- [X] **M7: UTM persistence and outbound link decoration** — URL UTM parameters captured into `localStorage` on page load. When outbound link decoration is enabled via ACF toggle on the TagManager options page, matching outbound links are decorated with stored UTM params via static DOM pass on load + MutationObserver for dynamically inserted links. No click-time modification (avoids navigation race conditions). Domains entered in ACF repeater (placeholder: "telecharge.com"). `sitchco.config.php` and PHP filter available as programmatic overrides. Subdomain matching works. UTM capture functions independently of decoration being enabled. `localStorage` errors handled gracefully.
+- [X] **M7: UTM persistence and outbound link decoration** — URL UTM parameters captured into `localStorage` on page load. When outbound link decoration is enabled via ACF toggle on the TagManager options page, matching outbound links are decorated with stored UTM params via static DOM pass on load + MutationObserver for dynamically inserted links. No click-time modification (avoids navigation race conditions). Domains entered in ACF repeater (placeholder: "telecharge.com"). PHP filter available as programmatic override. Subdomain matching works. UTM capture functions independently of decoration being enabled. `localStorage` errors handled gracefully.
 
 ## ScriptInjection Module
 
