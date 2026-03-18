@@ -23,9 +23,23 @@ class TagManager extends Module
         add_action('wp_head', fn() => $this->renderDataLayerInit(), 4);
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
-        // @todo M5: data-gtm attribute helper — gtm_attr() Twig function, structural labels in parent theme
+        add_filter('timber/twig/functions', function ($functions) {
+            $functions['gtm_attr'] = [
+                'callable' => static::renderGtmAttribute(...),
+                'is_safe' => ['html'],
+            ];
+            return $functions;
+        }, 20);
         // @todo M6: Hook subscribers — modal, form, hash state change
         // @todo M7: UTM persistence + outbound link decoration — driven by $settings->gtm_decorate_outbound and $settings->gtm_outbound_domains
+    }
+
+    public static function renderGtmAttribute(mixed $value): string
+    {
+        if (is_array($value) || is_object($value)) {
+            $value = wp_json_encode($value);
+        }
+        return sprintf('data-gtm="%s"', esc_attr((string) $value));
     }
 
     protected function getContainerIds(): array

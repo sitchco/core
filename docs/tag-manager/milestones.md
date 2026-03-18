@@ -10,7 +10,7 @@
 
 - [X] **M4: Click interaction tracking** — Delegated click handler on `document` tracks all qualifying elements (`a`, `button`, `input[type=submit]`, `[data-button]`). Labels auto-resolved from aria/text/title. `data-gtm` string values provide context labels via ancestor walk. `data-gtm` JSON values override interaction properties. `data-gtm="0"` opts out the element. Pushes `site_click` event to `dataLayer`.
 
-- [ ] **M5: `data-gtm` attribute helper** — Twig function `gtm_attr()` with no-op stub registered in TimberModule (returns `''` when TagManager is disabled). TagManager replaces the callable when active to return `data-gtm="..."` attribute markup. Structural context labels (`Header`, `Footer`, `Main`) added to parent theme layout templates. `🤝 Collaborative: deciding which parent theme templates get structural labels.`
+- [X] **M5: `data-gtm` attribute helper** — Twig function `gtm_attr()` with no-op stub registered in TimberModule (returns `''` when TagManager is disabled). TagManager replaces the callable when active to return `data-gtm="..."` attribute markup. Structural context labels (`Header`, `Footer`, `Main`) added to parent theme layout templates. `🤝 Collaborative: deciding which parent theme templates get structural labels.`
 
 - [ ] **M6: Hook subscribers (modal, form, hash)** — TagManager subscribes to existing UIFramework hooks: `ui-modal-show`/`ui-modal-hide` pushes `modal_open`/`modal_close`, `GFORM_CONFIRM` pushes `gform_submit`, `HASH_STATE_CHANGE` pushes `hash_change`. All events fire correctly and appear in `dataLayer`.
 
