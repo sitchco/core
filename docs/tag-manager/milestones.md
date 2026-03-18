@@ -6,7 +6,7 @@
 
 - [X] **M2: GTM container injection** — GTM head snippet and body `<noscript>` iframe render on the frontend, driven by ACF-configured container ID(s). Multiple containers supported. `enable-gtm` filter can disable injection. No staging snippet logic (deferred).
 
-- [ ] **M3: Page metadata push** — `dataLayer` initialized and populated with `wp_post_type`, `wp_post_id`, and `wp_slug` in `wp_head` at priority 0, before the GTM snippet. Non-event variable update (no `event` key).
+- [X] **M3: Page metadata push** — `dataLayer` initialized and populated with `wp_post_type`, `wp_post_id`, and `wp_slug` in `wp_head` at priority 0, before the GTM snippet. Non-event variable update (no `event` key).
 
 - [ ] **M4: Click interaction tracking** — Delegated click handler on `document` tracks all qualifying elements (`a`, `button`, `input[type=submit]`, `[data-button]`). Labels auto-resolved from aria/text/title. `data-gtm` string values provide context labels via ancestor walk. `data-gtm` JSON values override interaction properties. `data-gtm="0"` opts out the element. Pushes `site_click` event to `dataLayer`.
 

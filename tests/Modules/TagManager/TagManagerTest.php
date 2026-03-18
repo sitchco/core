@@ -19,12 +19,19 @@ class TagManagerTest extends TestCase
     {
         remove_all_filters('acf/format_value/name=gtm_container_ids');
         remove_all_filters(TagManager::hookName('enable-gtm'));
+        remove_all_filters(TagManager::hookName('current-state'));
         parent::tearDown();
     }
 
     private function setContainerIds(array $ids): void
     {
         add_filter('acf/format_value/name=gtm_container_ids', fn() => $ids, 10, 0);
+    }
+
+    private function setQueriedObject($object, int $id = 0): void
+    {
+        $GLOBALS['wp_query']->queried_object = $object;
+        $GLOBALS['wp_query']->queried_object_id = $id;
     }
 
     private function captureHook(string $hook): string
@@ -65,5 +72,67 @@ class TagManagerTest extends TestCase
         $body = $this->captureHook('wp_body_open');
         $this->assertStringNotContainsString('googletagmanager', $head);
         $this->assertStringNotContainsString('googletagmanager', $body);
+    }
+
+    public function test_datalayer_init_renders_before_gtm_snippet(): void
+    {
+        $this->setContainerIds([['container_id' => 'GTM-ORDER']]);
+        $post = $this->factory()->post->create_and_get();
+        $this->setQueriedObject($post, $post->ID);
+        $head = $this->captureHook('wp_head');
+        $dlPos = strpos($head, 'window.dataLayer=window.dataLayer||[]');
+        $gtmPos = strpos($head, 'googletagmanager');
+        $this->assertNotFalse($dlPos);
+        $this->assertNotFalse($gtmPos);
+        $this->assertLessThan($gtmPos, $dlPos);
+    }
+
+    public function test_datalayer_push_contains_post_metadata(): void
+    {
+        $post = $this->factory()->post->create_and_get([
+            'post_type' => 'page',
+            'post_name' => 'about-us',
+        ]);
+        $this->setQueriedObject($post, $post->ID);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('"wp_post_type":"page"', $head);
+        $this->assertStringContainsString('"wp_post_id":' . $post->ID, $head);
+        $this->assertStringContainsString('"wp_slug":"about-us"', $head);
+    }
+
+    public function test_datalayer_push_has_no_event_key(): void
+    {
+        $post = $this->factory()->post->create_and_get();
+        $this->setQueriedObject($post, $post->ID);
+        $head = $this->captureHook('wp_head');
+        $this->assertMatchesRegularExpression('/dataLayer\.push\(\{[^}]+\}\)/', $head);
+        $this->assertDoesNotMatchRegularExpression('/dataLayer\.push\(\{[^}]*"event"/', $head);
+    }
+
+    public function test_datalayer_init_renders_without_container_ids(): void
+    {
+        $this->setContainerIds([]);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('window.dataLayer=window.dataLayer||[]', $head);
+        $this->assertStringNotContainsString('googletagmanager', $head);
+    }
+
+    public function test_datalayer_no_push_on_404(): void
+    {
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('window.dataLayer=window.dataLayer||[]', $head);
+        $this->assertStringNotContainsString('dataLayer.push', $head);
+    }
+
+    public function test_current_state_filter_modifies_metadata(): void
+    {
+        $post = $this->factory()->post->create_and_get();
+        $this->setQueriedObject($post, $post->ID);
+        add_filter(TagManager::hookName('current-state'), function (array $data) {
+            $data['custom_key'] = 'custom_value';
+            return $data;
+        });
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('"custom_key":"custom_value"', $head);
     }
 }

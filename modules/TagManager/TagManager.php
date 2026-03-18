@@ -20,10 +20,9 @@ class TagManager extends Module
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
         });
 
+        add_action('wp_head', fn() => $this->renderDataLayerInit(), 0);
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
-
-        // @todo M3: Page metadata push — dataLayer init + wp_post_type/wp_post_id/wp_slug in wp_head (priority 0)
         // @todo M4: Interaction tracking — delegated click handler, data-gtm context resolution
         // @todo M5: data-gtm attribute helper — gtm_attr() Twig function, structural labels in parent theme
         // @todo M6: Hook subscribers — modal, form, hash state change
@@ -44,6 +43,40 @@ class TagManager extends Module
         foreach ($this->getContainerIds() as $id) {
             echo $this->$method($id);
         }
+    }
+
+    protected function getPageMetadata(): array
+    {
+        $obj = get_queried_object();
+        if ($obj instanceof \WP_Post) {
+            return [
+                'wp_post_type' => $obj->post_type,
+                'wp_post_id' => $obj->ID,
+                'wp_slug' => $obj->post_name,
+            ];
+        }
+        if ($obj instanceof \WP_Term) {
+            return [
+                'wp_post_type' => $obj->taxonomy,
+                'wp_post_id' => $obj->term_id,
+                'wp_slug' => $obj->slug,
+            ];
+        }
+        if ($obj instanceof \WP_Post_Type) {
+            return [
+                'wp_post_type' => $obj->name,
+                'wp_post_id' => 0,
+                'wp_slug' => $obj->name,
+            ];
+        }
+        return [];
+    }
+
+    protected function renderDataLayerInit(): void
+    {
+        $data = apply_filters(static::hookName('current-state'), $this->getPageMetadata());
+        $push = !empty($data) ? "\nwindow.dataLayer.push(" . wp_json_encode($data) . ');' : '';
+        echo "<script>\nwindow.dataLayer=window.dataLayer||[];{$push}\n</script>\n";
     }
 
     protected function headSnippet(string $id): string
