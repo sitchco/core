@@ -1,0 +1,148 @@
+{
+    "key": "group_69b9bd38ce5fb",
+    "title": "Tag Manager Settings",
+    "fields": [
+        {
+            "key": "field_69b9bd38812fc",
+            "label": "GTM Container IDs",
+            "name": "gtm_container_ids",
+            "aria-label": "",
+            "type": "repeater",
+            "instructions": "Google Tag Manager container IDs to inject on the frontend. Each container loads its own GTM snippet in the page head and body.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layout": "table",
+            "pagination": 0,
+            "min": 0,
+            "max": 0,
+            "collapsed": "",
+            "button_label": "Add Container",
+            "rows_per_page": 20,
+            "sub_fields": [
+                {
+                    "key": "field_69b9bd8d812fd",
+                    "label": "Container ID",
+                    "name": "container_id",
+                    "aria-label": "",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "default_value": "",
+                    "maxlength": "",
+                    "allow_in_bindings": 0,
+                    "placeholder": "GTM-XXXXXXX",
+                    "prepend": "",
+                    "append": "",
+                    "parent_repeater": "field_69b9bd38812fc"
+                }
+            ]
+        },
+        {
+            "key": "field_69b9bdbd812fe",
+            "label": "Decorate outbound links with UTM parameters",
+            "name": "gtm_decorate_outbound",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "Appends UTM parameters from the visitor's landing page to outbound links. Use this for third-party domains that don't support cross-domain tracking (e.g. external ticketing providers).",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "default_value": 0,
+            "allow_in_bindings": 0,
+            "ui_on_text": "",
+            "ui_off_text": "",
+            "ui": 1
+        },
+        {
+            "key": "field_69b9bde4812ff",
+            "label": "Outbound Domains",
+            "name": "gtm_outbound_domains",
+            "aria-label": "",
+            "type": "repeater",
+            "instructions": "External domains whose links should receive UTM parameters. Subdomains are matched automatically (e.g. \"telecharge.com\" also matches \"www.telecharge.com\").",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_69b9bdbd812fe",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layout": "table",
+            "pagination": 0,
+            "min": 0,
+            "max": 0,
+            "collapsed": "",
+            "button_label": "Add Domain",
+            "rows_per_page": 20,
+            "sub_fields": [
+                {
+                    "key": "field_69b9be0381300",
+                    "label": "Domain",
+                    "name": "domain",
+                    "aria-label": "",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "default_value": "",
+                    "maxlength": "",
+                    "allow_in_bindings": 0,
+                    "placeholder": "telecharge.com",
+                    "prepend": "",
+                    "append": "",
+                    "parent_repeater": "field_69b9bde4812ff"
+                }
+            ]
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "options_page",
+                "operator": "==",
+                "value": "tag-manager"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "",
+    "show_in_rest": 0,
+    "display_title": "",
+    "modified": 1773843984,
+    "options_class": "\/var\/www\/html\/wp-content\/mu-plugins\/sitchco-core\/modules\/TagManager\/TagManagerSettings.php"
+}

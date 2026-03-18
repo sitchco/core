@@ -1,0 +1,23 @@
+{
+    "key": "ui_options_page_69b9bcc8645f1",
+    "title": "Tag Manager",
+    "active": true,
+    "menu_order": 0,
+    "page_title": "Tag Manager",
+    "menu_slug": "tag-manager",
+    "parent_slug": "global",
+    "advanced_configuration": 1,
+    "icon_url": "",
+    "menu_title": "",
+    "position": null,
+    "redirect": false,
+    "description": "",
+    "menu_icon": [],
+    "update_button": "Update",
+    "updated_message": "Options Updated",
+    "capability": "edit_posts",
+    "data_storage": "options",
+    "post_id": "",
+    "autoload": false,
+    "modified": 1773780201
+}
