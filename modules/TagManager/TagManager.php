@@ -39,7 +39,7 @@ class TagManager extends Module
         if (is_array($value) || is_object($value)) {
             $value = wp_json_encode($value);
         }
-        return sprintf('data-gtm="%s"', esc_attr((string) $value));
+        return sprintf(' data-gtm="%s"', esc_attr((string) $value));
     }
 
     protected function getContainerIds(): array
