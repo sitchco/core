@@ -1,13 +1,13 @@
 <?php
 
-namespace Sitchco\Tests\Modules\VideoBlock;
+namespace Sitchco\Tests\Modules\Video;
 
 use Sitchco\Modules\UIModal\UIModal;
-use Sitchco\Modules\VideoBlock\VideoAttributes;
-use Sitchco\Modules\VideoBlock\VideoBlock;
-use Sitchco\Modules\VideoBlock\VideoBlockRenderer;
-use Sitchco\Modules\VideoBlock\VideoOembedData;
-use Sitchco\Modules\VideoBlock\VideoProvider;
+use Sitchco\Modules\Video\VideoAttributes;
+use Sitchco\Modules\Video\VideoModule;
+use Sitchco\Modules\Video\VideoBlockRenderer;
+use Sitchco\Modules\Video\VideoOembedData;
+use Sitchco\Modules\Video\VideoProvider;
 use Sitchco\Tests\TestCase;
 use WP_Block_Type_Registry;
 
@@ -26,8 +26,8 @@ class VideoBlockTest extends TestCase
 
     public function test_module_is_registered(): void
     {
-        $module = $this->container->get(VideoBlock::class);
-        $this->assertInstanceOf(VideoBlock::class, $module);
+        $module = $this->container->get(VideoModule::class);
+        $this->assertInstanceOf(VideoModule::class, $module);
     }
 
     public function test_block_type_is_registered(): void
@@ -710,8 +710,8 @@ class VideoBlockTest extends TestCase
     {
         $this->assertSame(
             'sitchco/video/play_icon_svg',
-            VideoBlock::hookName('play_icon_svg'),
-            'VideoBlock::hookName("play_icon_svg") should return "sitchco/video/play_icon_svg"',
+            VideoModule::hookName('play_icon_svg'),
+            'VideoModule::hookName("play_icon_svg") should return "sitchco/video/play_icon_svg"',
         );
     }
 
@@ -1521,7 +1521,7 @@ class VideoBlockTest extends TestCase
      */
     private function renderBlock(array $attributes, string $content): string
     {
-        $module = $this->container->get(VideoBlock::class);
+        $module = $this->container->get(VideoModule::class);
         $renderFile = $module->blocksPath()->append('video/render.php')->value();
         $block = $this->makeBlock($attributes, $content);
 

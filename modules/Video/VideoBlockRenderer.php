@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Modules\VideoBlock;
+namespace Sitchco\Modules\Video;
 
 use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\UIModal;
@@ -215,7 +215,7 @@ readonly class VideoBlockRenderer
         ]);
 
         $svg = apply_filters(
-            VideoBlock::hookName('play_icon_svg'),
+            VideoModule::hookName('play_icon_svg'),
             $svg,
             $attrs->provider->name,
             $attrs->playIconStyle,

@@ -1,11 +1,11 @@
 <?php
 
-namespace Sitchco\Modules\VideoBlock;
+namespace Sitchco\Modules\Video;
 
 use Sitchco\Framework\Module;
 use Sitchco\Modules\UIModal\UIModal;
 
-class VideoBlock extends Module
+class VideoModule extends Module
 {
     public const DEPENDENCIES = [UIModal::class];
 

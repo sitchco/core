@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Modules\VideoBlock;
+namespace Sitchco\Modules\Video;
 
 /**
  * Structured representation of the oEmbed fields used by the video block.

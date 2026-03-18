@@ -8,7 +8,7 @@
  * @var WP_Block $block      Block instance
  */
 
-use Sitchco\Modules\VideoBlock\VideoBlockRenderer;
+use Sitchco\Modules\Video\VideoBlockRenderer;
 
 $output = $GLOBALS['SitchcoContainer']->get(VideoBlockRenderer::class)->render($attributes, $content, $block);
 

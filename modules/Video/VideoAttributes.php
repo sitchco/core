@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Modules\VideoBlock;
+namespace Sitchco\Modules\Video;
 
 use WP_Block;
 

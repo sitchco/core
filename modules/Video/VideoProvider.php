@@ -1,6 +1,6 @@
 <?php
 
-namespace Sitchco\Modules\VideoBlock;
+namespace Sitchco\Modules\Video;
 
 /**
  * Value object encapsulating all provider-specific behavior for video blocks.
