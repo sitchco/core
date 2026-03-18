@@ -48,28 +48,17 @@ class TagManager extends Module
     protected function getPageMetadata(): array
     {
         $obj = get_queried_object();
-        if ($obj instanceof \WP_Post) {
-            return [
-                'wp_post_type' => $obj->post_type,
-                'wp_post_id' => $obj->ID,
-                'wp_slug' => $obj->post_name,
-            ];
-        }
-        if ($obj instanceof \WP_Term) {
-            return [
-                'wp_post_type' => $obj->taxonomy,
-                'wp_post_id' => $obj->term_id,
-                'wp_slug' => $obj->slug,
-            ];
-        }
-        if ($obj instanceof \WP_Post_Type) {
-            return [
-                'wp_post_type' => $obj->name,
-                'wp_post_id' => 0,
-                'wp_slug' => $obj->name,
-            ];
-        }
-        return [];
+        [$type, $id, $slug] = match (true) {
+            $obj instanceof \WP_Post => [$obj->post_type, $obj->ID, $obj->post_name],
+            $obj instanceof \WP_Term => [$obj->taxonomy, $obj->term_id, $obj->slug],
+            $obj instanceof \WP_Post_Type => [$obj->name, 0, $obj->name],
+            default => [null, null, null],
+        };
+        return $type !== null ? [
+            'wp_post_type' => $type,
+            'wp_post_id' => $id,
+            'wp_slug' => $slug,
+        ] : [];
     }
 
     protected function renderDataLayerInit(): void
