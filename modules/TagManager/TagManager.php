@@ -2,6 +2,7 @@
 
 namespace Sitchco\Modules\TagManager;
 
+use Sitchco\Framework\ConfigRegistry;
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\UIFramework\UIFramework;
@@ -12,12 +13,21 @@ class TagManager extends Module
 
     public const DEPENDENCIES = [UIFramework::class];
 
-    public function __construct(protected TagManagerSettings $settings) {}
+    public function __construct(
+        protected TagManagerSettings $settings,
+        private readonly ConfigRegistry $configRegistry,
+    ) {}
 
     public function init(): void
     {
         $this->registerAssets(function (ModuleAssets $assets) {
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
+            $outboundDomains = $this->getOutboundDomains();
+            if (!empty($outboundDomains)) {
+                $assets->inlineScriptData(static::hookName(), 'tagManager', [
+                    'outboundDomains' => $outboundDomains,
+                ]);
+            }
         });
 
         add_action('wp_head', fn() => $this->renderDataLayerInit(), 4);
@@ -30,7 +40,6 @@ class TagManager extends Module
             ];
             return $functions;
         }, 20);
-        // @todo M7: UTM persistence + outbound link decoration — driven by $settings->gtm_decorate_outbound and $settings->gtm_outbound_domains
     }
 
     public static function renderGtmAttribute(mixed $value): string
@@ -39,6 +48,20 @@ class TagManager extends Module
             $value = wp_json_encode($value);
         }
         return sprintf(' data-gtm="%s"', esc_attr((string) $value));
+    }
+
+    protected function getOutboundDomains(): array
+    {
+        if (!$this->settings->gtm_decorate_outbound) {
+            return [];
+        }
+        $acfDomains = array_filter(array_column($this->settings->gtm_outbound_domains ?: [], 'domain'));
+        $tagManagerConfig = $this->configRegistry->load('tagManager');
+        $configDomains = array_keys($tagManagerConfig['outboundDomains'] ?? []);
+        $merged = array_unique(array_merge($acfDomains, $configDomains));
+        $domains = apply_filters(static::hookName('outbound-domains'), $merged);
+
+        return array_fill_keys(array_values(array_filter($domains)), true);
     }
 
     protected function getContainerIds(): array
