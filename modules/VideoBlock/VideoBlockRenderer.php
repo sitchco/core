@@ -146,11 +146,13 @@ class VideoBlockRenderer
                 $oembed = null;
             }
             if ($oembed && !empty($oembed->thumbnail_url)) {
+                $oembed_width = (int) ($oembed->width ?? 0);
+                $oembed_height = (int) ($oembed->height ?? 0);
                 $thumbnail_url = self::upgradeThumbnailUrl(
                     $oembed->thumbnail_url,
                     $provider,
-                    (int) $oembed->width,
-                    (int) $oembed->height,
+                    $oembed_width,
+                    $oembed_height,
                 );
 
                 $escaped_thumb = esc_url($thumbnail_url);
@@ -159,8 +161,8 @@ class VideoBlockRenderer
                 <img class="sitchco-video__poster-img" src="{$escaped_thumb}" alt="{$escaped_title}" loading="lazy">
                 HTML;
                 $poster_style =
-                    $oembed->width && $oembed->height
-                        ? sprintf(' style="aspect-ratio: %s / %s"', esc_attr($oembed->width), esc_attr($oembed->height))
+                    $oembed_width && $oembed_height
+                        ? sprintf(' style="aspect-ratio: %s / %s"', esc_attr($oembed_width), esc_attr($oembed_height))
                         : '';
             } else {
                 $poster_html = '<div class="sitchco-video__placeholder-poster"></div>';

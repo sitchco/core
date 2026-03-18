@@ -1128,6 +1128,324 @@ class VideoBlockTest extends TestCase
         $this->restoreHttp();
     }
 
+    // --- Modal ID Fallback Chain ---
+
+    public function test_modal_id_falls_back_to_video_id_when_title_empty(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+            'title' => 'Fallback ID Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => '',
+                'displayMode' => 'modal',
+                'modalId' => '',
+            ]),
+            '',
+        );
+
+        // sanitize_title('') is empty, so modal ID falls back to $video_id ('dQw4w9WgXcQ')
+        // ModalData::__construct runs sanitize_title() on that, lowercasing to 'dqw4w9wgxcq'
+        $this->assertStringContainsString(
+            'id="dqw4w9wgxcq"',
+            $result['footer'],
+            'When modalId and videoTitle are empty, dialog ID should fall back to video ID',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_modal_falls_back_to_inline_when_no_id_resolvable(): void
+    {
+        // URL that yields no extractable video ID and no title
+        $url = 'https://www.youtube.com/channel/UCtest';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/test/hqdefault.jpg',
+            'title' => 'No ID Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => '',
+                'displayMode' => 'modal',
+                'modalId' => '',
+            ]),
+            '',
+        );
+
+        $this->assertNotEmpty($result['page'], 'Should fall back to inline render when no modal ID is resolvable');
+        $this->assertEmpty($result['footer'], 'Should NOT queue a dialog when no modal ID is resolvable');
+        $this->assertStringNotContainsString(
+            'data-modal-id',
+            $result['page'],
+            'Inline fallback should not have data-modal-id attribute',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- Modal with InnerBlocks Re-fetch ---
+
+    public function test_modal_with_innerblocks_fetches_oembed_for_dialog_thumbnail(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=modal_inner1';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/modal_inner1/hqdefault.jpg',
+            'title' => 'Modal InnerBlocks Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Modal InnerBlocks Test',
+                'displayMode' => 'modal',
+                'modalId' => 'modal-innerblocks-test',
+            ]),
+            '<p>Custom poster</p>',
+        );
+
+        // Page should use InnerBlocks, not oEmbed thumbnail
+        $this->assertStringContainsString('<p>Custom poster</p>', $result['page']);
+        $this->assertStringNotContainsString('sitchco-video__poster-img', $result['page']);
+
+        // Dialog should still contain the oEmbed thumbnail for the modal player
+        $this->assertStringContainsString(
+            'sitchco-video__modal-poster-img',
+            $result['footer'],
+            'Modal dialog should contain oEmbed thumbnail even when InnerBlocks are used for page poster',
+        );
+        $this->assertStringContainsString(
+            'maxresdefault.jpg',
+            $result['footer'],
+            'Modal dialog thumbnail should be upgraded to maxresdefault',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- Modal Thumbnail Absent ---
+
+    public function test_modal_without_thumbnail_renders_no_img_in_dialog(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=no_thumb_mod';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'title' => 'No Thumb Modal',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'No Thumb Modal',
+                'displayMode' => 'modal',
+                'modalId' => 'no-thumb-modal',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString('<dialog', $result['footer'], 'Dialog should still be queued');
+        $this->assertStringNotContainsString(
+            'sitchco-video__modal-poster-img',
+            $result['footer'],
+            'Modal dialog should not contain poster img when oEmbed has no thumbnail',
+        );
+        $this->assertStringContainsString(
+            'sitchco-video__spinner',
+            $result['footer'],
+            'Modal dialog should still contain spinner',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- Poster Aspect Ratio Style ---
+
+    public function test_inline_poster_has_aspect_ratio_style(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=aspect_inl01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/aspect_inl01/hqdefault.jpg',
+            'title' => 'Aspect Inline Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'youtube', 'videoTitle' => 'Aspect Inline Test']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'style="aspect-ratio: 480 / 360"',
+            $output,
+            'Inline poster div should have aspect-ratio style from oEmbed dimensions',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_inline_poster_no_aspect_ratio_when_dimensions_missing(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=no_dims_te01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/no_dims_te01/hqdefault.jpg',
+            'title' => 'No Dims Test',
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'youtube', 'videoTitle' => 'No Dims Test']),
+            '',
+        );
+
+        $this->assertStringNotContainsString(
+            'aspect-ratio',
+            $output,
+            'Inline poster should not have aspect-ratio style when oEmbed has no dimensions',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- ModalData ID Normalization ---
+
+    public function test_modal_id_normalization_digit_leading(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=digit_lead01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/digit_lead01/hqdefault.jpg',
+            'title' => 'Digit Leading Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $result = $this->renderBlockWithModals(
+            $this->makeAttributes([
+                'url' => $url,
+                'provider' => 'youtube',
+                'videoTitle' => 'Digit Leading Test',
+                'displayMode' => 'modal',
+                'modalId' => '42-things',
+            ]),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'id="modal-42-things"',
+            $result['footer'],
+            'Dialog ID should be prefixed with "modal-" when modalId starts with a digit',
+        );
+        $this->assertStringContainsString(
+            'data-modal-id="modal-42-things"',
+            $result['page'],
+            'Wrapper data-modal-id should use the normalized (prefixed) ID',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- oEmbed Failure YouTube Label ---
+
+    public function test_render_oembed_failure_youtube_label(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=broken_yt_01';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedFailure();
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'youtube', 'videoTitle' => 'Broken YT Video']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            'Watch on YouTube',
+            $output,
+            'YouTube oEmbed failure should show "Watch on YouTube" label',
+        );
+        $this->assertStringContainsString(
+            'sitchco-video__fallback-link',
+            $output,
+            'YouTube oEmbed failure should render fallback link',
+        );
+        $this->restoreHttp();
+    }
+
+    // --- Play Icon Provider Variants ---
+
+    public function test_play_icon_uses_generic_icon_for_vimeo(): void
+    {
+        $url = 'https://vimeo.com/111222333';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://i.vimeocdn.com/video/111222333_295x166.jpg',
+            'title' => 'Vimeo Icon Test',
+            'width' => 1920,
+            'height' => 1080,
+            'provider_name' => 'Vimeo',
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'vimeo', 'videoTitle' => 'Vimeo Icon Test']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            '#icon-generic-play',
+            $output,
+            'Vimeo videos should use the generic play icon',
+        );
+        $this->assertStringContainsString(
+            'viewBox="0 0 68 68"',
+            $output,
+            'Generic play icon should have square 68x68 viewBox',
+        );
+        $this->restoreHttp();
+    }
+
+    public function test_play_icon_uses_youtube_icon_for_youtube(): void
+    {
+        $url = 'https://www.youtube.com/watch?v=yt_icon_test';
+        $this->deleteOembedTransient($url);
+        $this->fakeOembedResponse($url, [
+            'thumbnail_url' => 'https://img.youtube.com/vi/yt_icon_test/hqdefault.jpg',
+            'title' => 'YT Icon Test',
+            'width' => 480,
+            'height' => 360,
+        ]);
+
+        $output = $this->renderBlock(
+            $this->makeAttributes(['url' => $url, 'provider' => 'youtube', 'videoTitle' => 'YT Icon Test']),
+            '',
+        );
+
+        $this->assertStringContainsString(
+            '#icon-youtube-play',
+            $output,
+            'YouTube videos should use the YouTube play icon',
+        );
+        $this->assertStringContainsString(
+            'viewBox="0 0 68 48"',
+            $output,
+            'YouTube play icon should have 68x48 viewBox',
+        );
+        $this->restoreHttp();
+    }
+
     // --- Helpers ---
 
     private function makeAttributes(array $overrides = []): array
