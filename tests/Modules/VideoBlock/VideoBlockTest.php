@@ -833,7 +833,7 @@ class VideoBlockTest extends TestCase
 
     public function test_extractVideoId_vimeo_video_path(): void
     {
-        $attrs = new VideoAttributes(['url' => 'https://vimeo.com/video/789012']);
+        $attrs = new VideoAttributes(['url' => 'https://vimeo.com/video/789012'], $this->makeBlock());
         $this->assertSame('789012', $attrs->videoId, 'Should extract ID from vimeo.com/video/ID URL pattern');
     }
 
@@ -1293,7 +1293,7 @@ class VideoBlockTest extends TestCase
         );
 
         $this->assertStringContainsString(
-            'style="aspect-ratio: 480 / 360"',
+            'style="aspect-ratio: 480 / 360',
             $output,
             'Inline poster div should have aspect-ratio style from oEmbed dimensions',
         );
@@ -1448,6 +1448,18 @@ class VideoBlockTest extends TestCase
 
     // --- Helpers ---
 
+    private function makeBlock(array $attributes = [], string $content = ''): \WP_Block
+    {
+        $innerBlocks = $content !== '' ? [['blockName' => 'core/paragraph', 'attrs' => []]] : [];
+        return new \WP_Block([
+            'blockName' => 'sitchco/video',
+            'attrs' => $attributes,
+            'innerBlocks' => $innerBlocks,
+            'innerHTML' => $content,
+            'innerContent' => [$content],
+        ]);
+    }
+
     private function makeAttributes(array $overrides = []): array
     {
         return array_merge(
@@ -1511,13 +1523,10 @@ class VideoBlockTest extends TestCase
     {
         $module = $this->container->get(VideoBlock::class);
         $renderFile = $module->blocksPath()->append('video/render.php')->value();
-
-        $block = new \stdClass();
-        $block->inner_blocks = $content !== '' ? [true] : [];
+        $block = $this->makeBlock($attributes, $content);
 
         ob_start();
-        // Scope the include so that $attributes, $content, $block are available
-        (function (string $_file, array $attributes, string $content, object $block) {
+        (function (string $_file, array $attributes, string $content, \WP_Block $block) {
             include $_file;
         })($renderFile, $attributes, $content, $block);
         return ob_get_clean();

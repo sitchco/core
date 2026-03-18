@@ -2,6 +2,8 @@
 
 namespace Sitchco\Modules\VideoBlock;
 
+use WP_Block;
+
 /**
  * Value object representing the resolved attributes for a sitchco/video block.
  *
@@ -25,8 +27,9 @@ readonly class VideoAttributes
     public string $clickBehavior;
     public string $displayMode;
     public string $modalId;
+    public bool $hasInnerBlocks;
 
-    public function __construct(array $attributes)
+    public function __construct(array $attributes, WP_Block $block)
     {
         $this->url = $attributes['url'] ?? '';
         $this->videoTitle = $attributes['videoTitle'] ?? '';
@@ -38,6 +41,7 @@ readonly class VideoAttributes
             ? VideoProvider::fromName($attributes['provider'])
             : VideoProvider::fromUrl($this->url);
         $this->videoId = $this->provider->extractVideoId($this->url);
+        $this->hasInnerBlocks = count($block->inner_blocks) > 0;
 
         // Resolve modal ID fallback chain: explicit modalId → slugified title → video ID
         $modalId = $attributes['modalId'] ?? '';
@@ -62,5 +66,10 @@ readonly class VideoAttributes
     public function isModalOnly(): bool
     {
         return $this->displayMode === 'modal-only';
+    }
+
+    public function playAriaLabel(): string
+    {
+        return sprintf('Play video: %s', $this->videoTitle);
     }
 }

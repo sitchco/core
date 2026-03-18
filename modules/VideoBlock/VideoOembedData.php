@@ -15,26 +15,18 @@ readonly class VideoOembedData
     public bool $hasThumbnail;
     public int $aspectWidth;
     public int $aspectHeight;
-    public string $aspectRatioStyle;
 
     public function __construct(
-        public string $thumbnailUrl,
-        public string $title,
-        public int $width,
-        public int $height,
+        public string $thumbnailUrl = '',
+        public string $title = '',
+        public int $width = 0,
+        public int $height = 0,
     ) {
         $this->hasThumbnail = $thumbnailUrl !== '';
         $this->aspectWidth = $width ?: self::DEFAULT_ASPECT_WIDTH;
         $this->aspectHeight = $height ?: self::DEFAULT_ASPECT_HEIGHT;
-        $this->aspectRatioStyle =
-            $width && $height ? sprintf(' style="aspect-ratio: %s / %s"', esc_attr($width), esc_attr($height)) : '';
     }
 
-    /**
-     * Build from a raw oEmbed stdClass, upgrading the thumbnail URL.
-     *
-     * Returns null if the response indicates a domain-level restriction.
-     */
     /**
      * Build from a raw oEmbed stdClass, upgrading the thumbnail URL via VideoProvider.
      *

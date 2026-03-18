@@ -5,6 +5,7 @@ namespace Sitchco\Modules\VideoBlock;
 use Sitchco\Modules\UIModal\ModalData;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Utils\Cache;
+use Sitchco\Utils\Str;
 
 /**
  * Handles all data preparation and HTML rendering for the sitchco/video block.
@@ -37,49 +38,20 @@ readonly class VideoBlockRenderer
         return VideoOembedData::fromRaw($result, $attrs->provider);
     }
 
-    public function render(array $attributes, string $content, object $block): string
+    public function render(array $attributes, string $content, \WP_Block $block): string
     {
         if (empty($attributes['url'])) {
             return $content;
         }
 
-        $attrs = new VideoAttributes($attributes);
-        $has_inner_blocks = count($block->inner_blocks) > 0;
+        $attrs = new VideoAttributes($attributes, $block);
 
         // Fetch oEmbed when no InnerBlocks provide a poster
-        $oembed = !$has_inner_blocks ? self::fetchOembedData($attrs) : null;
+        $oembed = !$attrs->hasInnerBlocks ? self::fetchOembedData($attrs) : null;
 
         // oEmbed failure (no InnerBlocks and no valid oEmbed): early return with fallback
-        if (!$has_inner_blocks && $oembed === null) {
-            if ($attrs->isModalOnly()) {
-                return '';
-            }
-
-            $wrapper_attrs = $this->buildWrapperAttrs($attrs);
-            $wrapper_attrs['data-video-unavailable'] = 'true';
-
-            return sprintf(
-                '<div %s><a class="sitchco-video__fallback-link" href="%s" target="_blank" rel="noopener noreferrer"><div class="sitchco-video__placeholder-poster"></div><span class="sitchco-video__fallback-label">%s</span></a></div>',
-                get_block_wrapper_attributes($wrapper_attrs),
-                esc_url($attrs->url),
-                esc_html(sprintf('Watch on %s', $attrs->provider->label)),
-            );
-        }
-
-        // Poster resolution
-        if ($has_inner_blocks) {
-            $poster_html = $content;
-            $poster_style = '';
-        } elseif ($oembed && $oembed->hasThumbnail) {
-            $escaped_thumb = esc_url($oembed->thumbnailUrl);
-            $escaped_title = esc_attr($oembed->title);
-            $poster_html = <<<HTML
-            <img class="sitchco-video__poster-img" src="{$escaped_thumb}" alt="{$escaped_title}" loading="lazy">
-            HTML;
-            $poster_style = $oembed->aspectRatioStyle;
-        } else {
-            $poster_html = '<div class="sitchco-video__placeholder-poster"></div>';
-            $poster_style = '';
+        if (!$attrs->hasInnerBlocks && $oembed === null) {
+            return $attrs->isModalOnly() ? '' : $this->buildFallback($attrs);
         }
 
         // Wrapper attributes
@@ -87,61 +59,123 @@ readonly class VideoBlockRenderer
 
         // Modal side effects
         if ($attrs->isModal()) {
-            // Always resolve oEmbed data for modal dialog content (even if InnerBlocks used for page poster)
-            $modal_oembed = $oembed ?? self::fetchOembedData($attrs);
-            $aspect_w = $modal_oembed ? $modal_oembed->aspectWidth : VideoOembedData::DEFAULT_ASPECT_WIDTH;
-            $aspect_h = $modal_oembed ? $modal_oembed->aspectHeight : VideoOembedData::DEFAULT_ASPECT_HEIGHT;
-            $has_oembed_poster = !$has_inner_blocks ? 'true' : 'false';
-
-            // Build modal thumbnail image HTML
-            $thumb_img = '';
-            if ($modal_oembed && $modal_oembed->hasThumbnail) {
-                $escaped_url = esc_url($modal_oembed->thumbnailUrl);
-                $escaped_w = esc_attr($aspect_w);
-                $escaped_h = esc_attr($aspect_h);
-                $thumb_img = <<<HTML
-                <img src="{$escaped_url}" alt="" class="sitchco-video__modal-poster-img" width="{$escaped_w}" height="{$escaped_h}">
-                HTML;
-            }
-
-            // Build modal player content HTML
-            $escaped_url_attr = esc_attr($attrs->url);
-            $escaped_provider = esc_attr($attrs->provider);
-            $escaped_video_id = esc_attr($attrs->videoId);
-            $escaped_has_oembed = esc_attr($has_oembed_poster);
-            $escaped_aspect_w = esc_attr($aspect_w);
-            $escaped_aspect_h = esc_attr($aspect_h);
-            $modal_content = <<<HTML
-            <div class="sitchco-video__modal-player" data-url="{$escaped_url_attr}" data-provider="{$escaped_provider}" data-video-id="{$escaped_video_id}" data-has-oembed-poster="{$escaped_has_oembed}" style="--aspect-w: {$escaped_aspect_w}; --aspect-h: {$escaped_aspect_h}; aspect-ratio: {$escaped_aspect_w} / {$escaped_aspect_h}">{$thumb_img}<div class="sitchco-video__spinner"></div></div>
-            HTML;
-
-            $modalData = new ModalData($attrs->modalId, $attrs->videoTitle, $modal_content, 'video');
+            $modalData = $this->buildModal($attrs, $oembed);
             $this->uiModal->loadModal($modalData);
-
-            // Modal-only: render nothing on page
             if ($attrs->isModalOnly()) {
                 return '';
             }
-
-            // Modal mode: use normalized ID (ModalData may prefix digit-leading IDs with "modal-")
             $wrapper_attrs['data-modal-id'] = $modalData->id();
         }
-
-        $play_button = self::buildPlayButton($attrs);
 
         // Accessibility attributes
         if ($attrs->clickBehavior === 'poster') {
             $wrapper_attrs['role'] = 'button';
             $wrapper_attrs['tabindex'] = '0';
-            $wrapper_attrs['aria-label'] = sprintf('Play video: %s', $attrs->videoTitle);
+            $wrapper_attrs['aria-label'] = $attrs->playAriaLabel();
         }
 
-        return sprintf(
-            '<div %s><div class="sitchco-video__poster"%s>%s</div>%s</div>',
+        return Str::wrapElement(
+            self::buildPoster($attrs, $content, $oembed) . self::buildPlayButton($attrs),
+            'div',
             get_block_wrapper_attributes($wrapper_attrs),
-            $poster_style,
-            $poster_html,
-            $play_button,
+        );
+    }
+
+    private function buildFallback(VideoAttributes $attrs): string
+    {
+        $wrapper_attrs = $this->buildWrapperAttrs($attrs);
+        $wrapper_attrs['data-video-unavailable'] = 'true';
+
+        $fallback_content =
+            self::buildPlaceholderPoster() .
+            Str::wrapElement(esc_html(sprintf('Watch on %s', $attrs->provider->label)), 'span', [
+                'class' => 'sitchco-video__fallback-label',
+            ]);
+
+        return Str::wrapElement(
+            Str::wrapElement($fallback_content, 'a', [
+                'class' => 'sitchco-video__fallback-link',
+                'href' => $attrs->url,
+                'target' => '_blank',
+                'rel' => 'noopener noreferrer',
+            ]),
+            'div',
+            get_block_wrapper_attributes($wrapper_attrs),
+        );
+    }
+
+    private function buildModal(VideoAttributes $attrs, ?VideoOembedData $oembed): ModalData
+    {
+        // Always resolve oEmbed data for modal dialog content (even if InnerBlocks used for page poster)
+        $modal_oembed = $oembed ?? (self::fetchOembedData($attrs) ?? new VideoOembedData());
+
+        $thumb_img = $modal_oembed->hasThumbnail
+            ? self::buildPosterImg($modal_oembed, [
+                'alt' => '',
+                'class' => 'sitchco-video__modal-poster-img',
+                'width' => $modal_oembed->aspectWidth,
+                'height' => $modal_oembed->aspectHeight,
+            ])
+            : '';
+
+        $modal_content = Str::wrapElement(
+            $thumb_img . Str::wrapElement('', 'div', ['class' => 'sitchco-video__spinner']),
+            'div',
+            [
+                'class' => 'sitchco-video__modal-player',
+                'data-url' => $attrs->url,
+                'data-provider' => $attrs->provider->name,
+                'data-video-id' => $attrs->videoId,
+                'data-has-oembed-poster' => !$attrs->hasInnerBlocks ? 'true' : 'false',
+                'style' => [
+                    '--aspect-w' => $modal_oembed->aspectWidth,
+                    '--aspect-h' => $modal_oembed->aspectHeight,
+                    'aspect-ratio' => "$modal_oembed->aspectWidth / $modal_oembed->aspectHeight",
+                ],
+            ],
+        );
+
+        return new ModalData($attrs->modalId, $attrs->videoTitle, $modal_content, 'video');
+    }
+
+    private static function buildPoster(VideoAttributes $attrs, string $content, ?VideoOembedData $oembed): string
+    {
+        $style = null;
+        if ($attrs->hasInnerBlocks) {
+            $html = $content;
+        } elseif ($oembed && $oembed->hasThumbnail) {
+            $html = self::buildPosterImg($oembed, [
+                'class' => 'sitchco-video__poster-img',
+                'loading' => 'lazy',
+            ]);
+            if ($oembed->width && $oembed->height) {
+                $style = ['aspect-ratio' => "$oembed->width / $oembed->height"];
+            }
+        } else {
+            $html = self::buildPlaceholderPoster();
+        }
+
+        return Str::wrapElement($html, 'div', [
+            'class' => 'sitchco-video__poster',
+            'style' => $style,
+        ]);
+    }
+
+    private static function buildPlaceholderPoster(): string
+    {
+        return Str::wrapElement('', 'div', ['class' => 'sitchco-video__placeholder-poster']);
+    }
+
+    private static function buildPosterImg(VideoOembedData $oembed, array $attributes = []): string
+    {
+        if (!$oembed->hasThumbnail) {
+            return '';
+        }
+
+        return Str::wrapElement(
+            '',
+            'img',
+            array_merge(['src' => $oembed->thumbnailUrl, 'alt' => $oembed->title], $attributes),
         );
     }
 
@@ -171,12 +205,14 @@ readonly class VideoBlockRenderer
      */
     private static function buildPlayButton(VideoAttributes $attrs): string
     {
-        $escaped_icon_width = esc_attr(VideoProvider::PLAY_ICON_WIDTH);
-        $escaped_icon_height = esc_attr($attrs->provider->playIconHeight);
-        $escaped_icon_name = esc_attr($attrs->provider->playIconName);
-        $svg = <<<HTML
-        <svg class="sitchco-video__play-icon-svg" aria-hidden="true" width="{$escaped_icon_width}" height="{$escaped_icon_height}" viewBox="0 0 {$escaped_icon_width} {$escaped_icon_height}"><use href="#icon-{$escaped_icon_name}"></use></svg>
-        HTML;
+        $use = Str::wrapElement('', 'use', ['href' => '#icon-' . $attrs->provider->playIconName]);
+        $svg = Str::wrapElement($use, 'svg', [
+            'class' => 'sitchco-video__play-icon-svg',
+            'aria-hidden' => 'true',
+            'width' => VideoProvider::PLAY_ICON_WIDTH,
+            'height' => $attrs->provider->playIconHeight,
+            'viewBox' => sprintf('0 0 %s %s', VideoProvider::PLAY_ICON_WIDTH, $attrs->provider->playIconHeight),
+        ]);
 
         $svg = apply_filters(
             VideoBlock::hookName('play_icon_svg'),
@@ -185,27 +221,23 @@ readonly class VideoBlockRenderer
             $attrs->playIconStyle,
         );
 
-        $style = sprintf(
-            'position:absolute;left:%s%%;top:%s%%;transform:translate(-50%%,-50%%)',
-            esc_attr($attrs->playIconX),
-            esc_attr($attrs->playIconY),
-        );
+        $button_attrs = [
+            'class' => ['sitchco-video__play-button', 'sitchco-video__play-button--' . $attrs->playIconStyle],
+            'style' => [
+                'position' => 'absolute',
+                'left' => $attrs->playIconX . '%',
+                'top' => $attrs->playIconY . '%',
+                'transform' => 'translate(-50%, -50%)',
+            ],
+        ];
 
         if ($attrs->clickBehavior === 'poster') {
-            return sprintf(
-                '<span class="sitchco-video__play-button sitchco-video__play-button--%s" aria-hidden="true" style="%s">%s</span>',
-                esc_attr($attrs->playIconStyle),
-                $style,
-                $svg,
-            );
+            $button_attrs['aria-hidden'] = 'true';
+            return Str::wrapElement($svg, 'span', $button_attrs);
         }
 
-        return sprintf(
-            '<button type="button" class="sitchco-video__play-button sitchco-video__play-button--%s" aria-label="%s" style="%s">%s</button>',
-            esc_attr($attrs->playIconStyle),
-            esc_attr(sprintf('Play video: %s', $attrs->videoTitle)),
-            $style,
-            $svg,
-        );
+        $button_attrs['type'] = 'button';
+        $button_attrs['aria-label'] = $attrs->playAriaLabel();
+        return Str::wrapElement($svg, 'button', $button_attrs);
     }
 }
