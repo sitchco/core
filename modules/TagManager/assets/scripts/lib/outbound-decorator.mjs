@@ -1,3 +1,4 @@
+import { isHttpLink } from './dom-utils.mjs';
 import { getStoredUtmParams } from './utm-storage.mjs';
 
 function matchesDomain(hostname, domain) {
@@ -5,12 +6,8 @@ function matchesDomain(hostname, domain) {
 }
 
 function isOutboundLink(link, domains) {
-    if (link.protocol !== 'http:' && link.protocol !== 'https:') {
-        return false;
-    }
-    if (link.host === window.location.host) {
-        return false;
-    }
+    if (!isHttpLink(link)) return false;
+    if (link.host === window.location.host) return false;
     return domains.some((domain) => matchesDomain(link.hostname, domain));
 }
 

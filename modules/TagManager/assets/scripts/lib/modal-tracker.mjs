@@ -1,13 +1,4 @@
-function resolveModalLabel(modal) {
-    const labelledById = modal.getAttribute('aria-labelledby');
-    if (labelledById) {
-        const el = document.getElementById(labelledById);
-        if (el?.textContent?.trim()) {
-            return el.textContent.trim();
-        }
-    }
-    return modal.id || '';
-}
+import { resolveAriaLabelledBy } from './dom-utils.mjs';
 
 export function registerModalTracker(pushEvent) {
     const { hooks } = window.sitchco;
@@ -17,7 +8,7 @@ export function registerModalTracker(pushEvent) {
         (modal) => {
             pushEvent({
                 event: 'modal_open',
-                modal_label: resolveModalLabel(modal),
+                modal_label: resolveAriaLabelledBy(modal) || modal.id || '',
             });
         },
         20,
@@ -29,7 +20,7 @@ export function registerModalTracker(pushEvent) {
         (modal) => {
             pushEvent({
                 event: 'modal_close',
-                modal_label: resolveModalLabel(modal),
+                modal_label: resolveAriaLabelledBy(modal) || modal.id || '',
             });
         },
         20,

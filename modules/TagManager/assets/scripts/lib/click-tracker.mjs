@@ -1,3 +1,5 @@
+import { resolveAriaLabelledBy, isHttpLink } from './dom-utils.mjs';
+
 const SELECTOR = 'a, button, input[type=submit], [data-button]';
 const MAX_LENGTH = 100;
 
@@ -19,30 +21,26 @@ function parseGtmData(el) {
     }
 }
 
-function resolveLabel(el, gtmData) {
-    if (gtmData?.label) {
-        return gtmData.label;
-    }
-    const ariaLabel = el.getAttribute('aria-label');
-    if (ariaLabel) {
-        return ariaLabel;
-    }
-    const labelledBy = el.getAttribute('aria-labelledby');
-    if (labelledBy) {
-        const ref = document.getElementById(labelledBy);
-        if (ref?.textContent?.trim()) {
-            return ref.textContent.trim();
-        }
-    }
-    const title = el.getAttribute('title');
-    if (title) {
-        return title;
-    }
-    if (el.value) {
-        return el.value;
-    }
-    const text = el.textContent?.trim().replace(/\s+/g, ' ') || '';
+function truncate(text) {
+    if (!text) return '';
     return text.length > MAX_LENGTH ? text.slice(0, MAX_LENGTH) : text;
+}
+
+const labelResolvers = [
+    (el, gtmData) => gtmData?.label,
+    (el) => el.getAttribute('aria-label'),
+    (el) => resolveAriaLabelledBy(el),
+    (el) => el.getAttribute('title'),
+    (el) => el.value,
+    (el) => truncate(el.textContent?.trim().replace(/\s+/g, ' ')),
+];
+
+function resolveLabel(el, gtmData) {
+    for (const resolve of labelResolvers) {
+        const result = resolve(el, gtmData);
+        if (result) return result;
+    }
+    return '';
 }
 
 function resolveContext(el) {
@@ -69,37 +67,25 @@ function resolveContext(el) {
     return result;
 }
 
-function resolveDirection(el) {
-    if (el.tagName !== 'A' || !el.href) {
-        return undefined;
-    }
-    if (el.protocol !== 'http:' && el.protocol !== 'https:') {
-        return undefined;
-    }
-    return el.hostname !== location.hostname ? 'outbound' : 'internal';
-}
-
-function resolveUrl(el) {
-    if (el.tagName !== 'A' || !el.href) {
-        return undefined;
-    }
-    if (el.protocol !== 'http:' && el.protocol !== 'https:') {
-        return undefined;
-    }
-    return el.pathname + el.search + el.hash || '/';
+function resolveLinkProps(el) {
+    if (!isHttpLink(el)) return null;
+    return {
+        click_direction: el.hostname !== location.hostname ? 'outbound' : 'internal',
+        click_url: el.pathname + el.search + el.hash || '/',
+    };
 }
 
 function buildPayload(el, gtmData) {
     const label = resolveLabel(el, gtmData);
     const context = resolveContext(el);
-    const direction = resolveDirection(el);
-    const url = resolveUrl(el);
+    const linkProps = resolveLinkProps(el);
+
+    const props = { click_label: label, click_context: context, ...linkProps };
 
     const payload = { event: 'site_click' };
-    if (label) payload.click_label = label;
-    if (context) payload.click_context = context;
-    if (direction) payload.click_direction = direction;
-    if (url) payload.click_url = url;
+    for (const [key, value] of Object.entries(props)) {
+        if (value) payload[key] = value;
+    }
 
     if (gtmData) {
         for (const [key, value] of Object.entries(gtmData)) {

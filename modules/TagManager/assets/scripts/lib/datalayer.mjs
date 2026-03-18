@@ -8,10 +8,7 @@ export function registerDataLayerActions() {
     hooks.addAction(constants.GTM_INTERACTION, (data) => pushEvent(data), 10, 'tag-manager');
     hooks.addAction(
         constants.GTM_STATE,
-        (data) => {
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push(data);
-        },
+        (data) => pushEvent(data),
         10,
         'tag-manager',
     );
