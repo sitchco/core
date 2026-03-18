@@ -1516,20 +1516,11 @@ class VideoBlockTest extends TestCase
         });
     }
 
-    /**
-     * Render the block's render.php template with the given attributes and content.
-     */
     private function renderBlock(array $attributes, string $content): string
     {
-        $module = $this->container->get(VideoModule::class);
-        $renderFile = $module->blocksPath()->append('video/render.php')->value();
+        $renderer = $this->container->get(VideoBlockRenderer::class);
         $block = $this->makeBlock($attributes, $content);
-
-        ob_start();
-        (function (string $_file, array $attributes, string $content, \WP_Block $block) {
-            include $_file;
-        })($renderFile, $attributes, $content, $block);
-        return ob_get_clean();
+        return $renderer->render($attributes, $content, $block);
     }
 
     /**
