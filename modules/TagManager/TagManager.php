@@ -30,7 +30,6 @@ class TagManager extends Module
             ];
             return $functions;
         }, 20);
-        // @todo M6: Hook subscribers — modal, form, hash state change
         // @todo M7: UTM persistence + outbound link decoration — driven by $settings->gtm_decorate_outbound and $settings->gtm_outbound_domains
     }
 

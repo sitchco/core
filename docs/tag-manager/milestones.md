@@ -12,7 +12,7 @@
 
 - [X] **M5: `data-gtm` attribute helper** — Twig function `gtm_attr()` with no-op stub registered in TimberModule (returns `''` when TagManager is disabled). TagManager replaces the callable when active to return `data-gtm="..."` attribute markup. Structural context labels (`Header`, `Footer`, `Main`) added to parent theme layout templates. `🤝 Collaborative: deciding which parent theme templates get structural labels.`
 
-- [ ] **M6: Hook subscribers (modal, form, hash)** — TagManager subscribes to existing UIFramework hooks: `ui-modal-show`/`ui-modal-hide` pushes `modal_open`/`modal_close`, `GFORM_CONFIRM` pushes `gform_submit`, `HASH_STATE_CHANGE` pushes `hash_change`. All events fire correctly and appear in `dataLayer`.
+- [X] **M6: Hook subscribers (modal, form, hash)** — TagManager subscribes to existing UIFramework hooks: `ui-modal-show`/`ui-modal-hide` pushes `modal_open`/`modal_close`, `GFORM_CONFIRM` pushes `gform_submit`, `HASH_STATE_CHANGE` pushes `hash_change`. All events fire correctly and appear in `dataLayer`.
 
 - [ ] **M7: UTM persistence and outbound link decoration** — URL UTM parameters captured into `localStorage` on page load. When outbound link decoration is enabled via ACF toggle on the TagManager options page, matching outbound links are decorated with stored UTM params via static DOM pass on load + MutationObserver for dynamically inserted links. No click-time modification (avoids navigation race conditions). Domains entered in ACF repeater (placeholder: "telecharge.com"). `sitchco.config.php` and PHP filter available as programmatic overrides. Subdomain matching works. UTM capture functions independently of decoration being enabled. `localStorage` errors handled gracefully.
 
