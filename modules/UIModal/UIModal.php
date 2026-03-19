@@ -112,6 +112,7 @@ class UIModal extends Module
                 [
                     'id' => $modal->id(),
                     'class' => 'sitchco-modal sitchco-modal--' . $modal->type,
+                    'tabindex' => '-1',
                 ],
                 $modal,
             );

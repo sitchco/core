@@ -15,9 +15,13 @@
     --modal-box-gap: 2rem;
     --modal-close-size: 2rem;
     --modal-close-color: var(--modal-container-color);
-    --modal-close-color-hover: var(--modal-close-color);
+    --modal-close-color-hover: color-mix(in srgb, var(--modal-close-color) 70%, transparent);
     --modal-close-top: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
     --modal-close-right: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
+    --modal-close-bg: transparent;
+    --modal-close-bg-hover: var(--modal-close-bg);
+    --modal-close-bg-size: 130%;
+    --modal-close-bg-radius: 50%;
 
     @media (min-width: 576px) {
         --modal-container-padding: 3rem;
@@ -128,13 +132,30 @@
         font-size: var(--modal-close-size);
         color: var(--modal-close-color);
         text-align: center;
-        overflow: hidden;
         transition: all var(--transition-duration) var(--transition-timing);
+        &::before {
+            content: '';
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: var(--modal-close-bg-size);
+            height: 0;
+            padding-top: var(--modal-close-bg-size);
+            transform: translate(-50%, -50%);
+            background: var(--modal-close-bg);
+            border-radius: var(--modal-close-bg-radius);
+            z-index: -1;
+            transition: background-color var(--transition-duration) var(--transition-timing);
+        }
 
         &:hover,
         &:active,
         &:focus {
             color: var(--modal-close-color-hover);
+            &::before {
+                background: var(--modal-close-bg-hover);
+            }
         }
     }
 
