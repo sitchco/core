@@ -74,6 +74,18 @@ abstract class Module
         return $this->path('blocks');
     }
 
+    /**
+     * Returns registration args for blocks owned by this module.
+     * Keys are full block names (e.g. 'sitchco/video'), values are
+     * the $args array passed as the second argument to register_block_type().
+     *
+     * @return array<string, array>
+     */
+    public function blockRegistrationArgs(): array
+    {
+        return [];
+    }
+
     public function filterBlockAssets(array $blocksConfig): void
     {
         add_filter(

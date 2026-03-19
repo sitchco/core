@@ -1,0 +1,27 @@
+{
+    "apiVersion": 3,
+    "name": "sitchco/video",
+    "title": "Video Embed",
+    "category": "sitchco",
+    "icon": "video-alt3",
+    "description": "Privacy-respecting video embed with poster, play icon, and optional modal display.",
+    "keywords": ["video", "youtube", "vimeo", "embed"],
+    "attributes": {
+        "url": { "type": "string", "default": "" },
+        "provider": { "type": "string", "default": "" },
+        "videoTitle": { "type": "string", "default": "" },
+        "displayMode": { "type": "string", "default": "inline" },
+        "modalId": { "type": "string", "default": "" },
+        "playIconStyle": { "type": "string", "default": "dark" },
+        "playIconX": { "type": "number", "default": 50 },
+        "playIconY": { "type": "number", "default": 50 },
+        "clickBehavior": { "type": "string", "default": "poster" }
+    },
+    "supports": {
+        "html": false,
+        "align": ["wide", "full"]
+    },
+    "editorScript": "file:./editor.jsx",
+    "viewScript": "file:./view.js",
+    "style": "file:./style.css"
+}
