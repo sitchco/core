@@ -3,6 +3,7 @@ import { registerClickTracker } from './lib/click-tracker.mjs';
 import { registerModalTracker } from './lib/modal-tracker.mjs';
 import { registerFormTracker } from './lib/form-tracker.mjs';
 import { registerHashTracker } from './lib/hash-tracker.mjs';
+import { registerVideoTracker } from './lib/video-tracker.mjs';
 import { captureUtmParams } from './lib/utm-storage.mjs';
 import { registerOutboundDecorator } from './lib/outbound-decorator.mjs';
 
@@ -16,6 +17,7 @@ hooks.addAction(
         registerModalTracker(pushEvent);
         registerFormTracker(pushEvent);
         registerHashTracker(pushEvent);
+        registerVideoTracker(pushEvent);
         captureUtmParams();
         registerOutboundDecorator();
     },

@@ -188,6 +188,46 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 
 ---
 
+### Video Tracking
+
+#### S15. Video Play
+
+**Trigger:** Video module fires `video-play` hook when playback starts (YouTube or Vimeo).
+
+**Expected:**
+1. TagManager subscribes, pushes `video_play` event with `video_id`, `video_provider`, `video_url`.
+2. Provider value is `'youtube'` or `'vimeo'` — unified schema across providers.
+
+**Must NOT:** Use GA4 reserved event name `video_start`. Fire duplicate events (Video module handles SDK-level deduplication).
+
+#### S16. Video Pause
+
+**Trigger:** Video module fires `video-pause` hook when playback pauses (user action or programmatic via `video-request-pause`).
+
+**Expected:**
+1. TagManager subscribes, pushes `video_pause` event with `video_id`, `video_provider`, `video_url`.
+
+#### S17. Video Progress Milestone
+
+**Trigger:** Video module fires `video-progress` hook when playback crosses 25%, 50%, 75%, or 100% thresholds.
+
+**Expected:**
+1. TagManager subscribes, pushes `video_milestone` event with `video_id`, `video_provider`, `video_url`, `video_milestone` (the percentage).
+2. Milestones fire at most once per video per page load (deduplicated by Video module).
+
+**Must NOT:** Use GA4 reserved name `video_progress`. Implement its own deduplication — the Video module's milestone system handles this.
+
+#### S18. Video Ended
+
+**Trigger:** Video module fires `video-ended` hook when playback completes.
+
+**Expected:**
+1. TagManager subscribes, pushes `video_ended` event with `video_id`, `video_provider`, `video_url`.
+
+**Must NOT:** Use GA4 reserved name `video_complete`.
+
+---
+
 ### Custom Tags (Separate Module)
 
 #### S11. Pre-GTM Custom Tag Injection (Consent Management Platform)

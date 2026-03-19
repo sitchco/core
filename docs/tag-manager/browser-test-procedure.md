@@ -89,8 +89,9 @@ ddev wp post list --post_type=sitchco_script --fields=ID,post_title,post_status 
 | Home | `https://roundabout.test/` | S4, S5, S9, S13, N1, N5 |
 | About | `https://roundabout.test/about/` | S11, S12, N3 |
 | Modal Tests | `https://roundabout.test/modal-tests/` | S7, S8 |
-| Video Test | `https://roundabout.test/video-test/` | S1, S7, S8 (video modal) |
+| Video Test | `https://roundabout.test/video-test/` | S1, S7, S8 (video modal), S15–S18 |
 | Fallen Angels | `https://roundabout.test/production/fallen-angels/` | S4 (custom post type), S10 |
+| GTM Test - Opt Out | `https://roundabout.test/gtm-test-opt-out/` | N2 |
 | Privacy Policy | `https://roundabout.test/privacy-policy/` | (navigation target) |
 
 ---
@@ -276,6 +277,58 @@ Note: The accordions on `/about/` and Kadence tabs on `/production/fallen-angels
 
 ---
 
+### S15. Video Play — PASS
+
+```bash
+playwright-cli goto https://roundabout.test/video-test/
+playwright-cli click <play-button-ref>
+```
+(Click "Play video: Education at Roundabout 2026" or any video play button)
+
+```bash
+playwright-cli run-code "async page => { await page.waitForTimeout(3000); const events = await page.evaluate(() => window.dataLayer.filter(e => e.event === 'video_play')); return JSON.stringify(events, null, 2); }"
+```
+Expected: `{ event: "video_play", video_id: "gsZ24DskSRM", video_provider: "youtube", video_url: "https://www.youtube.com/watch?v=gsZ24DskSRM" }`
+
+---
+
+### S16. Video Pause — PASS
+
+After starting a video (S15), close the modal to trigger pause:
+```bash
+playwright-cli click <close-modal-ref>
+playwright-cli run-code "async page => { const events = await page.evaluate(() => window.dataLayer.filter(e => e.event === 'video_pause')); return JSON.stringify(events, null, 2); }"
+```
+Expected: `{ event: "video_pause", video_id: "gsZ24DskSRM", video_provider: "youtube", video_url: "https://www.youtube.com/watch?v=gsZ24DskSRM" }`
+
+---
+
+### S17. Video Progress Milestone — PASS
+
+Play the Vimeo video (short enough to reach milestones in headless Chrome):
+```bash
+playwright-cli click <vimeo-play-button-ref>
+playwright-cli run-code "async page => { await page.waitForTimeout(10000); const events = await page.evaluate(() => window.dataLayer.filter(e => e.event === 'video_milestone')); return JSON.stringify(events, null, 2); }"
+```
+Expected: Milestones at 25, 50, 75, 100:
+```json
+{ "event": "video_milestone", "video_id": "613729649", "video_provider": "vimeo", "video_url": "https://vimeo.com/613729649", "video_milestone": 25 }
+```
+
+Note: YouTube iframes don't advance playback in headless Chrome. Use Vimeo videos for milestone testing.
+
+---
+
+### S18. Video Ended — PASS
+
+Let the Vimeo video play to completion:
+```bash
+playwright-cli run-code "async page => { await page.waitForTimeout(20000); const events = await page.evaluate(() => window.dataLayer.filter(e => e.event === 'video_ended')); return JSON.stringify(events, null, 2); }"
+```
+Expected: `{ event: "video_ended", video_id: "613729649", video_provider: "vimeo", video_url: "https://vimeo.com/613729649" }`
+
+---
+
 ### S11. Pre-GTM Custom Tag Injection — PASS
 
 **Prereq:** "Before GTM Test" custom tag exists with placement "Before GTM".
@@ -339,11 +392,20 @@ Note: Use snapshot to find a paragraph ref — e155 was from an earlier session.
 
 ---
 
-### N2. Opt-Out on Parent Does Not Cascade — NOT TESTED
+### N2. Opt-Out on Parent Does Not Cascade — PASS
 
-**Prereq:** Needs a page with `data-gtm="0"` on a parent element that contains a child `<a>`. This requires template markup changes or a test page.
+**Prereq:** Test page "GTM Test - Opt Out" (ID 2366) with `<form data-gtm="0">` containing a child `<a href="/privacy-policy/">`.
 
-**Test:** Click the child `<a>`. Expected: `site_click` fires normally — `data-gtm="0"` on the parent does not exclude descendant qualifying elements.
+```bash
+playwright-cli goto https://roundabout.test/gtm-test-opt-out/
+```
+Prevent navigation, then click the link inside the opted-out form:
+```bash
+playwright-cli run-code "async page => { await page.evaluate(() => { document.querySelector('a[href*=\"privacy-policy\"]').addEventListener('click', e => e.preventDefault(), { once: true }); }); }"
+playwright-cli click <link-ref>
+playwright-cli run-code "async page => { const events = await page.evaluate(() => window.dataLayer.filter(e => e.event === 'site_click')); return JSON.stringify(events, null, 2); }"
+```
+Expected: `{ event: "site_click", click_label: "Link inside opted-out form", click_direction: "internal", click_url: "/privacy-policy/" }` — `data-gtm="0"` on the parent does not exclude descendant qualifying elements.
 
 ---
 
@@ -357,9 +419,17 @@ Expected: `[]` — no `hash_change` event on initial load.
 
 ---
 
-### N4. GTM Container Disabled — PARTIAL PASS
+### N4. GTM Container Disabled — PASS
 
-With GTM container configured, verified that `window.dataLayer` is always initialized. Full test (disabling GTM) requires removing the container ID from settings and verifying no GTM snippet but dataLayer still works.
+**Prereq:** Remove GTM container ID from Tag Manager > Settings. Flush cache.
+
+```bash
+playwright-cli goto https://roundabout.test/
+playwright-cli run-code "async page => { const result = await page.evaluate(() => { const html = document.head.innerHTML; return { hasGtmSnippet: html.includes('googletagmanager.com'), dataLayerExists: Array.isArray(window.dataLayer), dataLayerContent: window.dataLayer ? window.dataLayer[0] : null }; }); return JSON.stringify(result, null, 2); }"
+```
+Expected: `hasGtmSnippet: false`, `dataLayerExists: true`, `dataLayerContent` contains page metadata. No JS errors in console. Custom tags still render independently.
+
+**Restore:** Re-add GTM container ID after testing. Flush cache.
 
 ---
 
