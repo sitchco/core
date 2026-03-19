@@ -24,6 +24,8 @@
 
 - [ ] **M10: Per-page targeting** — Include/exclude rules using post relationship field. Targeting resolved via `get_queried_object_id()` (not `get_the_ID()`). No rules = fires on all pages. Custom tags with targeting rules only render on matching pages.
 
+- [ ] **M11: Test cleanup and refactoring** — Review all TagManager and CustomTags tests against the [testing guide](../testing-guide.md). Remove stub tests that only verify container registration. Add behavioral tests for untested functionality. Refactor existing tests to follow established patterns (integration through container, static fixtures, factory-generated data). Ensure tests verify outcomes, not implementation details.
+
 ## Deferred
 
 - GTM staging snippet (environment-specific container swapping)
