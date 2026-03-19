@@ -10,7 +10,7 @@
 
 4. **Several hook integration points already exist and emit events.** `ui-modal-show`/`ui-modal-hide`, `GFORM_CONFIRM`, `HASH_STATE_CHANGE` are already firing and need only a subscriber.
 
-5. **ACF is the registration mechanism for options pages, field groups, post types, and taxonomies.** These are created in the ACF admin UI and synced to `acf-json/` — no PHP registration code (`acf_add_options_page()`, `register_post_type()`, etc.). Container IDs and other admin-configurable values use ACF field groups on options pages.
+5. **ACF is the registration mechanism for field groups, post types, and taxonomies.** These are created in the ACF admin UI and synced to `acf-json/`. The TagManager options page is registered via `acf_add_options_page()` in PHP to control menu placement (top-level "Tag Manager" menu at position 61, between Appearance and Plugins, with "Settings" and "Custom Tags" submenus). Container IDs and other admin-configurable values use ACF field groups on options pages.
 
 6. **The `data-gtm` attribute convention is dual-purpose.** String values = context labels for DOM ancestry walk. JSON object values = interaction overrides (bare keys mapped internally). `"0"` or `"false"` = opt-out for the element.
 

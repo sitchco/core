@@ -18,7 +18,7 @@
 
 ## CustomTags Module
 
-- [X] **M8: Custom Tag CPT and admin editor** — `sitchco_script` CPT ("Custom Tags") created via ACF admin UI (not public, not queryable), synced to `acf-json/`. Admin UI with CodeMirror editor for tag content. Placement selector: "Before GTM" / "After GTM" / "Footer". `🤝 Collaborative: CPT, field groups, and options pages created manually in admin UI.`
+- [X] **M8: Custom Tag CPT and admin editor** — `sitchco_script` CPT ("Custom Tags") created via ACF admin UI (not public, not queryable), synced to `acf-json/`. Admin UI with CodeMirror editor for tag content. Placement selector: "Before GTM" / "After GTM" / "Footer". CPT nested as submenu under the Tag Manager top-level menu. `🤝 Collaborative: CPT and field groups created manually in admin UI.`
 
 - [ ] **M9: Custom tag rendering with placement** — Custom tags inject at the correct location in the page based on placement selection. "Before GTM" renders in `wp_head` before the GTM snippet. "After GTM" renders after. "Footer" renders in `wp_footer`.
 

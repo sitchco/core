@@ -16,10 +16,10 @@ class TagManager extends Module
 
     public function init(): void
     {
+        add_action('acf/init', [$this, 'registerOptionsPage'], 5);
         $this->registerAssets(function (ModuleAssets $assets) {
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
         });
-
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $outboundDomains = $this->getOutboundDomains();
             if (!empty($outboundDomains)) {
@@ -28,21 +28,45 @@ class TagManager extends Module
                 ]);
             }
         });
-
         add_action('wp_head', fn() => $this->renderDataLayerInit(), 4);
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
-        add_filter(
-            'timber/twig/functions',
-            function ($functions) {
-                $functions['gtm_attr'] = [
-                    'callable' => static::renderGtmAttribute(...),
-                    'is_safe' => ['html'],
-                ];
-                return $functions;
+        add_filter('timber/twig/functions', [$this, 'registerTwigFunctions'], 20);
+    }
+
+    public function registerOptionsPage(): void
+    {
+        acf_add_options_page([
+            'page_title' => 'Tag Manager Settings',
+            'menu_title' => 'Tag Manager',
+            'menu_slug' => 'tag-manager',
+            'capability' => 'edit_posts',
+            'position' => 61,
+            'icon_url' => 'dashicons-tag',
+            'redirect' => false,
+            'autoload' => false,
+            'update_button' => 'Update',
+            'updated_message' => 'Options Updated',
+        ]);
+        add_action(
+            'admin_menu',
+            function () {
+                global $submenu;
+                if (isset($submenu['tag-manager'])) {
+                    $submenu['tag-manager'][0][0] = 'Settings';
+                }
             },
-            20,
+            999,
         );
+    }
+
+    public function registerTwigFunctions(array $functions): array
+    {
+        $functions['gtm_attr'] = [
+            'callable' => static::renderGtmAttribute(...),
+            'is_safe' => ['html'],
+        ];
+        return $functions;
     }
 
     public static function renderGtmAttribute(mixed $value): string
