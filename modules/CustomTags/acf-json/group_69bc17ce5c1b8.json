@@ -48,6 +48,69 @@
             "placeholder": "",
             "create_options": 0,
             "save_options": 0
+        },
+        {
+            "key": "field_69d4b1a6c0001",
+            "label": "Assignment",
+            "name": "script_assignment",
+            "aria-label": "",
+            "type": "group",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layout": "block",
+            "sub_fields": [
+                {
+                    "key": "field_69d4b1a6c0002",
+                    "label": "Type",
+                    "name": "type",
+                    "aria-label": "",
+                    "type": "button_group",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "choices": ["Exclude From...", "Only Include On..."],
+                    "default_value": 0,
+                    "return_format": "value",
+                    "allow_null": 0,
+                    "layout": "horizontal"
+                },
+                {
+                    "key": "field_69d4b1a6c0003",
+                    "label": "Selection",
+                    "name": "selection",
+                    "aria-label": "",
+                    "type": "relationship",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "post_type": "",
+                    "post_status": "",
+                    "taxonomy": "",
+                    "filters": ["search", "post_type"],
+                    "return_format": "id",
+                    "elements": "",
+                    "min": "",
+                    "max": "",
+                    "bidirectional": 0,
+                    "bidirectional_target": []
+                }
+            ]
         }
     ],
     "location": [
@@ -69,5 +132,5 @@
     "description": "",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1773935699
+    "modified": 1773944710
 }

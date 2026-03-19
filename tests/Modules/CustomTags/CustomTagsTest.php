@@ -24,8 +24,12 @@ class CustomTagsTest extends TestCase
         parent::tearDown();
     }
 
-    private function createCustomTag(string $content, string $placement = 'after_gtm', string $status = 'publish'): int
-    {
+    private function createCustomTag(
+        string $content,
+        string $placement = 'after_gtm',
+        string $status = 'publish',
+        ?array $assignment = null,
+    ): int {
         $postId = $this->factory()->post->create([
             'post_type' => 'sitchco_script',
             'post_status' => $status,
@@ -33,7 +37,16 @@ class CustomTagsTest extends TestCase
         ]);
         update_field('script_content', $content, $postId);
         update_field('script_placement', $placement, $postId);
+        if ($assignment !== null) {
+            update_field('script_assignment', $assignment, $postId);
+        }
         return $postId;
+    }
+
+    private function setQueriedObject($object, int $id = 0): void
+    {
+        $GLOBALS['wp_query']->queried_object = $object;
+        $GLOBALS['wp_query']->queried_object_id = $id;
     }
 
     private function captureHook(string $hook): string
@@ -104,5 +117,58 @@ class CustomTagsTest extends TestCase
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('<!-- TAG_ONE -->', $head);
         $this->assertStringContainsString('<!-- TAG_TWO -->', $head);
+    }
+
+    public function test_tag_with_include_rule_renders_on_matching_page(): void
+    {
+        $page = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $this->setQueriedObject($page, $page->ID);
+        $this->createCustomTag('<!-- TARGETED -->', 'after_gtm', 'publish', ['type' => 1, 'selection' => [$page->ID]]);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('<!-- TARGETED -->', $head);
+    }
+
+    public function test_tag_with_include_rule_does_not_render_on_other_page(): void
+    {
+        $targetPage = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $otherPage = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $this->setQueriedObject($otherPage, $otherPage->ID);
+        $this->createCustomTag('<!-- TARGETED -->', 'after_gtm', 'publish', [
+            'type' => 1,
+            'selection' => [$targetPage->ID],
+        ]);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringNotContainsString('<!-- TARGETED -->', $head);
+    }
+
+    public function test_tag_with_exclude_rule_does_not_render_on_excluded_page(): void
+    {
+        $page = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $this->setQueriedObject($page, $page->ID);
+        $this->createCustomTag('<!-- EXCLUDED -->', 'after_gtm', 'publish', ['type' => 0, 'selection' => [$page->ID]]);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringNotContainsString('<!-- EXCLUDED -->', $head);
+    }
+
+    public function test_tag_with_exclude_rule_renders_on_non_excluded_page(): void
+    {
+        $excludedPage = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $otherPage = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $this->setQueriedObject($otherPage, $otherPage->ID);
+        $this->createCustomTag('<!-- EXCLUDED -->', 'after_gtm', 'publish', [
+            'type' => 0,
+            'selection' => [$excludedPage->ID],
+        ]);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('<!-- EXCLUDED -->', $head);
+    }
+
+    public function test_tag_without_targeting_renders_on_all_pages(): void
+    {
+        $page = $this->factory()->post->create_and_get(['post_type' => 'page']);
+        $this->setQueriedObject($page, $page->ID);
+        $this->createCustomTag('<!-- GLOBAL -->', 'after_gtm');
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('<!-- GLOBAL -->', $head);
     }
 }

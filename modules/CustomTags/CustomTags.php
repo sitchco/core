@@ -40,7 +40,13 @@ class CustomTags extends Module
                 $placement = ScriptPlacement::tryFrom($tag->script_placement) ?? ScriptPlacement::AfterGtm;
                 $content = $tag->script_content ?: '';
                 if ($content !== '') {
-                    $tags[$placement->value][] = ['content' => $content, 'post_id' => $tag->ID];
+                    $assignment = get_field('script_assignment', $tag->ID) ?: [];
+                    $tags[$placement->value][] = [
+                        'content' => $content,
+                        'post_id' => $tag->ID,
+                        'assignment_type' => (int) ($assignment['type'] ?? 0),
+                        'assignment_selection' => $assignment['selection'] ?? null ?: [],
+                    ];
                 }
             }
             return $tags;
@@ -49,12 +55,27 @@ class CustomTags extends Module
 
     protected function renderTags(ScriptPlacement $placement): void
     {
+        $currentPageId = get_queried_object_id();
         foreach ($this->getTagsByPlacement()[$placement->value] ?? [] as $tag) {
+            if (!$this->shouldRenderTag($tag, $currentPageId)) {
+                continue;
+            }
             $content = apply_filters(static::hookName('render'), $tag['content'], $tag['post_id'], $placement->value);
             if (!empty($content)) {
                 echo $content . "\n";
             }
         }
+    }
+
+    private function shouldRenderTag(array $tag, int $currentPageId): bool
+    {
+        $selection = $tag['assignment_selection'];
+        if (empty($selection)) {
+            return true;
+        }
+        $isInclude = $tag['assignment_type'] === 1;
+        $matched = in_array($currentPageId, $selection, true);
+        return $isInclude ? $matched : !$matched;
     }
 
     public function registerAdminMenu(): void
