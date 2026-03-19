@@ -20,5 +20,5 @@ hooks.addAction(
         registerOutboundDecorator();
     },
     10,
-    'tag-manager',
+    'tag-manager'
 );

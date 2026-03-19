@@ -146,7 +146,7 @@ TagManager does not use the `FEATURES` constant. Unlike modules with independent
 
 The module being listed in `sitchco.config.php` is the only on/off toggle. `init()` contains all setup logic, branching on `TagManagerSettings` values.
 
-Script injection is handled by a separate ScriptInjection module (CPT-based).
+Custom tag injection is handled by a separate CustomTags module (CPT-based).
 
 ### PHP Side
 
@@ -195,6 +195,6 @@ On the PHP side, tag-manager exposes its own hooks via `static::hookName(...)`:
 
 5. **UTM/outbound link decoration fifth**: ACF-driven domain configuration with static DOM pass + MutationObserver. Add `localStorage` error handling.
 
-6. **ScriptInjection module last**: Separate module with CPT storage, CodeMirror editor, placement selection, and per-page targeting.
+6. **CustomTags module last**: Separate module with CPT storage, CodeMirror editor, placement selection, and per-page targeting.
 
 7. **Defer**: Video tracking (waiting on VideoBlock hooks), roundabout theme module tracking (consumers emit hooks when ready), scroll tracking Tier 2/3, legacy `data-ga-event` UA path (obsolete).

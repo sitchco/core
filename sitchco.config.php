@@ -24,6 +24,7 @@ use Sitchco\Modules\SvgSprite\SvgSprite;
 use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\TagManager\TagManager;
+use Sitchco\Modules\CustomTags\CustomTags;
 use Sitchco\Modules\UIPopover\UIPopover;
 use Sitchco\Modules\Video\VideoModule;
 use Sitchco\Modules\Wordpress\BlockConfig;
@@ -68,6 +69,7 @@ return [
         UIPopover::class,
         CacheInvalidation::class,
         TagManager::class,
+        CustomTags::class,
     ],
     'disallowedBlocks' => [],
 ];

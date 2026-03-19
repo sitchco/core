@@ -7,12 +7,13 @@ export function registerHashTracker(pushEvent) {
             if (hashState.previous === undefined) {
                 return;
             }
+
             pushEvent({
                 event: 'hash_change',
                 hash_value: hashState.current,
             });
         },
         10,
-        'tag-manager',
+        'tag-manager'
     );
 }

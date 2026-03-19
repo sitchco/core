@@ -36,7 +36,7 @@ Each interaction type fires its own named event: `site_click`, `modal_open`, `mo
 
 No custom scroll tracking JS at launch. GA4 Enhanced Measurement provides baseline `scroll` event at 90% depth. GTM Scroll Depth triggers available for additional thresholds. Footer auto-observation (Tier 2) can be added when analytics teams confirm the signal's value.
 
-### Script Injection: Separate ScriptInjection Module (CPT-Based)
+### Custom Tags: Separate CustomTags Module (CPT-Based)
 
 A separate module from TagManager. CPT storage (`sitchco_script` post type) with CodeMirror editor. Semantic placement labels ("Before GTM" / "After GTM" / "Footer"). Per-page targeting via include/exclude rules using `get_queried_object_id()`. Build sequencing deferred to planning.
 
@@ -188,42 +188,42 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 
 ---
 
-### Script Injection (Separate Module)
+### Custom Tags (Separate Module)
 
-#### S11. Pre-GTM Script Injection (Consent Management Platform)
+#### S11. Pre-GTM Custom Tag Injection (Consent Management Platform)
 
 **Trigger:** Admin needs to add a consent management platform that must load before GTM.
 
 **Expected:**
-1. Admin creates a new entry in the `sitchco_script` CPT.
-2. Enters script content in CodeMirror editor.
+1. Admin creates a new entry in the `sitchco_script` CPT ("Custom Tags").
+2. Enters tag content in CodeMirror editor.
 3. Selects placement: "Before GTM."
 4. Targets: "All Pages."
-5. Module injects the script in `wp_head` at a priority before the GTM snippet.
+5. Module injects the tag in `wp_head` at a priority before the GTM snippet.
 
 **Must NOT:** Depend on GTM being enabled. Fire after GTM loads.
 
-#### S12. Per-Page Script Targeting
+#### S12. Per-Page Custom Tag Targeting
 
-**Trigger:** Admin adds an event-specific script (ticket widget embed) to a single page.
+**Trigger:** Admin adds an event-specific tag (ticket widget embed) to a single page.
 
 **Expected:**
-1. Admin creates a script entry with include rule targeting specific post(s).
+1. Admin creates a custom tag entry with include rule targeting specific post(s).
 2. On `template_redirect`, module resolves `get_queried_object_id()` and matches against targeting rules.
-3. Script injected only on matching pages.
+3. Custom tag injected only on matching pages.
 
 **Must NOT:** Use `get_the_ID()` — returns 0 on archives/search. Must use `get_queried_object_id()`.
 
-#### S13. Script with No Targeting Rules
+#### S13. Custom Tag with No Targeting Rules
 
-**Trigger:** Admin creates a script entry without specifying any include/exclude rules.
+**Trigger:** Admin creates a custom tag entry without specifying any include/exclude rules.
 
 **Expected:**
-1. Script fires on all pages (default behavior).
+1. Custom tag fires on all pages (default behavior).
 
 **Must NOT:** Require targeting rules to be set — no rules means global.
 
-#### S14. Marketing/Analytics Script via GTM (Not ScriptInjection)
+#### S14. Marketing/Analytics Script via GTM (Not Custom Tags)
 
 **Trigger:** Admin needs to add a tracking pixel (Facebook Pixel, etc.) to the site.
 
@@ -232,7 +232,7 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 2. Configures consent via Consent Mode v2.
 3. No platform-side action needed.
 
-**Must NOT:** Be handled by the ScriptInjection module — tracking scripts with consent requirements belong in GTM.
+**Must NOT:** Be handled by the Custom Tags module — tracking scripts with consent requirements belong in GTM.
 
 ---
 
@@ -284,11 +284,11 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 
 6. **Context string truncation.** If the ancestor context string approaches GA4's 100-character parameter value limit, truncate from the leaf inward to preserve outermost context (more meaningful for section-level attribution).
 
-7. **ScriptInjection CPT not publicly accessible.** Configure in ACF with public and publicly queryable disabled.
+7. **Custom Tags CPT not publicly accessible.** Configure in ACF with public and publicly queryable disabled.
 
-8. **ScriptInjection does not handle consent.** Scripts fire unconditionally. Consent-requiring scripts belong in GTM behind Consent Mode v2 triggers. This is a governance/documentation concern, not enforced by code.
+8. **Custom Tags module does not handle consent.** Tags fire unconditionally. Consent-requiring scripts belong in GTM behind Consent Mode v2 triggers. This is a governance/documentation concern, not enforced by code.
 
-9. **Page caching limitation (ScriptInjection).** Full-page caches serve static HTML — PHP-side injection on `template_redirect` won't run on cache hits. Per-page targeted scripts require cache exclusion rules for affected pages. This is a known operational requirement to document.
+9. **Page caching limitation (Custom Tags).** Full-page caches serve static HTML — PHP-side injection on `template_redirect` won't run on cache hits. Per-page targeted custom tags require cache exclusion rules for affected pages. This is a known operational requirement to document.
 
 ## Future Considerations
 

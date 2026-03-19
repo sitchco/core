@@ -16,13 +16,13 @@
 
 - [X] **M7: UTM persistence and outbound link decoration** — URL UTM parameters captured into `localStorage` on page load. When outbound link decoration is enabled via ACF toggle on the TagManager options page, matching outbound links are decorated with stored UTM params via static DOM pass on load + MutationObserver for dynamically inserted links. No click-time modification (avoids navigation race conditions). Domains entered in ACF repeater (placeholder: "telecharge.com"). PHP filter available as programmatic override. Subdomain matching works. UTM capture functions independently of decoration being enabled. `localStorage` errors handled gracefully.
 
-## ScriptInjection Module
+## CustomTags Module
 
-- [ ] **M8: Script CPT and admin editor** — `sitchco_script` CPT created via ACF admin UI (not public, not queryable), synced to `acf-json/`. Admin UI with CodeMirror editor for script content. Placement selector: "Before GTM" / "After GTM" / "Footer". `🤝 Collaborative: CPT, field groups, and options pages created manually in admin UI.`
+- [X] **M8: Custom Tag CPT and admin editor** — `sitchco_script` CPT ("Custom Tags") created via ACF admin UI (not public, not queryable), synced to `acf-json/`. Admin UI with CodeMirror editor for tag content. Placement selector: "Before GTM" / "After GTM" / "Footer". `🤝 Collaborative: CPT, field groups, and options pages created manually in admin UI.`
 
-- [ ] **M9: Script rendering with placement** — Scripts inject at the correct location in the page based on placement selection. "Before GTM" renders in `wp_head` before the GTM snippet. "After GTM" renders after. "Footer" renders in `wp_footer`.
+- [ ] **M9: Custom tag rendering with placement** — Custom tags inject at the correct location in the page based on placement selection. "Before GTM" renders in `wp_head` before the GTM snippet. "After GTM" renders after. "Footer" renders in `wp_footer`.
 
-- [ ] **M10: Per-page targeting** — Include/exclude rules using post relationship field. Targeting resolved via `get_queried_object_id()` (not `get_the_ID()`). No rules = fires on all pages. Scripts with targeting rules only render on matching pages.
+- [ ] **M10: Per-page targeting** — Include/exclude rules using post relationship field. Targeting resolved via `get_queried_object_id()` (not `get_the_ID()`). No rules = fires on all pages. Custom tags with targeting rules only render on matching pages.
 
 ## Deferred
 

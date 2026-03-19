@@ -10,6 +10,6 @@ export function registerFormTracker(pushEvent) {
             });
         },
         10,
-        'tag-manager',
+        'tag-manager'
     );
 }

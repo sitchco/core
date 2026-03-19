@@ -12,7 +12,7 @@ export function registerModalTracker(pushEvent) {
             });
         },
         20,
-        'tag-manager',
+        'tag-manager'
     );
 
     hooks.addAction(
@@ -24,6 +24,6 @@ export function registerModalTracker(pushEvent) {
             });
         },
         20,
-        'tag-manager',
+        'tag-manager'
     );
 }

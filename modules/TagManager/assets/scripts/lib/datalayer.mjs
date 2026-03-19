@@ -6,10 +6,5 @@ export function pushEvent(data) {
 export function registerDataLayerActions() {
     const { hooks, constants } = window.sitchco;
     hooks.addAction(constants.GTM_INTERACTION, (data) => pushEvent(data), 10, 'tag-manager');
-    hooks.addAction(
-        constants.GTM_STATE,
-        (data) => pushEvent(data),
-        10,
-        'tag-manager',
-    );
+    hooks.addAction(constants.GTM_STATE, (data) => pushEvent(data), 10, 'tag-manager');
 }

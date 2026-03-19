@@ -20,7 +20,13 @@ export function captureUtmParams() {
 
     try {
         const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...stored, ...current }));
+        localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+                ...stored,
+                ...current,
+            })
+        );
     } catch {
         // localStorage unavailable (private browsing, quota exceeded, corrupt data)
     }
@@ -32,6 +38,7 @@ export function getStoredUtmParams() {
         if (!raw) {
             return {};
         }
+
         const parsed = JSON.parse(raw);
         return typeof parsed === 'object' && parsed !== null ? parsed : {};
     } catch {
