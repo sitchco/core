@@ -171,4 +171,24 @@ class CustomTagsTest extends TestCase
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('<!-- GLOBAL -->', $head);
     }
+
+    public function test_render_filter_can_modify_tag_content(): void
+    {
+        $this->createCustomTag('<!-- ORIGINAL -->', 'before_gtm');
+        add_filter(
+            CustomTags::hookName('render'),
+            fn(string $content) => str_replace('ORIGINAL', 'MODIFIED', $content),
+        );
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('<!-- MODIFIED -->', $head);
+        $this->assertStringNotContainsString('<!-- ORIGINAL -->', $head);
+    }
+
+    public function test_render_filter_can_suppress_tag(): void
+    {
+        $this->createCustomTag('<!-- SUPPRESSED -->', 'before_gtm');
+        add_filter(CustomTags::hookName('render'), fn() => '');
+        $head = $this->captureHook('wp_head');
+        $this->assertStringNotContainsString('<!-- SUPPRESSED -->', $head);
+    }
 }

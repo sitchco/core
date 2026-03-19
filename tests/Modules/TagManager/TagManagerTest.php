@@ -19,8 +19,11 @@ class TagManagerTest extends TestCase
     protected function tearDown(): void
     {
         remove_all_filters('acf/load_value/name=gtm_container_ids');
+        remove_all_filters('acf/load_value/name=gtm_decorate_outbound');
+        remove_all_filters('acf/load_value/name=gtm_outbound_domains');
         remove_all_filters(TagManager::hookName('enable-gtm'));
         remove_all_filters(TagManager::hookName('current-state'));
+        remove_all_filters(TagManager::hookName('outbound-domains'));
         parent::tearDown();
     }
 
@@ -33,6 +36,12 @@ class TagManagerTest extends TestCase
     {
         $GLOBALS['wp_query']->queried_object = $object;
         $GLOBALS['wp_query']->queried_object_id = $id;
+    }
+
+    private function setOutboundDomains(bool $enabled, array $domains = []): void
+    {
+        add_filter('acf/load_value/name=gtm_decorate_outbound', fn() => $enabled, 10, 0);
+        add_filter('acf/load_value/name=gtm_outbound_domains', fn() => $domains, 10, 0);
     }
 
     private function captureHook(string $hook): string
@@ -132,5 +141,63 @@ class TagManagerTest extends TestCase
         });
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('"custom_key":"custom_value"', $head);
+    }
+
+    public function test_gtm_attr_renders_string_value(): void
+    {
+        $result = TagManager::renderGtmAttribute('Header');
+        $this->assertSame(' data-gtm="Header"', $result);
+    }
+
+    public function test_gtm_attr_renders_array_as_escaped_json(): void
+    {
+        $result = TagManager::renderGtmAttribute(['label' => 'Donate', 'role' => 'cta']);
+        $this->assertStringContainsString('data-gtm="', $result);
+        $decoded = html_entity_decode($result);
+        $this->assertStringContainsString('{"label":"Donate","role":"cta"}', $decoded);
+    }
+
+    public function test_outbound_domains_filter_receives_configured_domains(): void
+    {
+        $this->setOutboundDomains(true, [['domain' => 'example.com'], ['domain' => 'other.com']]);
+        $captured = null;
+        add_filter(TagManager::hookName('outbound-domains'), function (array $domains) use (&$captured) {
+            $captured = $domains;
+            return $domains;
+        });
+        $this->captureHook('wp_head');
+        $this->assertSame(['example.com', 'other.com'], $captured);
+    }
+
+    public function test_outbound_domains_filter_not_called_when_toggle_disabled(): void
+    {
+        $this->setOutboundDomains(false, [['domain' => 'example.com']]);
+        $called = false;
+        add_filter(TagManager::hookName('outbound-domains'), function (array $domains) use (&$called) {
+            $called = true;
+            return $domains;
+        });
+        $this->captureHook('wp_head');
+        $this->assertFalse($called);
+    }
+
+    public function test_datalayer_push_contains_term_metadata(): void
+    {
+        $term = $this->factory()->term->create_and_get(['taxonomy' => 'category', 'slug' => 'news']);
+        $this->setQueriedObject($term, $term->term_id);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('"wp_post_type":"category"', $head);
+        $this->assertStringContainsString('"wp_post_id":' . $term->term_id, $head);
+        $this->assertStringContainsString('"wp_slug":"news"', $head);
+    }
+
+    public function test_datalayer_push_contains_post_type_metadata(): void
+    {
+        $postType = get_post_type_object('page');
+        $this->setQueriedObject($postType);
+        $head = $this->captureHook('wp_head');
+        $this->assertStringContainsString('"wp_post_type":"page"', $head);
+        $this->assertStringContainsString('"wp_post_id":0', $head);
+        $this->assertStringContainsString('"wp_slug":"page"', $head);
     }
 }
