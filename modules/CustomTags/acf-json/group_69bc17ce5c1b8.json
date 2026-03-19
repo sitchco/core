@@ -37,12 +37,8 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "before_gtm": "Before GTM",
-                "after_gtm": "After GTM",
-                "footer": "Footer"
-            },
-            "default_value": "after_gtm",
+            "choices": {},
+            "default_value": "",
             "return_format": "value",
             "multiple": 0,
             "allow_null": 0,
