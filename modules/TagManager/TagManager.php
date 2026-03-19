@@ -21,6 +21,7 @@ class TagManager extends Module
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
         });
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
+            $assets->enqueueScript(static::hookName());
             $outboundDomains = $this->getOutboundDomains();
             if (!empty($outboundDomains)) {
                 $assets->inlineScriptData(static::hookName(), 'tagManager', [
