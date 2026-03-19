@@ -18,6 +18,9 @@ class TagManager extends Module
     {
         $this->registerAssets(function (ModuleAssets $assets) {
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
+        });
+
+        $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $outboundDomains = $this->getOutboundDomains();
             if (!empty($outboundDomains)) {
                 $assets->inlineScriptData(static::hookName(), 'tagManager', [
@@ -29,13 +32,17 @@ class TagManager extends Module
         add_action('wp_head', fn() => $this->renderDataLayerInit(), 4);
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
-        add_filter('timber/twig/functions', function ($functions) {
-            $functions['gtm_attr'] = [
-                'callable' => static::renderGtmAttribute(...),
-                'is_safe' => ['html'],
-            ];
-            return $functions;
-        }, 20);
+        add_filter(
+            'timber/twig/functions',
+            function ($functions) {
+                $functions['gtm_attr'] = [
+                    'callable' => static::renderGtmAttribute(...),
+                    'is_safe' => ['html'],
+                ];
+                return $functions;
+            },
+            20,
+        );
     }
 
     public static function renderGtmAttribute(mixed $value): string
@@ -82,11 +89,13 @@ class TagManager extends Module
             $obj instanceof \WP_Post_Type => [$obj->name, 0, $obj->name],
             default => [null, null, null],
         };
-        return $type !== null ? [
-            'wp_post_type' => $type,
-            'wp_post_id' => $id,
-            'wp_slug' => $slug,
-        ] : [];
+        return $type !== null
+            ? [
+                'wp_post_type' => $type,
+                'wp_post_id' => $id,
+                'wp_slug' => $slug,
+            ]
+            : [];
     }
 
     protected function renderDataLayerInit(): void

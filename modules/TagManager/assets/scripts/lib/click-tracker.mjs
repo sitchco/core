@@ -13,6 +13,7 @@ function parseGtmData(el) {
     if (!raw || raw.charAt(0) !== '{') {
         return null;
     }
+
     try {
         const obj = JSON.parse(raw);
         return typeof obj === 'object' && obj !== null ? obj : null;
@@ -22,7 +23,9 @@ function parseGtmData(el) {
 }
 
 function truncate(text) {
-    if (!text) return '';
+    if (!text) {
+        return '';
+    }
     return text.length > MAX_LENGTH ? text.slice(0, MAX_LENGTH) : text;
 }
 
@@ -38,7 +41,9 @@ const labelResolvers = [
 function resolveLabel(el, gtmData) {
     for (const resolve of labelResolvers) {
         const result = resolve(el, gtmData);
-        if (result) return result;
+        if (result) {
+            return result;
+        }
     }
     return '';
 }
@@ -46,20 +51,25 @@ function resolveLabel(el, gtmData) {
 function resolveContext(el) {
     const parts = [];
     let ancestor = el.parentElement;
+
     while (ancestor && ancestor !== document.documentElement) {
         const val = ancestor.dataset?.gtm;
         if (val && val !== '0' && val !== 'false' && val.charAt(0) !== '{') {
             parts.push(val);
         }
+
         ancestor = ancestor.parentElement;
     }
+
     parts.reverse();
     let result = parts.join(' > ');
     if (result.length > MAX_LENGTH) {
         while (parts.length > 1 && parts.join(' > ').length > MAX_LENGTH) {
             parts.pop();
         }
+
         result = parts.join(' > ');
+
         if (result.length > MAX_LENGTH) {
             result = result.slice(0, MAX_LENGTH);
         }
@@ -68,7 +78,9 @@ function resolveContext(el) {
 }
 
 function resolveLinkProps(el) {
-    if (!isHttpLink(el)) return null;
+    if (!isHttpLink(el)) {
+        return null;
+    }
     return {
         click_direction: el.hostname !== location.hostname ? 'outbound' : 'internal',
         click_url: el.pathname + el.search + el.hash || '/',
@@ -80,11 +92,18 @@ function buildPayload(el, gtmData) {
     const context = resolveContext(el);
     const linkProps = resolveLinkProps(el);
 
-    const props = { click_label: label, click_context: context, ...linkProps };
+    const props = {
+        click_label: label,
+        click_context: context,
+        ...linkProps,
+    };
 
     const payload = { event: 'site_click' };
+
     for (const [key, value] of Object.entries(props)) {
-        if (value) payload[key] = value;
+        if (value) {
+            payload[key] = value;
+        }
     }
 
     if (gtmData) {
@@ -92,15 +111,18 @@ function buildPayload(el, gtmData) {
             payload[`click_${key}`] = value;
         }
     }
-
     return payload;
 }
 
 export function registerClickTracker(pushEvent) {
     document.addEventListener('click', (e) => {
         const el = e.target.closest(SELECTOR);
-        if (!el) return;
-        if (isOptedOut(el)) return;
+        if (!el) {
+            return;
+        }
+        if (isOptedOut(el)) {
+            return;
+        }
 
         const gtmData = parseGtmData(el);
         pushEvent(buildPayload(el, gtmData));

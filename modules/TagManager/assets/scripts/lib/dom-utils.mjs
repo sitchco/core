@@ -1,6 +1,9 @@
 export function resolveAriaLabelledBy(el) {
     const id = el.getAttribute('aria-labelledby');
-    if (!id) return '';
+    if (!id) {
+        return '';
+    }
+
     const ref = document.getElementById(id);
     return ref?.textContent?.trim() || '';
 }

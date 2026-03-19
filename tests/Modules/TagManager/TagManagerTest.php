@@ -12,12 +12,13 @@ class TagManagerTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        acf_get_store('values')->reset();
         $this->module = $this->container->get(TagManager::class);
     }
 
     protected function tearDown(): void
     {
-        remove_all_filters('acf/format_value/name=gtm_container_ids');
+        remove_all_filters('acf/load_value/name=gtm_container_ids');
         remove_all_filters(TagManager::hookName('enable-gtm'));
         remove_all_filters(TagManager::hookName('current-state'));
         parent::tearDown();
@@ -25,7 +26,7 @@ class TagManagerTest extends TestCase
 
     private function setContainerIds(array $ids): void
     {
-        add_filter('acf/format_value/name=gtm_container_ids', fn() => $ids, 10, 0);
+        add_filter('acf/load_value/name=gtm_container_ids', fn() => $ids, 10, 0);
     }
 
     private function setQueriedObject($object, int $id = 0): void
@@ -43,10 +44,7 @@ class TagManagerTest extends TestCase
 
     public function test_renders_gtm_snippets_for_configured_containers(): void
     {
-        $this->setContainerIds([
-            ['container_id' => 'GTM-FIRST'],
-            ['container_id' => 'GTM-SECOND'],
-        ]);
+        $this->setContainerIds([['container_id' => 'GTM-FIRST'], ['container_id' => 'GTM-SECOND']]);
         $head = $this->captureHook('wp_head');
         $body = $this->captureHook('wp_body_open');
         $this->assertStringContainsString("'GTM-FIRST'", $head);
