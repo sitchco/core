@@ -1,4 +1,4 @@
-import { resolveAriaLabelledBy, isHttpLink } from './dom-utils.mjs';
+import { isHttpLink, resolveAriaLabelledBy } from './dom-utils.mjs';
 
 const SELECTOR = 'a, button, input[type=submit], [data-button]';
 const MAX_LENGTH = 100;

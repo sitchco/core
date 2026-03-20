@@ -131,30 +131,46 @@ class WordPress
     }
 
     /**
+     * Retrieve all post types that have a publicly accessible archive URL.
+     *
+     * @return string[] An array of post type names with archive views.
+     */
+    public static function getVisibleArchivePostTypes(): array
+    {
+        return array_values(
+            array_filter(
+                get_post_types([], 'names'),
+                fn(string $type) => $type !== 'attachment' &&
+                    is_post_type_viewable($type) &&
+                    get_post_type_archive_link($type) !== false,
+            ),
+        );
+    }
+
+    /**
      * Retrieve all post types that are likely to have a single/detail view on the front end.
      *
-     * This function filters and returns an array of post types that are public, queryable,
-     * and have rewrite rules defined. It includes both built-in and custom post types.
-     *
-     * @return string[] An array of post type names that are publicly queryable and likely to have a detail view.
+     * @param bool $include_empty Whether to include post types with zero posts.
+     * @return string[] An array of post type names that are publicly viewable.
      */
-    public static function getVisibleSinglePostTypes(): array
+    public static function getVisibleSinglePostTypes(bool $include_empty = false): array
     {
-        $built_in = array_diff(get_post_types(['public' => true, '_builtin' => true]), ['attachment']);
-        $custom_types = array_filter(
-            get_post_types(['public' => true, 'publicly_queryable' => true, '_builtin' => false], 'objects') ?: [],
-            fn($post_type) => !empty($post_type->rewrite),
+        $types = array_filter(
+            get_post_types([], 'names'),
+            fn(string $type) => $type !== 'attachment' && is_post_type_viewable($type),
         );
 
-        $all_types = array_values(
-            array_unique(array_merge($built_in, array_map(fn($post_type) => $post_type->name, $custom_types))),
-        );
+        if (!$include_empty) {
+            $types = array_filter($types, function (string $type) {
+                $counts = (array) wp_count_posts($type);
+                $counts = array_intersect_key(
+                    $counts,
+                    array_flip(['publish', 'future', 'draft', 'pending', 'private']),
+                );
+                return !empty(array_filter($counts));
+            });
+        }
 
-        return array_filter($all_types, function ($post_type) {
-            $count = array_filter((array) wp_count_posts($post_type));
-            $count = array_intersect_key($count, array_flip(['publish', 'future', 'draft', 'pending', 'private']));
-
-            return !empty($count);
-        });
+        return array_values($types);
     }
 }

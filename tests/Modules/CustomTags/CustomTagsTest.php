@@ -2,6 +2,7 @@
 
 namespace Sitchco\Tests\Modules\CustomTags;
 
+use Sitchco\Modules\CustomTags\CustomTag;
 use Sitchco\Modules\CustomTags\CustomTags;
 use Sitchco\Modules\TagManager\TagManager;
 use Sitchco\Tests\TestCase;
@@ -21,6 +22,10 @@ class CustomTagsTest extends TestCase
         remove_all_filters(CustomTags::hookName('render'));
         remove_all_filters('acf/load_value/name=gtm_container_ids');
         remove_all_filters(TagManager::hookName('enable-gtm'));
+        $GLOBALS['wp_query']->is_singular = false;
+        $GLOBALS['wp_query']->is_page = false;
+        $GLOBALS['wp_query']->queried_object = null;
+        $GLOBALS['wp_query']->queried_object_id = 0;
         parent::tearDown();
     }
 
@@ -31,7 +36,7 @@ class CustomTagsTest extends TestCase
         ?array $assignment = null,
     ): int {
         $postId = $this->factory()->post->create([
-            'post_type' => 'sitchco_script',
+            'post_type' => CustomTag::POST_TYPE,
             'post_status' => $status,
             'post_title' => 'Test Tag',
         ]);
@@ -47,6 +52,8 @@ class CustomTagsTest extends TestCase
     {
         $GLOBALS['wp_query']->queried_object = $object;
         $GLOBALS['wp_query']->queried_object_id = $id;
+        $GLOBALS['wp_query']->is_singular = true;
+        $GLOBALS['wp_query']->is_page = $object instanceof \WP_Post && $object->post_type === 'page';
     }
 
     private function captureHook(string $hook): string
@@ -123,7 +130,11 @@ class CustomTagsTest extends TestCase
     {
         $page = $this->factory()->post->create_and_get(['post_type' => 'page']);
         $this->setQueriedObject($page, $page->ID);
-        $this->createCustomTag('<!-- TARGETED -->', 'after_gtm', 'publish', ['type' => 1, 'selection' => [$page->ID]]);
+        $this->createCustomTag('<!-- TARGETED -->', 'after_gtm', 'publish', [
+            'mode' => 'include',
+            'pages' => [$page->ID],
+            'archives' => [],
+        ]);
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('<!-- TARGETED -->', $head);
     }
@@ -134,8 +145,9 @@ class CustomTagsTest extends TestCase
         $otherPage = $this->factory()->post->create_and_get(['post_type' => 'page']);
         $this->setQueriedObject($otherPage, $otherPage->ID);
         $this->createCustomTag('<!-- TARGETED -->', 'after_gtm', 'publish', [
-            'type' => 1,
-            'selection' => [$targetPage->ID],
+            'mode' => 'include',
+            'pages' => [$targetPage->ID],
+            'archives' => [],
         ]);
         $head = $this->captureHook('wp_head');
         $this->assertStringNotContainsString('<!-- TARGETED -->', $head);
@@ -145,7 +157,11 @@ class CustomTagsTest extends TestCase
     {
         $page = $this->factory()->post->create_and_get(['post_type' => 'page']);
         $this->setQueriedObject($page, $page->ID);
-        $this->createCustomTag('<!-- EXCLUDED -->', 'after_gtm', 'publish', ['type' => 0, 'selection' => [$page->ID]]);
+        $this->createCustomTag('<!-- EXCLUDED -->', 'after_gtm', 'publish', [
+            'mode' => 'exclude',
+            'pages' => [$page->ID],
+            'archives' => [],
+        ]);
         $head = $this->captureHook('wp_head');
         $this->assertStringNotContainsString('<!-- EXCLUDED -->', $head);
     }
@@ -156,8 +172,9 @@ class CustomTagsTest extends TestCase
         $otherPage = $this->factory()->post->create_and_get(['post_type' => 'page']);
         $this->setQueriedObject($otherPage, $otherPage->ID);
         $this->createCustomTag('<!-- EXCLUDED -->', 'after_gtm', 'publish', [
-            'type' => 0,
-            'selection' => [$excludedPage->ID],
+            'mode' => 'exclude',
+            'pages' => [$excludedPage->ID],
+            'archives' => [],
         ]);
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('<!-- EXCLUDED -->', $head);

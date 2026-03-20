@@ -79,7 +79,7 @@ These items must be configured in WordPress before testing. Verify with `ddev wp
 
 Verify custom tags exist:
 ```bash
-ddev wp post list --post_type=sitchco_script --fields=ID,post_title,post_status --format=table
+ddev wp post list --post_type=custom_tag --fields=ID,post_title,post_status --format=table
 ```
 
 ### Test Pages

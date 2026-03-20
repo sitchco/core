@@ -1,0 +1,114 @@
+{
+    "key": "group_content_targeting",
+    "title": "Content Targeting",
+    "fields": [
+        {
+            "key": "field_ct_mode",
+            "label": "Mode",
+            "name": "mode",
+            "aria-label": "",
+            "type": "button_group",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "exclude": "Exclude From...",
+                "include": "Only Include On..."
+            },
+            "default_value": "exclude",
+            "return_format": "value",
+            "allow_null": 0,
+            "allow_in_bindings": 1,
+            "layout": "horizontal"
+        },
+        {
+            "key": "field_ct_archives",
+            "label": "Archives",
+            "name": "archives",
+            "aria-label": "",
+            "type": "select",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "50",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "posts_index": "Posts Index",
+                "post_type_archive:post": "Archive: Posts",
+                "taxonomy_archive:category": "Taxonomy: Categories",
+                "taxonomy_archive:post_tag": "Taxonomy: Tags",
+                "taxonomy_archive:post_format": "Taxonomy: Formats",
+                "author_archive": "Author Archives",
+                "search_results": "Search Results"
+            },
+            "default_value": [],
+            "return_format": "value",
+            "multiple": 1,
+            "allow_null": 0,
+            "allow_in_bindings": 0,
+            "ui": 1,
+            "ajax": 0,
+            "create_options": 0,
+            "placeholder": "",
+            "save_options": 0
+        },
+        {
+            "key": "field_ct_pages",
+            "label": "Pages",
+            "name": "pages",
+            "aria-label": "",
+            "type": "relationship",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "post_type": ["post", "page", "production", "theatre"],
+            "post_status": "",
+            "taxonomy": "",
+            "filters": ["search", "post_type"],
+            "return_format": "id",
+            "elements": "",
+            "min": "",
+            "max": "",
+            "bidirectional": 0,
+            "bidirectional_target": []
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "post"
+            },
+            {
+                "param": "post_type",
+                "operator": "!=",
+                "value": "post"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": false,
+    "description": "Clone source for content targeting fields. Not assigned to any location directly.",
+    "show_in_rest": 0,
+    "display_title": "",
+    "modified": 1774029696
+}

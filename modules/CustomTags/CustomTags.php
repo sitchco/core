@@ -3,17 +3,23 @@
 namespace Sitchco\Modules\CustomTags;
 
 use Sitchco\Framework\Module;
+use Sitchco\Modules\ContentTargeting\ContentTargeting;
 use Sitchco\Utils\Cache;
 
 class CustomTags extends Module
 {
+    public const DEPENDENCIES = [ContentTargeting::class];
+
     public const HOOK_SUFFIX = 'custom-tags';
 
     public const POST_CLASSES = [CustomTag::class];
 
     private const CACHE_KEY = 'custom_tags_by_placement';
 
-    public function __construct(protected CustomTagRepository $repository) {}
+    public function __construct(
+        protected CustomTagRepository $repository,
+        protected ContentTargeting $contentTargeting,
+    ) {}
 
     public function init(): void
     {
@@ -40,12 +46,10 @@ class CustomTags extends Module
                 $placement = ScriptPlacement::tryFrom($tag->script_placement) ?? ScriptPlacement::AfterGtm;
                 $content = $tag->script_content ?: '';
                 if ($content !== '') {
-                    $assignment = get_field('script_assignment', $tag->ID) ?: [];
                     $tags[$placement->value][] = [
                         'content' => $content,
                         'post_id' => $tag->ID,
-                        'assignment_type' => (int) ($assignment['type'] ?? 0),
-                        'assignment_selection' => $assignment['selection'] ?? null ?: [],
+                        'targeting' => get_field('script_assignment', $tag->ID) ?: [],
                     ];
                 }
             }
@@ -55,9 +59,8 @@ class CustomTags extends Module
 
     protected function renderTags(ScriptPlacement $placement): void
     {
-        $currentPageId = get_queried_object_id();
         foreach ($this->getTagsByPlacement()[$placement->value] ?? [] as $tag) {
-            if (!$this->shouldRenderTag($tag, $currentPageId)) {
+            if (!$this->contentTargeting->matchesCurrentRequest($tag['targeting'])) {
                 continue;
             }
             $content = apply_filters(static::hookName('render'), $tag['content'], $tag['post_id'], $placement->value);
@@ -65,17 +68,6 @@ class CustomTags extends Module
                 echo $content . "\n";
             }
         }
-    }
-
-    private function shouldRenderTag(array $tag, int $currentPageId): bool
-    {
-        $selection = $tag['assignment_selection'];
-        if (empty($selection)) {
-            return true;
-        }
-        $isInclude = $tag['assignment_type'] === 1;
-        $matched = in_array($currentPageId, $selection, true);
-        return $isInclude ? $matched : !$matched;
     }
 
     public function registerAdminMenu(): void
@@ -94,14 +86,14 @@ class CustomTags extends Module
                 'Custom Tags',
                 'Custom Tags',
                 'edit_posts',
-                'edit.php?post_type=sitchco_script',
+                'edit.php?post_type=' . CustomTag::POST_TYPE,
             );
         } else {
             add_menu_page(
                 'Custom Tags',
                 'Custom Tags',
                 'edit_posts',
-                'edit.php?post_type=sitchco_script',
+                'edit.php?post_type=' . CustomTag::POST_TYPE,
                 '',
                 'dashicons-code-standards',
                 100,
@@ -112,7 +104,7 @@ class CustomTags extends Module
     public function initCodeEditor(): void
     {
         $screen = get_current_screen();
-        if (!$screen || $screen->post_type !== 'sitchco_script') {
+        if (!$screen || $screen->post_type !== CustomTag::POST_TYPE) {
             return;
         }
         $settings = wp_enqueue_code_editor(['type' => 'text/html']);

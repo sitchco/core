@@ -173,7 +173,7 @@ class CustomTags extends Module
 
     public function init(): void
     {
-        $this->contentTargeting->registerTargeting('sitchco_script');
+        $this->contentTargeting->registerTargeting('custom_tag');
         // ...existing hooks
     }
 

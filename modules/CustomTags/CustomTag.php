@@ -11,5 +11,5 @@ use Sitchco\Model\PostBase;
  */
 class CustomTag extends PostBase
 {
-    const POST_TYPE = 'sitchco_script';
+    const POST_TYPE = 'custom_tag';
 }

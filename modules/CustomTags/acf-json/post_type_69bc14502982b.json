@@ -3,7 +3,7 @@
     "title": "Custom Tags",
     "menu_order": 0,
     "active": true,
-    "post_type": "sitchco_script",
+    "post_type": "custom_tag",
     "advanced_configuration": true,
     "import_source": "",
     "import_date": "",

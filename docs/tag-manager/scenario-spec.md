@@ -38,7 +38,7 @@ No custom scroll tracking JS at launch. GA4 Enhanced Measurement provides baseli
 
 ### Custom Tags: Separate CustomTags Module (CPT-Based)
 
-A separate module from TagManager. CPT storage (`sitchco_script` post type) with CodeMirror editor. Semantic placement labels ("Before GTM" / "After GTM" / "Footer"). Per-page targeting via include/exclude rules using `get_queried_object_id()`. Build sequencing deferred to planning.
+A separate module from TagManager. CPT storage (`custom_tag` post type) with CodeMirror editor. Semantic placement labels ("Before GTM" / "After GTM" / "Footer"). Per-page targeting via include/exclude rules using `get_queried_object_id()`. Build sequencing deferred to planning.
 
 ### Key Convention: Bare Keys in `data-gtm` JSON
 
@@ -235,7 +235,7 @@ A separate module from TagManager. CPT storage (`sitchco_script` post type) with
 **Trigger:** Admin needs to add a consent management platform that must load before GTM.
 
 **Expected:**
-1. Admin creates a new entry in the `sitchco_script` CPT ("Custom Tags").
+1. Admin creates a new entry in the `custom_tag` CPT ("Custom Tags").
 2. Enters tag content in CodeMirror editor.
 3. Selects placement: "Before GTM."
 4. Targets: "All Pages."
