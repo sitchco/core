@@ -31,8 +31,8 @@ abstract class AcfPostTypeTest extends TestCase
 
     protected function tearDown(): void
     {
-        unset($GLOBALS['wp_post_types'][$this->post_type]);
-        unset($GLOBALS['wp_taxonomies'][$this->taxonomy]);
+        unregister_post_type($this->post_type);
+        unregister_taxonomy($this->taxonomy);
         $this->posts = [];
         parent::tearDown();
     }
