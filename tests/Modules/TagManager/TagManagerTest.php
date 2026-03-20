@@ -14,6 +14,7 @@ class TagManagerTest extends TestCase
         parent::setUp();
         acf_get_store('values')->reset();
         $this->module = $this->container->get(TagManager::class);
+        $this->module->init();
     }
 
     protected function tearDown(): void
@@ -186,8 +187,8 @@ class TagManagerTest extends TestCase
         $term = $this->factory()->term->create_and_get(['taxonomy' => 'category', 'slug' => 'news']);
         $this->setQueriedObject($term, $term->term_id);
         $head = $this->captureHook('wp_head');
-        $this->assertStringContainsString('"wp_post_type":"category"', $head);
-        $this->assertStringContainsString('"wp_post_id":' . $term->term_id, $head);
+        $this->assertStringContainsString('"wp_taxonomy":"category"', $head);
+        $this->assertStringContainsString('"wp_term_id":' . $term->term_id, $head);
         $this->assertStringContainsString('"wp_slug":"news"', $head);
     }
 
@@ -197,7 +198,7 @@ class TagManagerTest extends TestCase
         $this->setQueriedObject($postType);
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('"wp_post_type":"page"', $head);
-        $this->assertStringContainsString('"wp_post_id":0', $head);
+        $this->assertStringNotContainsString('"wp_post_id"', $head);
         $this->assertStringContainsString('"wp_slug":"page"', $head);
     }
 }
