@@ -46,6 +46,10 @@ class TimberModule extends Module
                 'callable' => 'get_block_wrapper_attributes',
                 'is_safe' => ['html'],
             ];
+            $functions['gtm_attr'] = [
+                'callable' => fn(mixed $value) => '',
+                'is_safe' => ['html'],
+            ];
             return $functions;
         });
         add_filter('timber/meta/transform_value', '__return_true');
