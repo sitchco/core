@@ -9,7 +9,7 @@ function isOutboundLink(link, domains) {
     if (!isHttpLink(link)) {
         return false;
     }
-    if (link.host === window.location.host) {
+    if (link.hostname === window.location.hostname) {
         return false;
     }
     return domains.some((domain) => matchesDomain(link.hostname, domain));

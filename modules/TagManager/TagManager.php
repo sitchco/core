@@ -41,7 +41,7 @@ class TagManager extends Module
             'page_title' => 'Tag Manager Settings',
             'menu_title' => 'Tag Manager',
             'menu_slug' => 'tag-manager',
-            'capability' => 'edit_posts',
+            'capability' => 'manage_options',
             'position' => 61,
             'icon_url' => 'dashicons-tag',
             'redirect' => false,
@@ -95,7 +95,7 @@ class TagManager extends Module
             return [];
         }
         $ids = $this->settings->gtm_container_ids;
-        return array_filter(array_column($ids ?: [], 'container_id'));
+        return array_unique(array_filter(array_map('trim', array_column($ids ?: [], 'container_id'))));
     }
 
     protected function renderContainerSnippets(string $method): void
@@ -108,19 +108,23 @@ class TagManager extends Module
     protected function getPageMetadata(): array
     {
         $obj = get_queried_object();
-        [$type, $id, $slug] = match (true) {
-            $obj instanceof \WP_Post => [$obj->post_type, $obj->ID, $obj->post_name],
-            $obj instanceof \WP_Term => [$obj->taxonomy, $obj->term_id, $obj->slug],
-            $obj instanceof \WP_Post_Type => [$obj->name, 0, $obj->name],
-            default => [null, null, null],
+        return match (true) {
+            $obj instanceof \WP_Post => [
+                'wp_post_type' => $obj->post_type,
+                'wp_post_id' => $obj->ID,
+                'wp_slug' => $obj->post_name,
+            ],
+            $obj instanceof \WP_Term => [
+                'wp_taxonomy' => $obj->taxonomy,
+                'wp_term_id' => $obj->term_id,
+                'wp_slug' => $obj->slug,
+            ],
+            $obj instanceof \WP_Post_Type => [
+                'wp_post_type' => $obj->name,
+                'wp_slug' => $obj->name,
+            ],
+            default => [],
         };
-        return $type !== null
-            ? [
-                'wp_post_type' => $type,
-                'wp_post_id' => $id,
-                'wp_slug' => $slug,
-            ]
-            : [];
     }
 
     protected function renderDataLayerInit(): void

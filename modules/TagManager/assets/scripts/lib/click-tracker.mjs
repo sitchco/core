@@ -81,9 +81,11 @@ function resolveLinkProps(el) {
     if (!isHttpLink(el)) {
         return null;
     }
+
+    const isOutbound = el.hostname !== location.hostname;
     return {
-        click_direction: el.hostname !== location.hostname ? 'outbound' : 'internal',
-        click_url: el.pathname + el.search + el.hash || '/',
+        click_direction: isOutbound ? 'outbound' : 'internal',
+        click_url: (isOutbound ? el.origin : '') + (el.pathname + el.search + el.hash || '/'),
     };
 }
 
