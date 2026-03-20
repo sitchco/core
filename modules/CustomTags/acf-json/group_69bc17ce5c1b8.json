@@ -1,0 +1,97 @@
+{
+    "key": "group_69bc17ce5c1b8",
+    "title": "Custom Tag Settings",
+    "fields": [
+        {
+            "key": "field_69bc17ce8fa08",
+            "label": "Script Content",
+            "name": "script_content",
+            "aria-label": "",
+            "type": "textarea",
+            "instructions": "Enter the script or HTML to inject. Include &lt;script&gt; tags for JavaScript.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "maxlength": "",
+            "allow_in_bindings": 0,
+            "rows": 15,
+            "placeholder": "",
+            "new_lines": ""
+        },
+        {
+            "key": "field_69bc18198fa09",
+            "label": "Script Placement",
+            "name": "script_placement",
+            "aria-label": "",
+            "type": "select",
+            "instructions": "Where in the page this script renders. 'Before GTM' and 'After GTM' render in the &lt;head&gt;.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "before_gtm": "Before GTM",
+                "after_gtm": "After GTM",
+                "footer": "Footer"
+            },
+            "default_value": "after_gtm",
+            "return_format": "value",
+            "multiple": 0,
+            "allow_null": 0,
+            "allow_in_bindings": 0,
+            "ui": 1,
+            "ajax": 0,
+            "placeholder": "",
+            "create_options": 0,
+            "save_options": 0
+        },
+        {
+            "key": "field_69d4b1a6c0001",
+            "label": "Assignment",
+            "name": "script_assignment",
+            "aria-label": "",
+            "type": "clone",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "clone": ["group_content_targeting"],
+            "display": "group",
+            "layout": "block",
+            "prefix_label": 0,
+            "prefix_name": 0
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "post_type",
+                "operator": "==",
+                "value": "custom_tag"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "",
+    "show_in_rest": 0,
+    "display_title": "",
+    "modified": 1774017992
+}
