@@ -303,4 +303,51 @@ class ContentTargetingTest extends TestCase
             ]),
         );
     }
+
+    public function test_post_type_archive_post_does_not_match_home(): void
+    {
+        $this->setHome();
+
+        $this->assertFalse(
+            $this->contentTargeting->matchesCurrentRequest([
+                'mode' => 'include',
+                'pages' => [],
+                'archives' => ['post_type_archive:post'],
+            ]),
+        );
+    }
+
+    public function test_include_post_type_archive_matches_archive(): void
+    {
+        register_post_type('test_cpt', ['public' => true, 'has_archive' => true]);
+        $this->setPostTypeArchive('test_cpt');
+
+        $this->assertTrue(
+            $this->contentTargeting->matchesCurrentRequest([
+                'mode' => 'include',
+                'pages' => [],
+                'archives' => ['post_type_archive:test_cpt'],
+            ]),
+        );
+
+        unregister_post_type('test_cpt');
+    }
+
+    public function test_include_post_type_archive_does_not_match_other_archive(): void
+    {
+        register_post_type('test_cpt', ['public' => true, 'has_archive' => true]);
+        register_post_type('other_cpt', ['public' => true, 'has_archive' => true]);
+        $this->setPostTypeArchive('test_cpt');
+
+        $this->assertFalse(
+            $this->contentTargeting->matchesCurrentRequest([
+                'mode' => 'include',
+                'pages' => [],
+                'archives' => ['post_type_archive:other_cpt'],
+            ]),
+        );
+
+        unregister_post_type('test_cpt');
+        unregister_post_type('other_cpt');
+    }
 }

@@ -23,12 +23,14 @@ class CustomTags extends Module
 
     public function init(): void
     {
+        add_filter('register_post_type_args', [$this, 'restrictPostTypeCapabilities'], 10, 2);
         add_action('admin_menu', [$this, 'registerAdminMenu'], 100);
         $this->enqueueAdminAssets([$this, 'initCodeEditor']);
         add_filter('acf/load_field/name=script_placement', [$this, 'loadPlacementChoices']);
         add_action('wp_head', fn() => $this->renderTags(ScriptPlacement::BeforeGtm), 3);
         add_action('wp_head', fn() => $this->renderTags(ScriptPlacement::AfterGtm), 6);
         add_action('wp_footer', fn() => $this->renderTags(ScriptPlacement::Footer));
+        add_action('save_post_' . CustomTag::POST_TYPE, fn() => Cache::forget(self::CACHE_KEY));
     }
 
     public function loadPlacementChoices(array $field): array
@@ -49,7 +51,7 @@ class CustomTags extends Module
                     $tags[$placement->value][] = [
                         'content' => $content,
                         'post_id' => $tag->ID,
-                        'targeting' => get_field('script_assignment', $tag->ID) ?: [],
+                        'targeting' => $tag->script_assignment ?: [],
                     ];
                 }
             }
@@ -85,20 +87,45 @@ class CustomTags extends Module
                 'tag-manager',
                 'Custom Tags',
                 'Custom Tags',
-                'edit_posts',
+                'manage_options',
                 'edit.php?post_type=' . CustomTag::POST_TYPE,
             );
         } else {
             add_menu_page(
                 'Custom Tags',
                 'Custom Tags',
-                'edit_posts',
+                'manage_options',
                 'edit.php?post_type=' . CustomTag::POST_TYPE,
                 '',
                 'dashicons-code-standards',
                 100,
             );
         }
+    }
+
+    public function restrictPostTypeCapabilities(array $args, string $postType): array
+    {
+        if ($postType !== CustomTag::POST_TYPE) {
+            return $args;
+        }
+        $cap = 'manage_options';
+        $args['capabilities'] = [
+            'edit_post' => $cap,
+            'read_post' => $cap,
+            'delete_post' => $cap,
+            'edit_posts' => $cap,
+            'edit_others_posts' => $cap,
+            'publish_posts' => $cap,
+            'read_private_posts' => $cap,
+            'delete_posts' => $cap,
+            'delete_private_posts' => $cap,
+            'delete_published_posts' => $cap,
+            'delete_others_posts' => $cap,
+            'edit_private_posts' => $cap,
+            'edit_published_posts' => $cap,
+            'create_posts' => $cap,
+        ];
+        return $args;
     }
 
     public function initCodeEditor(): void
