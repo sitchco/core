@@ -60,8 +60,13 @@ window.addEventListener('load', () => {
     document.documentElement.classList.add('fonts-loaded');
 });
 
-if (window.jQuery) {
-    jQuery(document).bind('gform_confirmation_loaded', function (event, formId) {
-        sitchco.hooks.doAction(constants.GFORM_CONFIRM, formId);
-    });
-}
+// Gravity Forms fires gform_confirmation_loaded as a jQuery custom event.
+// Bind inside ready() so jQuery is guaranteed to be loaded (UIFramework script
+// can execute before jQuery depending on enqueue order).
+ready(() => {
+    if (window.jQuery) {
+        jQuery(document).on('gform_confirmation_loaded', (event, formId) => {
+            sitchco.hooks.doAction(constants.GFORM_CONFIRM, formId);
+        });
+    }
+});
