@@ -47,6 +47,10 @@ class CoreMuPluginTest extends TestCase
 
     function test_active_module_post_classes()
     {
+        add_filter('timber/post/classmap', function ($classmap) {
+            $classmap['post'] = PostTester::class;
+            return $classmap;
+        });
         $post_id = $this->factory()->post->create([
             'post_title' => 'Post',
         ]);
