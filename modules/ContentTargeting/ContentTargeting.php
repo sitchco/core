@@ -30,8 +30,8 @@ class ContentTargeting extends Module
     public function matchesCurrentRequest(array $config): bool
     {
         $mode = $config['mode'] ?? 'exclude';
-        $pages = $config['pages'] ?? [];
-        $archives = $config['archives'] ?? [];
+        $pages = array_map(fn($p) => is_object($p) ? $p->ID : (int) $p, (array) ($config['pages'] ?? null ?: []));
+        $archives = $config['archives'] ?? null ?: [];
 
         if (empty($pages) && empty($archives)) {
             return true;

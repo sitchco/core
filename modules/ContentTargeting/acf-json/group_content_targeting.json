@@ -40,15 +40,7 @@
                 "class": "",
                 "id": ""
             },
-            "choices": {
-                "posts_index": "Posts Index",
-                "post_type_archive:post": "Archive: Posts",
-                "taxonomy_archive:category": "Taxonomy: Categories",
-                "taxonomy_archive:post_tag": "Taxonomy: Tags",
-                "taxonomy_archive:post_format": "Taxonomy: Formats",
-                "author_archive": "Author Archives",
-                "search_results": "Search Results"
-            },
+            "choices": {},
             "default_value": [],
             "return_format": "value",
             "multiple": 1,
@@ -74,7 +66,7 @@
                 "class": "",
                 "id": ""
             },
-            "post_type": ["post", "page", "production", "theatre"],
+            "post_type": [],
             "post_status": "",
             "taxonomy": "",
             "filters": ["search", "post_type"],
@@ -110,5 +102,5 @@
     "description": "Clone source for content targeting fields. Not assigned to any location directly.",
     "show_in_rest": 0,
     "display_title": "",
-    "modified": 1774029696
+    "modified": 1774041944
 }

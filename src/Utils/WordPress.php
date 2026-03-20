@@ -141,6 +141,7 @@ class WordPress
             array_filter(
                 get_post_types([], 'names'),
                 fn(string $type) => $type !== 'attachment' &&
+                    $type !== 'post' &&
                     is_post_type_viewable($type) &&
                     get_post_type_archive_link($type) !== false,
             ),

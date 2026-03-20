@@ -12,7 +12,7 @@ class WordPressTest extends TestCase
     protected function tearDown(): void
     {
         foreach ($this->registered_types as $type) {
-            unset($GLOBALS['wp_post_types'][$type]);
+            unregister_post_type($type);
         }
         $this->registered_types = [];
         parent::tearDown();
