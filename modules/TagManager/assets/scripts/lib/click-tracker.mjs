@@ -81,6 +81,7 @@ function resolveLinkProps(el) {
     if (!isHttpLink(el)) {
         return null;
     }
+
     const isOutbound = el.hostname !== location.hostname;
     return {
         click_direction: isOutbound ? 'outbound' : 'internal',

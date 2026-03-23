@@ -20,7 +20,9 @@ function decorateLink(link, utmParams) {
         const url = new URL(link.href);
 
         for (const [key, value] of Object.entries(utmParams)) {
-            url.searchParams.set(key, value);
+            if (!url.searchParams.has(key)) {
+                url.searchParams.set(key, value);
+            }
         }
 
         link.href = url.toString();
