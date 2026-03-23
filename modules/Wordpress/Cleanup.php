@@ -36,6 +36,7 @@ class Cleanup extends Module
         'disableDefaultBlockPatterns',
         'youtubeNoCookie',
         'throttleHeartbeat',
+        'stripTrailingEmptyParagraphs',
     ];
 
     public function init(): void
@@ -528,5 +529,37 @@ class Cleanup extends Module
                 ? str_replace('youtube.com', 'youtube-nocookie.com', $html)
                 : $html,
         );
+    }
+
+    /**
+     * Strip empty paragraph blocks from the end of post content on save.
+     */
+    public function stripTrailingEmptyParagraphs(): void
+    {
+        add_filter('content_save_pre', [$this, 'removeTrailingEmptyParagraphs']);
+    }
+
+    /**
+     * Remove trailing empty paragraph blocks from content.
+     *
+     * Matches empty paragraphs with optional block attributes and HTML attributes,
+     * treating whitespace, &nbsp;, and <br> variants as empty.
+     */
+    public function removeTrailingEmptyParagraphs(string $content): string
+    {
+        $emptyParagraphBlock = <<<'REGEX'
+            \s*                              # whitespace before the block
+            <!-- \s* wp:paragraph            # opening block comment
+            (\s+ \{ [^}]* \} )?             # optional JSON attributes
+            \s* --> \s*                      # end of opening comment
+            <p [^>]* >                       # opening <p> tag with optional HTML attributes
+            ( \s | &nbsp; | <br\s*/?> )*    # "empty" content
+            </p> \s*                         # closing </p>
+            <!-- \s* /wp:paragraph \s* -->   # closing block comment
+        REGEX;
+
+        $pattern = '/(' . $emptyParagraphBlock . '\s*)+$/sx';
+
+        return preg_replace($pattern, '', $content) ?? $content;
     }
 }
