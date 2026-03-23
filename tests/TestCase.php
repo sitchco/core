@@ -38,4 +38,10 @@ abstract class TestCase extends \WPTest\Test\TestCase
     {
         remove_all_filters('pre_http_request');
     }
+
+    protected function assertNoVisibleHtml(string $html, string $message = ''): void
+    {
+        $stripped = trim(preg_replace('/<!--.*?-->/s', '', $html));
+        $this->assertEmpty($stripped, $message);
+    }
 }

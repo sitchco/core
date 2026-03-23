@@ -51,7 +51,9 @@ readonly class VideoBlockRenderer
 
         // oEmbed failure (no InnerBlocks and no valid oEmbed): early return with fallback
         if (!$attrs->hasInnerBlocks && $oembed === null) {
-            return $attrs->isModalOnly() ? '' : $this->buildFallback($attrs);
+            return $attrs->isModalOnly()
+                ? sprintf('<!-- video:%s -->', esc_attr($attrs->modalId))
+                : $this->buildFallback($attrs);
         }
 
         // Wrapper attributes
@@ -62,7 +64,9 @@ readonly class VideoBlockRenderer
             $modalData = $this->buildModal($attrs, $oembed);
             $this->uiModal->loadModal($modalData);
             if ($attrs->isModalOnly()) {
-                return '';
+                // Return HTML comment to preserve enqueued view script assets
+                // @see WP_Block::render()
+                return sprintf('<!-- video:%s -->', esc_attr($modalData->id()));
             }
             $wrapper_attrs['data-modal-id'] = $modalData->id();
         }

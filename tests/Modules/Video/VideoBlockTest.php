@@ -427,7 +427,7 @@ class VideoBlockTest extends TestCase
             '',
         );
 
-        $this->assertEmpty($result['page'], 'Modal-only mode should render no visible HTML on page');
+        $this->assertNoVisibleHtml($result['page'], 'Modal-only mode should render no visible HTML on page');
         $this->restoreHttp();
     }
 
@@ -981,7 +981,7 @@ class VideoBlockTest extends TestCase
             '',
         );
 
-        $this->assertEmpty($result['page'], 'Modal-only with oEmbed failure should render empty page');
+        $this->assertNoVisibleHtml($result['page'], 'Modal-only with oEmbed failure should render empty page');
         $this->assertEmpty($result['footer'], 'Modal-only with oEmbed failure should render empty footer');
         $this->restoreHttp();
     }
