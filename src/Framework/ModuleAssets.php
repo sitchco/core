@@ -123,11 +123,14 @@ class ModuleAssets
         if (!$url) {
             return;
         }
-        wp_enqueue_block_style($blockName, [
+        $args = [
             'handle' => $blockName,
             'src' => $url,
-            'path' => $this->stylePath($src)->value(),
-        ]);
+        ];
+        if (!$this->isDevServer) {
+            $args['path'] = $this->buildAssetPath($this->stylePath($src))?->value();
+        }
+        wp_enqueue_block_style($blockName, $args);
     }
 
     public function inlineScript(string $handle, string $content, $position = null): void

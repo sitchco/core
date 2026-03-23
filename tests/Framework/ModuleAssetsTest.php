@@ -207,7 +207,7 @@ class ModuleAssetsTest extends TestCase
         do_action('wp_enqueue_scripts');
         $registered = wp_styles()->registered[$handle];
         $this->assertStringEndsWith('dist/assets/test-block-abcde.css', $registered->src);
-        $this->assertStringEndsWith('assets/styles/test-block.css', $registered->extra['path']);
+        $this->assertStringEndsWith('dist/assets/test-block-abcde.css', $registered->extra['path']);
         $this->assertAssetOutputs(
             wp_styles(),
             $handle,
@@ -222,7 +222,6 @@ class ModuleAssetsTest extends TestCase
             'https://example.org:5173/Fakes/ModuleTester/assets/styles/test-block.css',
             $registered->src,
         );
-        $this->assertStringEndsWith('assets/styles/test-block.css', $registered->extra['path']);
         $this->assertAssetOutputs(
             wp_styles(),
             $handle,
