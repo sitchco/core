@@ -36,6 +36,7 @@ class Cleanup extends Module
         'disableDefaultBlockPatterns',
         'youtubeNoCookie',
         'throttleHeartbeat',
+        'stripTrailingEmptyParagraphs',
     ];
 
     public function init(): void
@@ -528,5 +529,27 @@ class Cleanup extends Module
                 ? str_replace('youtube.com', 'youtube-nocookie.com', $html)
                 : $html,
         );
+    }
+
+    /**
+     * Strip empty paragraph blocks from the end of post content on save.
+     */
+    public function stripTrailingEmptyParagraphs(): void
+    {
+        add_filter('content_save_pre', [$this, 'removeTrailingEmptyParagraphs']);
+    }
+
+    /**
+     * Remove trailing empty paragraph blocks from content.
+     *
+     * Only strips bare, unattributed empty paragraphs — the kind created by accidentally
+     * clicking in the open space at the bottom of the editor. Paragraphs with any block
+     * attributes (alignment, color, etc.) are intentional and preserved.
+     */
+    public function removeTrailingEmptyParagraphs(string $content): string
+    {
+        $pattern = '~(\s*<!-- wp:paragraph -->\s*<p></p>\s*<!-- /wp:paragraph -->\s*)+$~';
+
+        return preg_replace($pattern, '', $content) ?? $content;
     }
 }
