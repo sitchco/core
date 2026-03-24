@@ -542,23 +542,13 @@ class Cleanup extends Module
     /**
      * Remove trailing empty paragraph blocks from content.
      *
-     * Matches empty paragraphs with optional block attributes and HTML attributes,
-     * treating whitespace, &nbsp;, and <br> variants as empty.
+     * Only strips bare, unattributed empty paragraphs — the kind created by accidentally
+     * clicking in the open space at the bottom of the editor. Paragraphs with any block
+     * attributes (alignment, color, etc.) are intentional and preserved.
      */
     public function removeTrailingEmptyParagraphs(string $content): string
     {
-        $emptyParagraphBlock = <<<'REGEX'
-            \s*                              # whitespace before the block
-            <!-- \s* wp:paragraph            # opening block comment
-            (\s+ \{ [^}]* \} )?             # optional JSON attributes
-            \s* --> \s*                      # end of opening comment
-            <p [^>]* >                       # opening <p> tag with optional HTML attributes
-            ( \s | &nbsp; | <br\s*/?> )*    # "empty" content
-            </p> \s*                         # closing </p>
-            <!-- \s* /wp:paragraph \s* -->   # closing block comment
-        REGEX;
-
-        $pattern = '~(' . $emptyParagraphBlock . "\n" . '\s*)+$~sx';
+        $pattern = '~(\s*<!-- wp:paragraph -->\s*<p></p>\s*<!-- /wp:paragraph -->\s*)+$~';
 
         return preg_replace($pattern, '', $content) ?? $content;
     }

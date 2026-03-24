@@ -18,20 +18,20 @@ class CleanupTest extends TestCase
     public function test_strips_single_trailing_empty_paragraph(): void
     {
         $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Hello world</p>
-<!-- /wp:paragraph -->
+        <!-- wp:paragraph -->
+        <p>Hello world</p>
+        <!-- /wp:paragraph -->
 
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
+        HTML;
 
         $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Hello world</p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p>Hello world</p>
+        <!-- /wp:paragraph -->
+        HTML;
 
         $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
     }
@@ -39,176 +39,62 @@ HTML;
     public function test_strips_multiple_trailing_empty_paragraphs(): void
     {
         $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Hello world</p>
-<!-- /wp:paragraph -->
+        <!-- wp:paragraph -->
+        <p>Hello world</p>
+        <!-- /wp:paragraph -->
 
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
 
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
+        HTML;
 
         $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Hello world</p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p>Hello world</p>
+        <!-- /wp:paragraph -->
+        HTML;
 
         $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
     }
 
-    public function test_strips_nbsp_paragraph(): void
+    public function test_strips_after_non_paragraph_block(): void
     {
         $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
+        <!-- wp:heading -->
+        <h2>Title</h2>
+        <!-- /wp:heading -->
 
-<!-- wp:paragraph -->
-<p>&nbsp;</p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
+        HTML;
 
         $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:heading -->
+        <h2>Title</h2>
+        <!-- /wp:heading -->
+        HTML;
 
         $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
     }
 
-    public function test_strips_br_paragraph(): void
+    public function test_strips_content_that_is_only_empty_paragraphs(): void
     {
         $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
 
-<!-- wp:paragraph -->
-<p><br></p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
+        HTML;
 
-        $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
-    }
-
-    public function test_strips_self_closing_br_paragraph(): void
-    {
-        $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-
-<!-- wp:paragraph -->
-<p><br /></p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
-    }
-
-    public function test_strips_empty_paragraph_with_block_attributes(): void
-    {
-        $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-
-<!-- wp:paragraph {"align":"center"} -->
-<p class="has-text-align-center"></p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
-    }
-
-    public function test_preserves_non_trailing_empty_paragraphs(): void
-    {
-        $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>First</p>
-<!-- /wp:paragraph -->
-
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
-
-<!-- wp:paragraph -->
-<p>Last</p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $this->assertSame($content, $this->module->removeTrailingEmptyParagraphs($content));
-    }
-
-    public function test_preserves_non_empty_trailing_paragraph(): void
-    {
-        $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Hello world</p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $this->assertSame($content, $this->module->removeTrailingEmptyParagraphs($content));
-    }
-
-    public function test_does_not_strip_other_empty_block_types(): void
-    {
-        $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-
-<!-- wp:spacer -->
-<div style="height:100px" aria-hidden="true" class="wp-block-spacer"></div>
-<!-- /wp:spacer -->
-HTML;
-
-        $this->assertSame($content, $this->module->removeTrailingEmptyParagraphs($content));
-    }
-
-    public function test_strips_trailing_empty_paragraphs_after_non_paragraph_block(): void
-    {
-        $content = <<<'HTML'
-<!-- wp:heading -->
-<h2>Title</h2>
-<!-- /wp:heading -->
-
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $expected = <<<'HTML'
-<!-- wp:heading -->
-<h2>Title</h2>
-<!-- /wp:heading -->
-HTML;
-
-        $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
+        $this->assertSame('', $this->module->removeTrailingEmptyParagraphs($content));
     }
 
     public function test_handles_empty_content(): void
@@ -216,39 +102,49 @@ HTML;
         $this->assertSame('', $this->module->removeTrailingEmptyParagraphs(''));
     }
 
-    public function test_handles_content_that_is_only_empty_paragraphs(): void
+    public function test_preserves_non_trailing_empty_paragraphs(): void
     {
         $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
+        <!-- wp:paragraph -->
+        <p>First</p>
+        <!-- /wp:paragraph -->
 
-<!-- wp:paragraph -->
-<p></p>
-<!-- /wp:paragraph -->
-HTML;
+        <!-- wp:paragraph -->
+        <p></p>
+        <!-- /wp:paragraph -->
 
-        $this->assertSame('', $this->module->removeTrailingEmptyParagraphs($content));
+        <!-- wp:paragraph -->
+        <p>Last</p>
+        <!-- /wp:paragraph -->
+        HTML;
+
+        $this->assertSame($content, $this->module->removeTrailingEmptyParagraphs($content));
     }
 
-    public function test_strips_whitespace_only_paragraph(): void
+    /**
+     * @dataProvider preserved_trailing_blocks
+     */
+    public function test_preserves_non_bare_trailing_blocks(string $trailingBlock): void
     {
-        $content = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
+        $content = "<!-- wp:paragraph -->\n<p>Content</p>\n<!-- /wp:paragraph -->\n\n" . $trailingBlock;
 
-<!-- wp:paragraph -->
-<p>   </p>
-<!-- /wp:paragraph -->
-HTML;
+        $this->assertSame($content, $this->module->removeTrailingEmptyParagraphs($content));
+    }
 
-        $expected = <<<'HTML'
-<!-- wp:paragraph -->
-<p>Content</p>
-<!-- /wp:paragraph -->
-HTML;
-
-        $this->assertSame($expected, $this->module->removeTrailingEmptyParagraphs($content));
+    public function preserved_trailing_blocks(): array
+    {
+        return [
+            'paragraph with text' => ["<!-- wp:paragraph -->\n<p>Hello world</p>\n<!-- /wp:paragraph -->"],
+            'paragraph with nbsp' => ["<!-- wp:paragraph -->\n<p>&nbsp;</p>\n<!-- /wp:paragraph -->"],
+            'paragraph with br' => ["<!-- wp:paragraph -->\n<p><br></p>\n<!-- /wp:paragraph -->"],
+            'paragraph with self-closing br' => ["<!-- wp:paragraph -->\n<p><br /></p>\n<!-- /wp:paragraph -->"],
+            'paragraph with whitespace' => ["<!-- wp:paragraph -->\n<p>   </p>\n<!-- /wp:paragraph -->"],
+            'paragraph with attributes' => [
+                "<!-- wp:paragraph {\"align\":\"center\"} -->\n<p class=\"has-text-align-center\"></p>\n<!-- /wp:paragraph -->",
+            ],
+            'non-paragraph block' => [
+                "<!-- wp:spacer -->\n<div style=\"height:100px\" aria-hidden=\"true\" class=\"wp-block-spacer\"></div>\n<!-- /wp:spacer -->",
+            ],
+        ];
     }
 }
