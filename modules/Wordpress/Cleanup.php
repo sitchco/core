@@ -558,7 +558,7 @@ class Cleanup extends Module
             <!-- \s* /wp:paragraph \s* -->   # closing block comment
         REGEX;
 
-        $pattern = '/(' . $emptyParagraphBlock . '\s*)+$/sx';
+        $pattern = '~(' . $emptyParagraphBlock . "\n" . '\s*)+$~sx';
 
         return preg_replace($pattern, '', $content) ?? $content;
     }
