@@ -10,7 +10,7 @@ export function registerHashTracker(pushEvent) {
 
             pushEvent({
                 event: 'hash_change',
-                hash_value: hashState.current,
+                hash: { value: hashState.current },
             });
         },
         10,

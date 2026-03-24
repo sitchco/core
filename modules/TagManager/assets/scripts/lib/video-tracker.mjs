@@ -13,7 +13,7 @@ export function registerVideoTracker(pushEvent) {
         {
             hook: 'video-progress',
             event: 'video_milestone',
-            extra: (data) => ({ video_milestone: data.milestone }),
+            extra: (data) => ({ milestone: data.milestone }),
         },
         {
             hook: 'video-ended',
@@ -25,13 +25,18 @@ export function registerVideoTracker(pushEvent) {
         hooks.addAction(
             hook,
             (data) => {
-                pushEvent({
-                    event,
-                    video_id: data.id,
-                    video_provider: data.provider,
-                    video_url: data.url,
-                    ...extra?.(data),
-                });
+                pushEvent(
+                    {
+                        event,
+                        video: {
+                            id: data.id,
+                            provider: data.provider,
+                            url: data.url,
+                            ...extra?.(data),
+                        },
+                    },
+                    data.element
+                );
             },
             20,
             'tag-manager'

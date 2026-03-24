@@ -37,7 +37,7 @@ const MILESTONES = [25, 50, 75];
  * @param {number} current - Current playback time in seconds.
  * @param {number} duration - Total video duration in seconds.
  */
-function checkMilestones(videoId, provider, url, current, duration) {
+function checkMilestones(videoId, provider, url, current, duration, container) {
     if (!duration || duration <= 0) {
         return;
     }
@@ -52,6 +52,7 @@ function checkMilestones(videoId, provider, url, current, duration) {
                 provider: provider,
                 url: url,
                 milestone: milestone,
+                element: container,
             });
         }
     });
@@ -68,7 +69,7 @@ function checkMilestones(videoId, provider, url, current, duration) {
  * @param {string} provider - Player provider name.
  * @param {string} url - Original video URL.
  */
-export function startMilestonePolling(instanceId, videoId, adapter, provider, url) {
+export function startMilestonePolling(instanceId, videoId, adapter, provider, url, container) {
     if (pollIntervals.has(instanceId)) {
         return;
     }
@@ -79,7 +80,7 @@ export function startMilestonePolling(instanceId, videoId, adapter, provider, ur
     const intervalId = setInterval(function () {
         Promise.all([adapter.getCurrentTime(), adapter.getDuration()])
             .then(function ([current, duration]) {
-                checkMilestones(videoId, provider, url, current, duration);
+                checkMilestones(videoId, provider, url, current, duration, container);
             })
             .catch(function () {
                 // Player may be destroyed mid-poll -- ignore silently

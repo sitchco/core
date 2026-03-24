@@ -4,10 +4,16 @@ export function registerFormTracker(pushEvent) {
     hooks.addAction(
         constants.GFORM_CONFIRM,
         (formId) => {
-            pushEvent({
-                event: 'gform_submit',
-                form_id: formId,
-            });
+            const formEl =
+                document.getElementById(`gform_wrapper_${formId}`) ||
+                document.getElementById(`gform_confirmation_wrapper_${formId}`);
+            pushEvent(
+                {
+                    event: 'gform_submit',
+                    form: { id: formId },
+                },
+                formEl
+            );
         },
         10,
         'tag-manager'

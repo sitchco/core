@@ -18,10 +18,13 @@ export function registerModalTracker(pushEvent) {
         hooks.addAction(
             hook,
             (modal) => {
-                pushEvent({
-                    event,
-                    modal_label: resolveAriaLabelledBy(modal) || modal.id || '',
-                });
+                pushEvent(
+                    {
+                        event,
+                        modal: { label: resolveAriaLabelledBy(modal) || modal.id || '' },
+                    },
+                    modal
+                );
             },
             20,
             'tag-manager'
