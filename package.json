@@ -16,6 +16,9 @@
         "prepare": "sitchco prepare",
         "test": "pnpm -r test"
     },
+    "dependencies": {
+        "@sitchco/datalayer": "^0.1.0"
+    },
     "devDependencies": {
         "@sitchco/cli": "2.1.9",
         "@sitchco/eslint-config": "^2.1.2"

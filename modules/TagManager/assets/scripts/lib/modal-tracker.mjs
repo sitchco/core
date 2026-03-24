@@ -1,4 +1,4 @@
-import { resolveAriaLabelledBy } from './dom-utils.mjs';
+import { resolveAriaLabelledBy } from '@sitchco/datalayer';
 
 export function registerModalTracker(pushEvent) {
     const { hooks } = window.sitchco;
