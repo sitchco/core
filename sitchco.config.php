@@ -11,6 +11,7 @@ use Sitchco\Modules\AmazonCloudfront;
 use Sitchco\Modules\BackgroundProcessing;
 use Sitchco\Modules\CacheInvalidation\CacheInvalidation;
 use Sitchco\Modules\Cron;
+use Sitchco\Modules\CustomTags\CustomTags;
 use Sitchco\Modules\Flash;
 use Sitchco\Modules\Imagify;
 use Sitchco\Modules\Model\ImageModel;
@@ -68,6 +69,7 @@ return [
         UIPopover::class,
         CacheInvalidation::class,
         TagManager::class,
+        CustomTags::class
     ],
     'disallowedBlocks' => [],
 ];

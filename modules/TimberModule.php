@@ -64,7 +64,7 @@ class TimberModule extends Module
      */
     public static function transformDatePicker(mixed $value): DateTime|string
     {
-        if (!$value instanceof \DateTimeImmutable) {
+        if (!($value instanceof \DateTimeImmutable)) {
             return $value;
         }
         return new DateTime($value);

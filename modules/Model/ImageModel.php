@@ -65,7 +65,7 @@ class ImageModel extends Module
     {
         $thumbnail_id = get_post_thumbnail_id($post_id);
         $attachment = get_post($thumbnail_id);
-        if (!$attachment instanceof \WP_Post) {
+        if (!($attachment instanceof \WP_Post)) {
             return $content;
         }
         $img = Image::build(get_post($thumbnail_id));

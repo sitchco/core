@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@sitchco/datalayer':
+        specifier: ^0.1.0
+        version: 0.1.1
     devDependencies:
       '@sitchco/cli':
         specifier: 2.1.10
@@ -1094,6 +1098,9 @@ packages:
   '@sitchco/cli@2.1.10':
     resolution: {integrity: sha512-qQS2cWzyOgncHSLNpx3rdbbXCXv55AYh1W/Xb2gSqlYbnbwFI8tG0fpA7dMOrQK+RwfLbqHHROhEJT2Zl+NjGA==}
     hasBin: true
+
+  '@sitchco/datalayer@0.1.1':
+    resolution: {integrity: sha512-5XkpfGnNDXbX3rtjch5VlzFu9WTCWDITQetfyTFjyJt7kifAnjgvXLbtMltvBlmfTLb8SXLzgB0k3isz5kkXqA==}
 
   '@sitchco/eslint-config@2.1.2':
     resolution: {integrity: sha512-66gPFLOEJ+tAHD8Ox8O8m3374u5FiZUENS8nCEUF7kLaT76oQ43NIidffUXGBgjNpzO9Ut6U1UG0OlK6hgJooA==}
@@ -3914,6 +3921,8 @@ snapshots:
       - terser
       - tsx
       - yaml
+
+  '@sitchco/datalayer@0.1.1': {}
 
   '@sitchco/eslint-config@2.1.2(@babel/core@7.28.5)(eslint@9.39.4)':
     dependencies:
