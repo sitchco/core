@@ -30,27 +30,6 @@ const getTriggerTarget = (trigger) => {
     return selector ? document.querySelector(selector) : null;
 };
 
-// Open modal from URL hash, close modal on hash-away
-const syncModalWithHash = () => {
-    const hash = window.location.hash;
-    const openModal = document.querySelector('dialog.sitchco-modal[open]');
-    if (openModal && (!hash || `#${openModal.id}` !== hash)) {
-        hideModal(openModal);
-    }
-    if (!hash) {
-        return;
-    }
-
-    try {
-        const modal = document.querySelector(`dialog.sitchco-modal${hash}`);
-        if (modal && !modal.hasAttribute('open')) {
-            showModal(modal);
-        }
-    } catch {
-        // CSS-invalid hash characters — ignore
-    }
-};
-
 addAction(
     SHOW_MODAL_HOOK,
     (modal) => {
@@ -65,16 +44,15 @@ addAction(
         }
 
         setModalLabel(modal);
-
-        if (modal.id && window.location.hash !== `#${modal.id}`) {
-            history.replaceState(null, '', `#${modal.id}`);
-        }
-
         getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'true'));
 
         document.body.classList.add('lock-scroll');
         modal.showModal();
         modal.focus();
+
+        if (modal.id && window.location.hash !== `#${modal.id}`) {
+            sitchco.hashState.set(modal.id);
+        }
     },
     10,
     COMPONENT
@@ -94,6 +72,26 @@ addAction(
     COMPONENT
 );
 
+// React to centralized hash state changes (open/close modals by hash)
+addAction(sitchco.constants.HASH_STATE_CHANGE, (state) => {
+    const openModal = document.querySelector('dialog.sitchco-modal[open]');
+    if (openModal && openModal.id !== state.current) {
+        hideModal(openModal);
+    }
+    if (!state.isset()) {
+        return;
+    }
+
+    try {
+        const modal = document.querySelector(`dialog.sitchco-modal#${CSS.escape(state.current)}`);
+        if (modal && !modal.hasAttribute('open')) {
+            showModal(modal);
+        }
+    } catch {
+        // Invalid selector
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function () {
     // Set up cancel/close event listeners on each dialog
     document.querySelectorAll('dialog.sitchco-modal').forEach((modal) => {
@@ -112,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function () {
             getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'false'));
 
             if (modal.id && window.location.hash === `#${modal.id}`) {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
+                sitchco.hashState.clear();
             }
         });
     });
@@ -191,7 +189,4 @@ document.addEventListener('DOMContentLoaded', function () {
             hideModal(modal);
         }
     });
-
-    syncModalWithHash();
-    window.addEventListener('hashchange', syncModalWithHash);
 });

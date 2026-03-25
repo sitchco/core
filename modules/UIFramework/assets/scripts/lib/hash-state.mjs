@@ -37,7 +37,7 @@ let currentState = new HashState();
 
 export const hashState = {
     emit() {
-        if (currentState.isset() && currentState.hasChanged()) {
+        if (currentState.hasChanged() && (currentState.isset() || currentState.previous !== undefined)) {
             sitchco.hooks.doAction(HASH_STATE_CHANGE, currentState);
         }
     },
@@ -47,17 +47,27 @@ export const hashState = {
     get() {
         return currentState;
     },
-    set(newState) {
+    set(newState, { push = false } = {}) {
         if (typeof newState === 'string') {
-            location.hash = `/${newState.replace(/^\/+/, '')}`;
-            return;
+            const cleaned = newState.replace(/^[#/]+/, '');
+            if (push) {
+                location.hash = cleaned;
+                return; // hashchange listener handles state update + emit
+            }
+
+            history.replaceState(null, '', `#${cleaned}`);
         }
 
         currentState = new HashState(currentState);
         this.emit();
     },
-    setList(stateList) {
-        this.set(stateList.join('/'));
+    clear() {
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        currentState = new HashState(currentState);
+        this.emit();
+    },
+    setList(stateList, options) {
+        this.set(stateList.join('/'), options);
     },
 };
 
@@ -73,7 +83,7 @@ export function registerHashStateActions() {
         99
     );
 
-    sitchco.hooks.addAction(SET_HASH_STATE, (hash) => {
-        hashState.set(hash);
+    sitchco.hooks.addAction(SET_HASH_STATE, (hash, options) => {
+        hashState.set(hash, options);
     });
 }
