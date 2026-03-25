@@ -118,15 +118,17 @@ function buildPlayerCallbacks({ instanceId, videoId, providerName, url, containe
                 id: videoId,
                 provider: providerName,
                 url: url,
+                element: container,
             });
 
-            startMilestonePolling(instanceId, videoId, adapter, providerName, url);
+            startMilestonePolling(instanceId, videoId, adapter, providerName, url, container);
         },
         onPause: function () {
             sitchco.hooks.doAction('video-pause', {
                 id: videoId,
                 provider: providerName,
                 url: url,
+                element: container,
             });
 
             stopMilestonePolling(instanceId);
@@ -137,12 +139,14 @@ function buildPlayerCallbacks({ instanceId, videoId, providerName, url, containe
                 provider: providerName,
                 url: url,
                 milestone: 100,
+                element: container,
             });
 
             sitchco.hooks.doAction('video-ended', {
                 id: videoId,
                 provider: providerName,
                 url: url,
+                element: container,
             });
 
             stopMilestonePolling(instanceId);
