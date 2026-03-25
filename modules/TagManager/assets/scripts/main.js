@@ -1,6 +1,4 @@
-import { pushEvent, registerClickTracker } from '@sitchco/datalayer';
-import { captureUtmParams } from '@sitchco/datalayer/utm';
-import { registerOutboundDecorator } from '@sitchco/datalayer/outbound';
+import { pushEvent, registerClickTracker, captureUtmParams, registerOutboundDecorator } from '@sitchco/datalayer';
 import { registerModalTracker } from './lib/modal-tracker.mjs';
 import { registerFormTracker } from './lib/form-tracker.mjs';
 import { registerHashTracker } from './lib/hash-tracker.mjs';

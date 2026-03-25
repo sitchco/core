@@ -21,6 +21,7 @@ use Sitchco\Modules\PostDeployment;
 use Sitchco\Modules\PostLifecycle;
 use Sitchco\Modules\Stream;
 use Sitchco\Modules\SvgSprite\SvgSprite;
+use Sitchco\Modules\TagManager\TagManager;
 use Sitchco\Modules\UIFramework\UIFramework;
 use Sitchco\Modules\UIModal\UIModal;
 use Sitchco\Modules\UIPopover\UIPopover;
@@ -66,6 +67,7 @@ return [
         VideoModule::class,
         UIPopover::class,
         CacheInvalidation::class,
+        TagManager::class,
     ],
     'disallowedBlocks' => [],
 ];
