@@ -136,6 +136,22 @@ add_filter(UIModal::hookName('close'), function (string $html, ModalData $modal)
 }, 10, 2);
 ```
 
+### `sitchco/ui-modal/content-attributes`
+
+Modify the `.sitchco-modal__content` div attributes. The primary use case is injecting layout classes from the parent theme based on modal type.
+
+```php
+add_filter(UIModal::hookName('content-attributes'), function (array $attrs, ModalData $modal) {
+    if ($modal->type === 'video') {
+        return $attrs;
+    }
+    $attrs['class'] = array_merge((array) ($attrs['class'] ?? []), ['is-layout-constrained', 'has-global-padding']);
+    return $attrs;
+}, 10, 2);
+```
+
+Default attributes: `['class' => 'sitchco-modal__content']`. The `class` key supports arrays (joined with spaces).
+
 ### `sitchco/ui-modal/attributes`
 
 Modify the outer `<dialog>` attributes. Useful for adding classes or data attributes.
@@ -193,7 +209,8 @@ Override CSS custom properties on `.sitchco-modal` or a type modifier class:
     /* Container appearance */
     --modal-container-bg: #fff;
     --modal-container-color: #000;
-    --modal-container-padding: 1rem;       /* 3rem at ≥576px */
+    --modal-container-padding: 1rem;       /* 3rem at ≥576px; vertical (top/bottom) */
+    --modal-container-padding-h: ...;      /* Horizontal; set by parent theme, fallback 1rem */
     --modal-container-border-radius: 0px;
 
     /* Global */

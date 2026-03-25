@@ -94,4 +94,36 @@ class UIModalTest extends TestCase
         $loaded = $this->module->loadModal($modal);
         $this->assertEquals('full', $loaded->type);
     }
+
+    public function test_renderModalContent_includes_content_class(): void
+    {
+        remove_all_filters(UIModal::hookName('content-attributes'));
+        $modal = new ModalData('test-render', 'Test', '<p>Content</p>', 'box');
+        $html = $this->module->renderModalContent($modal);
+        $this->assertStringContainsString('class="sitchco-modal__content"', $html);
+    }
+
+    public function test_renderModalContent_does_not_include_layout_classes_by_default(): void
+    {
+        remove_all_filters(UIModal::hookName('content-attributes'));
+        $modal = new ModalData('test-no-layout', 'Test', '<p>Content</p>', 'box');
+        $html = $this->module->renderModalContent($modal);
+        $this->assertStringNotContainsString('is-layout-constrained', $html);
+        $this->assertStringNotContainsString('has-global-padding', $html);
+    }
+
+    public function test_renderModalContent_applies_content_attributes_filter(): void
+    {
+        remove_all_filters(UIModal::hookName('content-attributes'));
+        add_filter(UIModal::hookName('content-attributes'), function (array $attrs) {
+            $attrs['class'] = array_merge((array) ($attrs['class'] ?? []), ['test-class']);
+            $attrs['data-test'] = 'value';
+            return $attrs;
+        });
+        $modal = new ModalData('test-filter', 'Test', '<p>Content</p>', 'box');
+        $html = $this->module->renderModalContent($modal);
+        $this->assertStringContainsString('sitchco-modal__content', $html);
+        $this->assertStringContainsString('test-class', $html);
+        $this->assertStringContainsString('data-test="value"', $html);
+    }
 }

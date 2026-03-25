@@ -3,6 +3,8 @@
 .sitchco-modal {
     --modal-bg-color: rgb(0 0 0 / 0.7);
     --modal-max-width: 980px;
+    --wp--style--root--padding-left: var(--modal-container-padding-h, 1rem);
+    --wp--style--root--padding-right: var(--modal-container-padding-h, 1rem);
     --modal-backdrop-color: transparent;
     --modal-container-flex: 0 0 auto;
     --modal-container-margin: auto;
@@ -17,7 +19,7 @@
     --modal-close-color: var(--modal-container-color);
     --modal-close-color-hover: color-mix(in srgb, var(--modal-close-color) 70%, transparent);
     --modal-close-top: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
-    --modal-close-right: max(0.5rem, calc(var(--modal-container-padding) - var(--modal-close-size)));
+    --modal-close-right: max(0.5rem, calc(var(--modal-container-padding-h, 1rem) - var(--modal-close-size)));
     --modal-close-bg: transparent;
     --modal-close-bg-hover: var(--modal-close-bg);
     --modal-close-bg-size: 130%;
@@ -103,7 +105,8 @@
         margin: var(--modal-container-margin);
         width: var(--modal-container-width);
         max-width: var(--modal-container-max-width);
-        padding: var(--modal-container-padding);
+        padding-top: var(--modal-container-padding);
+        padding-bottom: var(--modal-container-padding);
         border-radius: var(--modal-container-border-radius);
         pointer-events: auto;
         background: var(--modal-container-bg);
@@ -112,7 +115,6 @@
 
     &__content {
         width: 100%;
-        max-width: var(--modal-max-width);
         margin: auto;
     }
 

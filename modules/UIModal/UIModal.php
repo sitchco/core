@@ -6,6 +6,7 @@ use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
 use Sitchco\Modules\TimberModule;
 use Sitchco\Modules\UIFramework\UIFramework;
+use Sitchco\Utils\ArrayUtil;
 use Sitchco\Utils\Str;
 use Sitchco\Utils\TimberUtil;
 
@@ -92,8 +93,11 @@ class UIModal extends Module
 
     public function renderModalContent(ModalData $modalData): string
     {
+        $contentAttrs = ['class' => 'sitchco-modal__content'];
+        $contentAttrs = apply_filters(static::hookName('content-attributes'), $contentAttrs, $modalData);
         $context = [
             'modal' => $modalData,
+            'content_attributes' => ArrayUtil::toAttributes($contentAttrs),
             'pre_content' => apply_filters(static::hookName('pre-content'), '', $modalData),
             'close' => apply_filters(static::hookName('close'), '&#10005;', $modalData),
         ];
