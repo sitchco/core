@@ -30,27 +30,6 @@ const getTriggerTarget = (trigger) => {
     return selector ? document.querySelector(selector) : null;
 };
 
-// Open modal from URL hash, close modal on hash-away
-const syncModalWithHash = () => {
-    const hash = window.location.hash;
-    const openModal = document.querySelector('dialog.sitchco-modal[open]');
-    if (openModal && (!hash || `#${openModal.id}` !== hash)) {
-        hideModal(openModal);
-    }
-    if (!hash) {
-        return;
-    }
-
-    try {
-        const modal = document.querySelector(`dialog.sitchco-modal${hash}`);
-        if (modal && !modal.hasAttribute('open')) {
-            showModal(modal);
-        }
-    } catch {
-        // CSS-invalid hash characters — ignore
-    }
-};
-
 addAction(
     SHOW_MODAL_HOOK,
     (modal) => {
@@ -65,16 +44,15 @@ addAction(
         }
 
         setModalLabel(modal);
-
-        if (modal.id && window.location.hash !== `#${modal.id}`) {
-            history.replaceState(null, '', `#${modal.id}`);
-        }
-
         getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'true'));
 
         document.body.classList.add('lock-scroll');
         modal.showModal();
         modal.focus();
+
+        if (modal.id && sitchco.hashState.get().current !== modal.id) {
+            sitchco.hashState.set(modal.id);
+        }
     },
     10,
     COMPONENT
@@ -88,6 +66,27 @@ addAction(
         const el = modal || document.querySelector('dialog.sitchco-modal[open].sitchco-modal--blockdismiss');
         if (el) {
             el.classList.remove('sitchco-modal--blockdismiss');
+        }
+    },
+    10,
+    COMPONENT
+);
+
+// React to centralized hash state changes (open/close modals by hash)
+addAction(
+    sitchco.constants.HASH_STATE_CHANGE,
+    (state) => {
+        const openModal = document.querySelector('dialog.sitchco-modal[open]');
+        if (openModal && openModal.id !== state.current) {
+            hideModal(openModal);
+        }
+        if (!state.isset()) {
+            return;
+        }
+
+        const modal = document.querySelector(`dialog.sitchco-modal#${CSS.escape(state.current)}`);
+        if (modal && !modal.hasAttribute('open')) {
+            showModal(modal);
         }
     },
     10,
@@ -111,8 +110,8 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.classList.remove('lock-scroll');
             getTriggersForModal(modal).forEach((el) => el.setAttribute('aria-expanded', 'false'));
 
-            if (modal.id && window.location.hash === `#${modal.id}`) {
-                history.replaceState(null, '', window.location.pathname + window.location.search);
+            if (modal.id && sitchco.hashState.get().current === modal.id) {
+                sitchco.hashState.clear();
             }
         });
     });
@@ -191,7 +190,4 @@ document.addEventListener('DOMContentLoaded', function () {
             hideModal(modal);
         }
     });
-
-    syncModalWithHash();
-    window.addEventListener('hashchange', syncModalWithHash);
 });
