@@ -10,8 +10,8 @@ hooks.addAction(
     constants.REGISTER,
     () => {
         // registerDataLayerActions — inlined here (sitchco-coupled)
-        hooks.addAction(constants.GTM_INTERACTION, (data) => pushEvent(data), 10, 'tag-manager');
-        hooks.addAction(constants.GTM_STATE, (data) => pushEvent(data), 10, 'tag-manager');
+        hooks.addAction(constants.GTM_INTERACTION, (data, element) => pushEvent(data, element), 10, 'tag-manager');
+        hooks.addAction(constants.GTM_STATE, (data, element) => pushEvent(data, element), 10, 'tag-manager');
 
         registerClickTracker(pushEvent);
         registerModalTracker(pushEvent);
