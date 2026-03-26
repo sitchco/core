@@ -50,6 +50,10 @@ export const hashState = {
     set(newState, { push = false } = {}) {
         if (typeof newState === 'string') {
             const cleaned = newState.replace(/^[#/]+/, '');
+            if (!cleaned) {
+                this.clear();
+                return;
+            }
             if (push) {
                 location.hash = cleaned;
                 return; // hashchange listener handles state update + emit
