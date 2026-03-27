@@ -25,6 +25,7 @@ class Logger
 {
     private static ?LogLevel $resolvedLevel = null;
     private static ?string $requestId = null;
+    private static ?array $lastEntry = null;
 
     public static function getRequestId(): string
     {
@@ -37,6 +38,7 @@ class Logger
             return;
         }
         $message = stripcslashes(json_encode($value, JSON_PRETTY_PRINT));
+        self::$lastEntry = ['level' => $level, 'value' => $value, 'message' => $message];
         $rid = self::getRequestId();
         error_log("[{$rid}] [{$level->value}] {$message}");
         if (defined('SITCHCO_LOG_FILE') && SITCHCO_LOG_FILE) {
@@ -57,6 +59,11 @@ class Logger
     public static function error(mixed $value): void
     {
         self::log($value, LogLevel::ERROR);
+    }
+
+    public static function getLastEntry(): ?array
+    {
+        return self::$lastEntry;
     }
 
     public static function dump(mixed $d, bool $return = false): ?string
