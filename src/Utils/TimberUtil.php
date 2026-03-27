@@ -23,6 +23,15 @@ class TimberUtil
         return Timber::compile($template, $context);
     }
 
+    static function compileString(string $twig_string, array $context = [], string $filter_key = null): string
+    {
+        if ($filter_key) {
+            $hookName = Hooks::name('template-context', $filter_key);
+            $context = apply_filters($hookName, $context, $filter_key);
+        }
+        return Timber::compile_string($twig_string, $context);
+    }
+
     static function addContext(string $template, array $additionalContext): void
     {
         add_filter(
