@@ -27,7 +27,7 @@ class AcfOptions extends Module
         });
     }
 
-    protected function isFieldGroupOptionsPage(array $field_group): string
+    protected function isFieldGroupOptionsPage(array $field_group): bool
     {
         foreach ($field_group['location'] as $rule_group) {
             foreach ($rule_group as $rule) {
@@ -74,10 +74,11 @@ class AcfOptions extends Module
         $template = file_exists($target)
             ? file_get_contents($target)
             : file_get_contents(SITCHCO_CORE_TEMPLATES_DIR . '/options-class.php.tpl');
+        $fields = array_filter($field_group['fields'], fn($field) => !empty($field['name']));
         $property_lines = array_map(function ($field) {
             $type = $this->acfFieldTypeToPhpType($field);
             return " * @property $type \${$field['name']} {$field['label']}";
-        }, $field_group['fields']);
+        }, $fields);
         $template = str_replace(['[namespace]', '[class_name]'], [$namespace, $class_name], $template);
         $template = preg_replace(
             '#(\[properties])[\s\S]+(\[/properties])#',
@@ -85,7 +86,7 @@ class AcfOptions extends Module
             $template,
         );
         file_put_contents($target, $template);
-        return $target;
+        return "$namespace\\$class_name";
     }
 
     /**
@@ -96,7 +97,7 @@ class AcfOptions extends Module
      */
     protected function acfFieldTypeToPhpType(array $acf_field): string
     {
-        $return_type = match ($acf_field['return_format']) {
+        $return_type = match ($acf_field['return_format'] ?? null) {
             'id' => 'int',
             'url' => 'string',
             'array' => 'array',

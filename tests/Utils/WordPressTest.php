@@ -26,10 +26,10 @@ class WordPressTest extends TestCase
 
     // --- getVisibleArchivePostTypes ---
 
-    public function test_archive_types_includes_post(): void
+    public function test_archive_types_excludes_post(): void
     {
         $types = WordPress::getVisibleArchivePostTypes();
-        $this->assertContains('post', $types);
+        $this->assertNotContains('post', $types);
     }
 
     public function test_archive_types_excludes_page(): void
