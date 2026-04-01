@@ -72,6 +72,12 @@ class TagManager extends Module
 
     public static function renderGtmAttribute(mixed $value): string
     {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        if ($value === false || $value === 0) {
+            return ' data-gtm="0"';
+        }
         if (is_array($value) || is_object($value)) {
             $value = wp_json_encode($value);
         }
