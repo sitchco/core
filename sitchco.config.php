@@ -69,7 +69,7 @@ return [
         UIPopover::class,
         CacheInvalidation::class,
         TagManager::class,
-        CustomTags::class
+        CustomTags::class,
     ],
     'disallowedBlocks' => [],
 ];
