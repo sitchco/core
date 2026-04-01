@@ -24,6 +24,7 @@ class SvgSprite extends Module
         add_filter('timber/twig/functions', function ($functions) {
             $functions['icon'] = [
                 'callable' => [$this, 'renderIcon'],
+                'is_safe' => ['html'],
             ];
             return $functions;
         });
