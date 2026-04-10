@@ -244,9 +244,30 @@ class MyTest extends TestCase
 ### Don't add tests when:
 
 1. **Code is already covered by existing tests** - If existing tests would catch breakage, skip it
-2. **Testing private implementation details** - If you need to use reflection or test helpers to access something, don't test it
+2. **Testing private implementation details** - If something is hard to test because of restrictive visibility, make a small source change (adjust visibility, add a getter) rather than using Reflection or complex mocking. See "Design for Testability" below
 3. **Refactoring without behavior changes** - If behavior stays the same, existing tests should pass
 4. **Testing third-party code** - Trust that WordPress, ACF, etc. have their own tests
+
+## Design for Testability
+
+When writing tests for existing classes, you may encounter private methods or internal state that is hard to verify. **Don't reach for Reflection, complex mocks, or indirect side-effect checks.** Instead, make small adjustments to the source class so tests can exercise it directly.
+
+### Preferred approaches (in order)
+
+1. **Change `private` to `protected` or `public`** — If a method contains logic worth testing, its visibility is the problem, not the test.
+2. **Add a getter for internal state** — A simple `getTemplateAreas(): array` is better than Reflection to read a `protected` property.
+3. **Return values from void methods** — If a method has a meaningful outcome, return it so callers (and tests) can inspect it.
+4. **Extract a collaborator** — If a method does too much, extract the testable part into a service that can be tested independently.
+
+### What to avoid
+
+- `ReflectionClass` / `ReflectionMethod::setAccessible()` to expose internals — brittle and couples tests to implementation.
+- Complex mocking schemes that replicate internal wiring — hard to read and maintain.
+- Checking database rows, cache keys, or global state as a proxy for class behavior — tests the side effect, not the contract.
+
+### Commit discipline
+
+When source changes are needed to support tests, commit them separately from the tests themselves. This makes code review clearer: reviewers see the design improvement on its own, then the tests that rely on it.
 
 ## Common Pitfalls
 
