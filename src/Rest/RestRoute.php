@@ -17,6 +17,7 @@ class RestRoute
     private string|array $methods;
     private mixed $callback;
     private string $capability;
+    private array $args;
 
     /**
      * Constructor to initialize the route.
@@ -25,13 +26,20 @@ class RestRoute
      * @param string|array $methods Allowed HTTP methods.
      * @param callable $callback Function to handle the request.
      * @param string $capability
+     * @param array $args REST API argument definitions for request validation.
      */
-    public function __construct(string $path, string|array $methods, callable $callback, string $capability = '')
-    {
+    public function __construct(
+        string $path,
+        string|array $methods,
+        callable $callback,
+        string $capability = '',
+        array $args = [],
+    ) {
         $this->path = $path;
         $this->methods = $methods;
         $this->callback = $callback;
         $this->capability = $capability;
+        $this->args = $args;
     }
 
     /**
@@ -46,6 +54,7 @@ class RestRoute
                 'methods' => $this->methods,
                 'callback' => [$this, 'handleRequest'],
                 'permission_callback' => $this->permissionCallback(),
+                'args' => $this->args,
             ]);
         });
     }

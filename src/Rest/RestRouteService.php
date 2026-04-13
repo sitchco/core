@@ -52,10 +52,11 @@ class RestRouteService
      * @param string $path The route path.
      * @param Closure $callback The function to handle the request.
      * @param string $capability Optional WP capability.
+     * @param array $args REST API argument definitions for request validation.
      */
-    public function addReadRoute(string $path, Closure $callback, string $capability = ''): void
+    public function addReadRoute(string $path, Closure $callback, string $capability = '', array $args = []): void
     {
-        $this->addRoute(new RestRoute($path, WP_REST_Server::READABLE, $callback, $capability));
+        $this->addRoute(new RestRoute($path, WP_REST_Server::READABLE, $callback, $capability, $args));
     }
 
     /**
@@ -64,9 +65,10 @@ class RestRouteService
      * @param string $path The route path.
      * @param Closure $callback The function to handle the request.
      * @param string $capability Optional WP capability.
+     * @param array $args REST API argument definitions for request validation.
      */
-    public function addCreateRoute(string $path, Closure $callback, string $capability = ''): void
+    public function addCreateRoute(string $path, Closure $callback, string $capability = '', array $args = []): void
     {
-        $this->addRoute(new RestRoute($path, WP_REST_Server::CREATABLE, $callback, $capability));
+        $this->addRoute(new RestRoute($path, WP_REST_Server::CREATABLE, $callback, $capability, $args));
     }
 }

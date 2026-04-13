@@ -113,6 +113,47 @@ class RestRouteServiceTest extends TestCase
     }
 
     /**
+     * Test that a route with args validates required parameters.
+     */
+    public function testRouteWithArgsValidation(): void
+    {
+        $args = [
+            'pattern_ids' => [
+                'required' => true,
+                'type' => 'array',
+                'items' => ['type' => 'integer'],
+            ],
+        ];
+        $this->service->addCreateRoute(
+            '/with-args',
+            fn(WP_REST_Request $request) => ['ids' => $request->get_param('pattern_ids')],
+            '',
+            $args,
+        );
+
+        $registered = $this->service->getRegisteredRoutes();
+        $route = end($registered);
+
+        $routes = rest_get_server()->get_routes('sitchco');
+        $routeConfig = $routes['/sitchco/with-args'][0];
+        $this->assertArrayHasKey('pattern_ids', $routeConfig['args']);
+        $this->assertTrue($routeConfig['args']['pattern_ids']['required']);
+
+        // Request missing the required param should fail validation
+        $request = new WP_REST_Request('POST', '/sitchco/with-args');
+        $response = rest_do_request($request);
+        $this->assertEquals(400, $response->get_status());
+
+        // Request with the required param should succeed
+        $request = new WP_REST_Request('POST', '/sitchco/with-args');
+        $request->set_header('Content-Type', 'application/json');
+        $request->set_body(json_encode(['pattern_ids' => [1, 2, 3]]));
+        $response = rest_do_request($request);
+        $this->assertEquals(200, $response->get_status());
+        $this->assertEquals(['ids' => [1, 2, 3]], $response->get_data());
+    }
+
+    /**
      * Test permission handling for restricted routes.
      */
     public function testRoutePermissionHandling(): void
