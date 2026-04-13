@@ -2,9 +2,19 @@
     --sitchco-icon-background-radius: 0px;
     --sitchco-icon-background: transparent;
     --sitchco-icon-background-size: 0.8em;
+    --sitchco-icon-color-hover: color-mix(in srgb, currentColor 70%, transparent);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+}
+
+:where(a.wp-block-sitchco-icon) {
+    color: currentColor;
+    transition: color 0.2s ease;
+
+    &:hover {
+        color: var(--sitchco-icon-color-hover);
+    }
 }
 
 /* Frontend: class on outer wrapper.  Editor preview: class on inner wrapper element*/
