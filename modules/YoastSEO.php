@@ -20,6 +20,24 @@ class YoastSEO extends Module
         add_filter('wpseo_premium_post_redirect_slug_change', '__return_true');
         add_filter('Yoast\WP\SEO\post_redirect_slug_change', '__return_true');
         add_filter('wpseo_sitemap_content_before_parse_html_images', '__return_empty_string');
+        add_filter('wpseo_indexable_excluded_post_types', [$this, 'excludeNonViewablePostTypes']);
+    }
+
+    /**
+     * Exclude post types that have no public front-end view from Yoast's settings UI.
+     *
+     * Why: Yoast's Content Types settings only gates on `public => true`, so utility
+     * post types registered with `publicly_queryable => false` (e.g. Content Partials)
+     * still expose title/social/schema controls that can't affect any real output.
+     */
+    public function excludeNonViewablePostTypes(array $excluded): array
+    {
+        foreach (get_post_types(['public' => true], 'objects') as $post_type) {
+            if (!is_post_type_viewable($post_type)) {
+                $excluded[] = $post_type->name;
+            }
+        }
+        return $excluded;
     }
 
     /**

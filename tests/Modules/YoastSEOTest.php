@@ -13,10 +13,27 @@ class YoastSEOTest extends TestCase
 {
     private YoastSEO $yoastSEO;
 
+    private array $registered_types = [];
+
     public function setUp(): void
     {
         parent::setUp();
         $this->yoastSEO = $this->container->get(YoastSEO::class);
+    }
+
+    protected function tearDown(): void
+    {
+        foreach ($this->registered_types as $type) {
+            unregister_post_type($type);
+        }
+        $this->registered_types = [];
+        parent::tearDown();
+    }
+
+    private function registerPostType(string $name, array $args = []): void
+    {
+        register_post_type($name, $args);
+        $this->registered_types[] = $name;
     }
 
     public function testInitAddsFilters()
@@ -41,5 +58,32 @@ class YoastSEOTest extends TestCase
 
         // Ensure the filter returns an empty array as expected
         $this->assertSame([], apply_filters('Yoast\WP\SEO\prominent_words_post_types', ['post', 'page']));
+    }
+
+    /**
+     * @dataProvider postTypeVisibilityProvider
+     */
+    public function testExclusionMatchesPostTypeVisibility(array $args, bool $shouldExclude)
+    {
+        $this->registerPostType('test_type', $args);
+        $excluded = apply_filters('wpseo_indexable_excluded_post_types', []);
+        $shouldExclude
+            ? $this->assertContains('test_type', $excluded)
+            : $this->assertNotContains('test_type', $excluded);
+    }
+
+    public static function postTypeVisibilityProvider(): array
+    {
+        return [
+            'public but not queryable' => [['public' => true, 'publicly_queryable' => false], true],
+            'public and queryable' => [['public' => true, 'publicly_queryable' => true], false],
+            'private post type' => [['public' => false, 'publicly_queryable' => false], false],
+        ];
+    }
+
+    public function testPreservesExistingExclusions()
+    {
+        $excluded = apply_filters('wpseo_indexable_excluded_post_types', ['preexisting_type']);
+        $this->assertContains('preexisting_type', $excluded);
     }
 }
