@@ -159,8 +159,8 @@ class AcfPostTypeAdminFilters extends Module
     protected function getTaxonomyFilters(array $post_type_config): array
     {
         $filters = [];
-
-        foreach ((array) $post_type_config['taxonomies'] as $tax_slug) {
+        $taxonomies = array_filter((array) $post_type_config['taxonomies']);
+        foreach ($taxonomies as $tax_slug) {
             $tax_obj = get_taxonomy($tax_slug);
             if (!$tax_obj->show_admin_column) {
                 continue;
