@@ -23,11 +23,6 @@ class PostBase extends Post
     private array $_local_add_terms_reference = [];
     private array $_local_remove_terms_reference = [];
 
-    /**
-     * The post's local modified time, as a raw date string ex: 2014-07-05 18:01:39
-     */
-    public string $post_modified;
-
     public function __get($field)
     {
         $value = parent::__get($field);
