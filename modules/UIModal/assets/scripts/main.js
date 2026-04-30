@@ -48,6 +48,7 @@ addAction(
 
         document.body.classList.add('lock-scroll');
         modal.showModal();
+        modal.scrollTop = 0;
 
         if (modal.id && sitchco.hashState.get().current !== modal.id) {
             sitchco.hashState.set(modal.id);
