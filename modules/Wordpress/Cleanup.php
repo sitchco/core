@@ -25,6 +25,7 @@ class Cleanup extends Module
         'disableGalleryCss',
         'disableXmlRpc',
         'disableFeeds',
+        'disableAttachmentPages',
         'disableDefaultPosts',
         'disableComments',
         'disableLanguageDropdown',
@@ -195,6 +196,25 @@ class Cleanup extends Module
         add_action('do_feed_atom', [$this, 'disableFeedsRedirect'], 1);
         add_action('do_feed_rss2_comments', [$this, 'disableFeedsRedirect'], 1);
         add_action('do_feed_atom_comments', [$this, 'disableFeedsRedirect'], 1);
+    }
+
+    /**
+     * 404 attachment requests instead of letting WP redirect /{slug}/ to the media file.
+     */
+    public function disableAttachmentPages(): void
+    {
+        add_action(
+            'template_redirect',
+            function (): void {
+                if (is_attachment()) {
+                    global $wp_query;
+                    $wp_query->set_404();
+                    status_header(404);
+                    nocache_headers();
+                }
+            },
+            1,
+        );
     }
 
     /**
