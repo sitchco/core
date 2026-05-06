@@ -9,6 +9,7 @@ use Exception;
 use Sitchco\Tests\Fakes\TestFileRegistry;
 use Sitchco\Utils\Hooks;
 use Timber\Loader;
+use function DI\autowire;
 
 class Bootstrap
 {
@@ -44,13 +45,23 @@ class Bootstrap
     public function initialize(): void
     {
         $configRegistry = new ConfigRegistry();
-        $builder = new ContainerBuilder();
         $containerDefinitions = $configRegistry->load('container');
+
+        $builder = new ContainerBuilder();
+        $builder->addDefinitions([
+            ConfigRegistry::class => autowire(),
+        ]);
         if (!empty($containerDefinitions)) {
             $builder->addDefinitions($containerDefinitions);
         }
+
+        if (wp_get_environment_type() !== 'local') {
+            $cacheDir = WP_CONTENT_DIR . '/cache/sitchco-di';
+            wp_mkdir_p($cacheDir);
+            $builder->enableCompilation($cacheDir);
+        }
+
         $GLOBALS['SitchcoContainer'] = $container = $builder->build();
-        $container->set(ConfigRegistry::class, $configRegistry);
 
         $blockManifestRegistry = $container->get(BlockManifestRegistry::class);
         $blockManifestRegistry->ensureFreshManifests();

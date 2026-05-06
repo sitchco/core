@@ -72,7 +72,8 @@ class Cache
      *
      * @param string   $key        Transient key
      * @param callable $callback   Function to generate value if not cached
-     * @param int      $expiration Cache duration in seconds
+     * @param int      $expiration Cache duration in seconds on success
+     * @param int|null $failureTtl Optional TTL when callback returns null/false (negative caching)
      * @return mixed The cached or freshly generated value
      */
     public static function rememberTransient(
@@ -90,7 +91,7 @@ class Cache
 
         if ($value !== null && $value !== false) {
             set_transient($key, ['__sitchco_cache' => 1, '_v' => $value], $expiration);
-        } elseif ($failureTtl) {
+        } elseif ($failureTtl !== null && $failureTtl > 0) {
             set_transient($key, ['__sitchco_cache' => 1, '_v' => $value], $failureTtl);
         }
 
