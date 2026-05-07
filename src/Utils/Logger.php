@@ -26,6 +26,7 @@ class Logger
     private static ?LogLevel $resolvedLevel = null;
     private static ?string $requestId = null;
     private static ?array $lastEntry = null;
+    private static bool $silenceErrorLog = false;
 
     public static function getRequestId(): string
     {
@@ -40,7 +41,9 @@ class Logger
         $message = stripcslashes(json_encode($value, JSON_PRETTY_PRINT));
         self::$lastEntry = ['level' => $level, 'value' => $value, 'message' => $message];
         $rid = self::getRequestId();
-        error_log("[{$rid}] [{$level->value}] {$message}");
+        if (!self::$silenceErrorLog) {
+            error_log("[{$rid}] [{$level->value}] {$message}");
+        }
         if (defined('SITCHCO_LOG_FILE') && SITCHCO_LOG_FILE) {
             self::writeToFile($level, $message);
         }
@@ -64,6 +67,11 @@ class Logger
     public static function getLastEntry(): ?array
     {
         return self::$lastEntry;
+    }
+
+    public static function silenceErrorLog(bool $silence): void
+    {
+        self::$silenceErrorLog = $silence;
     }
 
     public static function dump(mixed $d, bool $return = false): ?string

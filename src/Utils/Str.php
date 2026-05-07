@@ -198,6 +198,48 @@ class Str
     }
 
     /**
+     * Formats a numeric amount as a currency string.
+     *
+     * Uses PHP's NumberFormatter (ext-intl) for full locale-aware output when
+     * available, and falls back to a simple symbol + number_format_i18n() approach
+     * on hosts without ext-intl.
+     *
+     * @param float|int   $amount   The numeric amount.
+     * @param string      $currency ISO 4217 currency code (e.g. "USD", "EUR").
+     * @param string|null $locale   BCP-47 locale (e.g. "en_US"). Defaults to the
+     *                              active WordPress locale, or "en_US".
+     * @return string Formatted currency string.
+     */
+    public static function formatCurrency(float|int $amount, string $currency = 'USD', ?string $locale = null): string
+    {
+        if (class_exists('NumberFormatter')) {
+            $locale = $locale ?? (function_exists('get_locale') ? get_locale() : 'en_US');
+            $fmt = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
+            $result = $fmt->formatCurrency((float) $amount, strtoupper($currency));
+            if ($result !== false) {
+                return $result;
+            }
+        }
+        return self::formatCurrencyFallback((float) $amount, $currency);
+    }
+
+    /**
+     * Fallback currency formatter for environments without ext-intl.
+     */
+    private static function formatCurrencyFallback(float $amount, string $currency): string
+    {
+        $code = strtoupper($currency);
+        $symbols = [
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            'CAD' => 'CA$',
+        ];
+        $symbol = $symbols[$code] ?? $code . ' ';
+        return $symbol . number_format_i18n($amount, 2);
+    }
+
+    /**
      * Normalize color value to RGB format
      *
      * @param string $hex Hex color (#RGB or #RRGGBB) or RGB string
