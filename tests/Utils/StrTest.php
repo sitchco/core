@@ -8,11 +8,11 @@ use Sitchco\Utils\Str;
 
 class StrTest extends TestCase
 {
-    private function callFallback(float $amount, string $currency): string
+    private function callFallback(float $amount, string $currency, ?int $decimals = null): string
     {
         try {
             $m = new ReflectionMethod(Str::class, 'formatCurrencyFallback');
-            return $m->invoke(null, $amount, $currency);
+            return $m->invoke(null, $amount, $currency, $decimals);
         } catch (\ReflectionException $e) {
             $this->fail('Reflection failed: ' . $e->getMessage());
         }
@@ -25,7 +25,7 @@ class StrTest extends TestCase
         if (!class_exists('NumberFormatter')) {
             $this->markTestSkipped('ext-intl not installed.');
         }
-        $result = Str::formatCurrency(1234.56, 'USD', 'en_US');
+        $result = Str::formatCurrency(1234.56, ['locale' => 'en_US']);
         $this->assertStringContainsString('1,234.56', $result);
         $this->assertStringContainsString('$', $result);
     }
@@ -35,7 +35,7 @@ class StrTest extends TestCase
         if (!class_exists('NumberFormatter')) {
             $this->markTestSkipped('ext-intl not installed.');
         }
-        $result = Str::formatCurrency(1234.56, 'EUR', 'de_DE');
+        $result = Str::formatCurrency(1234.56, ['currency' => 'EUR', 'locale' => 'de_DE']);
         $this->assertStringContainsString('1.234,56', $result);
         $this->assertStringContainsString('€', $result);
     }
@@ -45,7 +45,7 @@ class StrTest extends TestCase
         if (!class_exists('NumberFormatter')) {
             $this->markTestSkipped('ext-intl not installed.');
         }
-        $result = Str::formatCurrency(0, 'USD', 'en_US');
+        $result = Str::formatCurrency(0, ['locale' => 'en_US']);
         $this->assertStringContainsString('0.00', $result);
         $this->assertStringContainsString('$', $result);
     }
@@ -55,10 +55,21 @@ class StrTest extends TestCase
         if (!class_exists('NumberFormatter')) {
             $this->markTestSkipped('ext-intl not installed.');
         }
-        $result = Str::formatCurrency(-1234.56, 'USD', 'en_US');
+        $result = Str::formatCurrency(-1234.56, ['locale' => 'en_US']);
         $this->assertStringContainsString('1,234.56', $result);
         // ICU may use "-$..." or "($...)" depending on version/locale
         $this->assertMatchesRegularExpression('/[-(]/', $result);
+    }
+
+    public function test_format_currency_intl_with_decimals_zero(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $result = Str::formatCurrency(1234.56, ['locale' => 'en_US', 'decimals' => 0]);
+        $this->assertStringContainsString('1,235', $result);
+        $this->assertStringContainsString('$', $result);
+        $this->assertStringNotContainsString('.', $result);
     }
 
     // --- formatCurrency: fallback path (via reflection) ---
@@ -81,6 +92,77 @@ class StrTest extends TestCase
     public function test_format_currency_lowercase_code_normalized(): void
     {
         $this->assertSame('$1,234.56', $this->callFallback(1234.56, 'usd'));
+    }
+
+    public function test_format_currency_fallback_with_decimals_zero(): void
+    {
+        $this->assertSame('$1,235', $this->callFallback(1234.56, 'USD', 0));
+    }
+
+    // --- formatCurrencyRange ---
+
+    public function test_format_currency_range_same_low_high_returns_single_amount(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $result = Str::formatCurrencyRange(50, 50, ['locale' => 'en_US', 'decimals' => 0]);
+        $this->assertSame('$50', $result);
+        $this->assertSame(1, substr_count($result, '$'));
+    }
+
+    public function test_format_currency_range_different_low_high(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $this->assertSame('$25-75', Str::formatCurrencyRange(25, 75, ['locale' => 'en_US', 'decimals' => 0]));
+    }
+
+    public function test_format_currency_range_custom_separator_with_spaces(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $this->assertSame(
+            '$25 – 75',
+            Str::formatCurrencyRange(25, 75, ['locale' => 'en_US', 'decimals' => 0, 'separator' => ' – ']),
+        );
+    }
+
+    public function test_format_currency_range_zero(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $this->assertSame('$0', Str::formatCurrencyRange(0, 0, ['locale' => 'en_US', 'decimals' => 0]));
+    }
+
+    public function test_format_currency_range_with_decimals(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $this->assertSame(
+            '$25.50-75.25',
+            Str::formatCurrencyRange(25.5, 75.25, ['locale' => 'en_US', 'decimals' => 2]),
+        );
+    }
+
+    public function test_format_currency_range_eur_locale(): void
+    {
+        if (!class_exists('NumberFormatter')) {
+            $this->markTestSkipped('ext-intl not installed.');
+        }
+        $result = Str::formatCurrencyRange(25, 75, [
+            'currency' => 'EUR',
+            'locale' => 'de_DE',
+            'decimals' => 0,
+        ]);
+        $this->assertSame(1, substr_count($result, '€'));
+        $this->assertStringContainsString('25', $result);
+        $this->assertStringContainsString('75', $result);
+        $this->assertStringContainsString('-', $result);
     }
 
     // --- plural ---

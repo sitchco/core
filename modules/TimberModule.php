@@ -7,6 +7,7 @@ use Sitchco\Framework\Module;
 use Sitchco\Support\DateTime;
 use Sitchco\Utils\ArrayUtil;
 use Sitchco\Utils\Block;
+use Sitchco\Utils\Str;
 use Timber\Timber;
 use Sitchco\Utils\TimberUtil;
 use WP_Block;
@@ -49,6 +50,12 @@ class TimberModule extends Module
             $functions['gtm_attr'] = [
                 'callable' => fn(mixed $value) => '',
                 'is_safe' => ['html'],
+            ];
+            $functions['format_currency'] = [
+                'callable' => [Str::class, 'formatCurrency'],
+            ];
+            $functions['format_currency_range'] = [
+                'callable' => [Str::class, 'formatCurrencyRange'],
             ];
             return $functions;
         });

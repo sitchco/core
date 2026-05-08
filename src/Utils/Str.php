@@ -204,29 +204,110 @@ class Str
      * available, and falls back to a simple symbol + number_format_i18n() approach
      * on hosts without ext-intl.
      *
-     * @param float|int   $amount   The numeric amount.
-     * @param string      $currency ISO 4217 currency code (e.g. "USD", "EUR").
-     * @param string|null $locale   BCP-47 locale (e.g. "en_US"). Defaults to the
-     *                              active WordPress locale, or "en_US".
+     * @param float|int $amount  The numeric amount.
+     * @param array     $options {
+     *   @type string      $currency ISO 4217 currency code. Default "USD".
+     *   @type string|null $locale   BCP-47 locale (e.g. "en_US"). Default null
+     *                               (uses WordPress locale or "en_US").
+     *   @type int|null    $decimals Force a fixed number of fraction digits.
+     *                               Default null (use locale/currency default).
+     * }
      * @return string Formatted currency string.
      */
-    public static function formatCurrency(float|int $amount, string $currency = 'USD', ?string $locale = null): string
+    public static function formatCurrency(float|int $amount, array $options = []): string
     {
+        $opts = array_merge(
+            [
+                'currency' => 'USD',
+                'locale' => null,
+                'decimals' => null,
+            ],
+            $options,
+        );
+
         if (class_exists('NumberFormatter')) {
-            $locale = $locale ?? (function_exists('get_locale') ? get_locale() : 'en_US');
+            $locale = $opts['locale'] ?? (function_exists('get_locale') ? get_locale() : 'en_US');
             $fmt = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-            $result = $fmt->formatCurrency((float) $amount, strtoupper($currency));
+            if ($opts['decimals'] !== null) {
+                $fmt->setAttribute(\NumberFormatter::MIN_FRACTION_DIGITS, $opts['decimals']);
+                $fmt->setAttribute(\NumberFormatter::MAX_FRACTION_DIGITS, $opts['decimals']);
+            }
+            $result = $fmt->formatCurrency((float) $amount, strtoupper($opts['currency']));
             if ($result !== false) {
                 return $result;
             }
         }
-        return self::formatCurrencyFallback((float) $amount, $currency);
+        return self::formatCurrencyFallback((float) $amount, $opts['currency'], $opts['decimals']);
+    }
+
+    /**
+     * Formats a low/high pair as a currency range string with a single leading
+     * symbol and a configurable separator (e.g. "$25-75" or "$25 – 75").
+     *
+     * When $low equals $high, returns a single formatted amount instead of a range.
+     *
+     * @param float|int $low     The low end of the range.
+     * @param float|int $high    The high end of the range.
+     * @param array     $options {
+     *   @type string      $currency  ISO 4217 currency code. Default "USD".
+     *   @type string|null $locale    BCP-47 locale. Default null.
+     *   @type int|null    $decimals  Force a fixed number of fraction digits.
+     *                                Default null.
+     *   @type string      $separator String placed between the two amounts.
+     *                                Default "-".
+     * }
+     * @return string Formatted currency range string.
+     */
+    public static function formatCurrencyRange(float|int $low, float|int $high, array $options = []): string
+    {
+        $opts = array_merge(
+            [
+                'currency' => 'USD',
+                'locale' => null,
+                'decimals' => null,
+                'separator' => '-',
+            ],
+            $options,
+        );
+
+        $formatOpts = [
+            'currency' => $opts['currency'],
+            'locale' => $opts['locale'],
+            'decimals' => $opts['decimals'],
+        ];
+
+        if ($low == $high) {
+            return self::formatCurrency($low, $formatOpts);
+        }
+
+        [$symbol, $lowNumeric] = self::splitCurrencySymbol(self::formatCurrency($low, $formatOpts));
+        [, $highNumeric] = self::splitCurrencySymbol(self::formatCurrency($high, $formatOpts));
+
+        return $symbol . $lowNumeric . $opts['separator'] . $highNumeric;
+    }
+
+    /**
+     * Splits a formatted currency string into its symbol and bare numeric portion.
+     *
+     * Works for both prefix locales (e.g. "$25.50" -> ["$", "25.50"]) and suffix
+     * locales (e.g. "25,50 €" -> ["€", "25,50"]).
+     */
+    private static function splitCurrencySymbol(string $formatted): array
+    {
+        preg_match('/^(\D*)/u', $formatted, $pre);
+        preg_match('/(\D*)$/u', $formatted, $suf);
+        $prefix = $pre[1] ?? '';
+        $suffix = $suf[1] ?? '';
+        $numeric = substr($formatted, strlen($prefix), strlen($formatted) - strlen($prefix) - strlen($suffix));
+        $symbolRaw = $prefix !== '' ? $prefix : $suffix;
+        $symbol = preg_replace('/^[\s\x{00A0}]+|[\s\x{00A0}]+$/u', '', $symbolRaw);
+        return [$symbol, $numeric];
     }
 
     /**
      * Fallback currency formatter for environments without ext-intl.
      */
-    private static function formatCurrencyFallback(float $amount, string $currency): string
+    private static function formatCurrencyFallback(float $amount, string $currency, ?int $decimals = null): string
     {
         $code = strtoupper($currency);
         $symbols = [
@@ -236,7 +317,7 @@ class Str
             'CAD' => 'CA$',
         ];
         $symbol = $symbols[$code] ?? $code . ' ';
-        return $symbol . number_format_i18n($amount, 2);
+        return $symbol . number_format_i18n($amount, $decimals ?? 2);
     }
 
     /**
