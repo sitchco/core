@@ -72,4 +72,34 @@ class RewriteServiceTest extends TestCase
         $this->expectExceptionMessage('http://example.org/login/');
         $route->processRoute();
     }
+
+    public function testRedirectRouteRuleWithDynamicUrl(): void
+    {
+        $path = '/dynamic-redirect/';
+        $callback = fn() => 'http://example.org/dynamic-destination/';
+        $this->service->register($path, ['callback' => $callback, 'redirect_url' => true]);
+        $registered = $this->service->getRegisteredRewriteRules();
+        $route = end($registered);
+        $this->assertInstanceOf(RedirectRoute::class, $route);
+        $route_id = 'route_' . md5($path);
+        $result = $route->processRoute();
+        $this->assertFalse($result);
+        set_query_var('route', $route_id);
+        $this->expectException(RedirectExitException::class);
+        $this->expectExceptionMessage('http://example.org/dynamic-destination/');
+        $route->processRoute();
+    }
+
+    public function testRedirectRouteRuleWithDynamicUrlFallsThroughOnFalse(): void
+    {
+        $path = '/dynamic-redirect-miss/';
+        $callback = fn() => false;
+        $this->service->register($path, ['callback' => $callback, 'redirect_url' => true]);
+        $registered = $this->service->getRegisteredRewriteRules();
+        $route = end($registered);
+        $this->assertInstanceOf(RedirectRoute::class, $route);
+        $route_id = 'route_' . md5($path);
+        set_query_var('route', $route_id);
+        $this->assertFalse($route->processRoute());
+    }
 }

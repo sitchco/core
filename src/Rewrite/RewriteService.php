@@ -25,7 +25,8 @@ class RewriteService
      * @param array $args {
      * *  @type array $query array of WP_Query parameters
      * *  @type callable $callback function to execute when URL matches the rewrite path
-     * *  @type string $redirect_url URL to redirect to if callback function returns true
+     * *  @type string|bool $redirect_url URL to redirect to if callback returns truthy.
+     * *      Pass `true` to use the callback's string return value as the redirect URL.
      * }
      * @return RewriteService
      */
@@ -34,13 +35,15 @@ class RewriteService
         $args = wp_parse_args($args, [
             'query' => [],
             'callback' => null,
-            'redirect_url' => '',
+            'redirect_url' => null,
         ]);
         if (is_callable($args['callback'])) {
-            // Determine if it's a redirect route
-            $route = $args['redirect_url']
-                ? new RedirectRoute($path, $args['callback'], (string) $args['redirect_url'])
-                : new Route($path, $args['callback']);
+            if ($args['redirect_url'] === null || $args['redirect_url'] === false) {
+                $route = new Route($path, $args['callback']);
+            } else {
+                $static_url = is_string($args['redirect_url']) ? $args['redirect_url'] : null;
+                $route = new RedirectRoute($path, $args['callback'], $static_url);
+            }
         } else {
             // Default to QueryRewrite
             $route = new QueryRewrite($path, (array) $args['query']);
