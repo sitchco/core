@@ -54,7 +54,7 @@
     "admin_menu_parent": "",
     "show_in_admin_bar": true,
     "show_in_nav_menus": false,
-    "show_in_rest": true,
+    "show_in_rest": false,
     "rest_base": "",
     "rest_namespace": "wp\/v2",
     "rest_controller_class": "WP_REST_Posts_Controller",
@@ -78,7 +78,7 @@
     "can_export": true,
     "delete_with_user": false,
     "register_meta_box_cb": "",
-    "enter_title_here": "",
+    "enter_title_here": "Add Name",
     "default_query_parameters": {
         "row-row-0": {
             "key": "",
@@ -88,8 +88,8 @@
     },
     "listing_screen_columns": {
         "row-row-0": {
-            "name": "",
-            "label": "",
+            "name": "title",
+            "label": "Name",
             "sortable": "0",
             "filterable": "0"
         }

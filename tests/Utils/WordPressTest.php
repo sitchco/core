@@ -169,4 +169,48 @@ class WordPressTest extends TestCase
         $types = WordPress::getVisibleSinglePostTypes(true);
         $this->assertNotContains('test_internal', $types);
     }
+
+    // --- captureWithInlineStyleRecovery ---
+
+    public function test_inline_recovery_appends_style_block_for_orphaned_handle(): void
+    {
+        $wp_styles = wp_styles();
+        wp_register_style('wptest-recovery-orphan', false);
+        $wp_styles->done[] = 'wptest-recovery-orphan';
+
+        $output = WordPress::captureWithInlineStyleRecovery(function () {
+            wp_add_inline_style('wptest-recovery-orphan', '.orphan { color: red; }');
+            return '<p>body</p>';
+        });
+
+        $this->assertStringContainsString('<p>body</p>', $output);
+        $this->assertStringContainsString('<style>', $output);
+        $this->assertStringContainsString('.orphan { color: red; }', $output);
+    }
+
+    public function test_inline_recovery_omits_style_block_when_no_orphans(): void
+    {
+        $wp_styles = wp_styles();
+        wp_register_style('wptest-recovery-clean', false);
+        $wp_styles->done[] = 'wptest-recovery-clean';
+
+        $output = WordPress::captureWithInlineStyleRecovery(fn() => '<p>body</p>');
+
+        $this->assertSame('<p>body</p>', $output);
+        $this->assertStringNotContainsString('<style>', $output);
+    }
+
+    public function test_inline_recovery_skips_handles_printed_during_render(): void
+    {
+        wp_register_style('wptest-recovery-printed', false);
+        wp_add_inline_style('wptest-recovery-printed', '.printed { color: blue; }');
+
+        $output = WordPress::captureWithInlineStyleRecovery(function () {
+            wp_styles()->done[] = 'wptest-recovery-printed';
+            return '<p>body</p>';
+        });
+
+        $this->assertSame('<p>body</p>', $output);
+        $this->assertStringNotContainsString('.printed { color: blue; }', $output);
+    }
 }

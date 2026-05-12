@@ -136,6 +136,8 @@ class WordPress
      * wp_add_inline_style() on done handles is silently dropped. This brackets the render with
      * before/after snapshots of each done handle's `after` data and appends any new entries as a
      * trailing <style> block.
+     *
+     * @param callable(): string $renderer
      */
     public static function captureWithInlineStyleRecovery(callable $renderer): string
     {
