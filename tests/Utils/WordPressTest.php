@@ -9,12 +9,21 @@ class WordPressTest extends TestCase
 {
     private array $registered_types = [];
 
+    private ?\WP_Styles $wp_styles_backup = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->wp_styles_backup = $GLOBALS['wp_styles'] ?? null;
+    }
+
     protected function tearDown(): void
     {
         foreach ($this->registered_types as $type) {
             unregister_post_type($type);
         }
         $this->registered_types = [];
+        $GLOBALS['wp_styles'] = $this->wp_styles_backup;
         parent::tearDown();
     }
 
