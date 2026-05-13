@@ -8,6 +8,20 @@ use Timber\Timber;
 
 class ModalDataTest extends TestCase
 {
+    private ?\WP_Styles $wp_styles_backup = null;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->wp_styles_backup = $GLOBALS['wp_styles'] ?? null;
+    }
+
+    protected function tearDown(): void
+    {
+        $GLOBALS['wp_styles'] = $this->wp_styles_backup;
+        parent::tearDown();
+    }
+
     public function test_id_prefixes_digit_starting_ids()
     {
         $normal = new ModalData('about-us', '', '', 'box');

@@ -131,6 +131,43 @@ class WordPress
     }
 
     /**
+     * Run a content renderer and recover inline styles that were added to already-printed handles.
+     * When a renderer (e.g. do_blocks() via Timber Post::content()) runs after wp_head,
+     * wp_add_inline_style() on done handles is silently dropped. This brackets the render with
+     * before/after snapshots of each done handle's `after` data and appends any new entries as a
+     * trailing <style> block.
+     *
+     * @param callable(): string $renderer
+     */
+    public static function captureWithInlineStyleRecovery(callable $renderer): string
+    {
+        $wp_styles = wp_styles();
+        $done_before = $wp_styles->done;
+        $snapshot = [];
+        foreach ($done_before as $handle) {
+            $snapshot[$handle] = $wp_styles->get_data($handle, 'after') ?: [];
+        }
+
+        $content = $renderer();
+
+        $orphaned = [];
+        foreach ($done_before as $handle) {
+            $after = $wp_styles->get_data($handle, 'after') ?: [];
+            $new_entries = array_slice($after, count($snapshot[$handle]));
+            if ($new_entries) {
+                $orphaned[$handle] = $new_entries;
+            }
+        }
+
+        if ($orphaned) {
+            $css = implode("\n", array_merge(...array_values($orphaned)));
+            $content .= "\n<style>\n{$css}\n</style>";
+        }
+
+        return $content;
+    }
+
+    /**
      * Retrieve all post types that have a publicly accessible archive URL.
      *
      * @return string[] An array of post type names with archive views.
