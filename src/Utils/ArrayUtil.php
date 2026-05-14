@@ -117,7 +117,9 @@ class ArrayUtil
                             $filtered = array_filter((array) $value, fn($v) => !ValueUtil::isEmptyValue($v));
                             $value = $key == 'style' ? static::toCSSProperties($filtered) : implode($glue, $filtered);
                         }
-                        if ($value === '') {
+                        // Empty values are stripped, except for attributes where empty has semantic
+                        // meaning (e.g. alt="" marks an image as decorative — distinct from missing alt).
+                        if ($value === '' && !in_array($key, ['alt'], true)) {
                             return '';
                         }
                         return sprintf('%s="%s"', esc_attr($key), esc_attr($value));
