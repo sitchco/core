@@ -123,5 +123,6 @@ class UIModal extends Module
             $modalContent = $this->renderModalContent($modal);
             echo Str::wrapElement($modalContent, 'dialog', $attributes);
         }
+        $this->modalsLoaded = [];
     }
 }

@@ -13,15 +13,6 @@ use WP_Block_Type_Registry;
 
 class VideoBlockTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        // Reset UIModal's modalsLoaded array to prevent test pollution
-        $uiModal = $this->container->get(UIModal::class);
-        $ref = new \ReflectionProperty(UIModal::class, 'modalsLoaded');
-        $ref->setValue($uiModal, []);
-        parent::tearDown();
-    }
-
     // --- Block Registration ---
 
     public function test_module_is_registered(): void
@@ -643,11 +634,6 @@ class VideoBlockTest extends TestCase
             'Without InnerBlocks, modal should have data-has-oembed-poster="true"',
         );
         $this->restoreHttp();
-
-        // Reset modals between sub-tests
-        $uiModal = $this->container->get(UIModal::class);
-        $ref = new \ReflectionProperty(UIModal::class, 'modalsLoaded');
-        $ref->setValue($uiModal, []);
 
         // Test 2: With InnerBlocks -> data-has-oembed-poster="false"
         $url2 = 'https://www.youtube.com/watch?v=poster_flag2';
