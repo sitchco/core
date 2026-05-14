@@ -39,6 +39,9 @@ class UIModal extends Module
             $assets->registerScript(static::hookName(), 'main.js', [UIFramework::hookName()]);
             $assets->registerStyle(static::hookName(), 'main.css');
         });
+        $this->enqueueGlobalAssets(function (ModuleAssets $assets) {
+            $assets->enqueueStyle(static::hookName());
+        });
     }
 
     public function registerType(string $key, array $options = []): void
@@ -108,7 +111,6 @@ class UIModal extends Module
     {
         if (count($this->modalsLoaded)) {
             $this->assets()->enqueueScript(static::hookName());
-            $this->assets()->enqueueStyle(static::hookName());
         }
         foreach ($this->modalsLoaded as $modal) {
             $attributes = apply_filters(
