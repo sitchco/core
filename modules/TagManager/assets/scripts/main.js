@@ -26,7 +26,10 @@ hooks.addAction(
             })),
         };
         captureLandingParams(landingParamsConfig);
-        registerOutboundDecorator(landingParamsConfig);
+        const landingParamsHandle = registerOutboundDecorator(landingParamsConfig);
+        window.sitchco.tagManager = window.sitchco.tagManager ?? {};
+        window.sitchco.tagManager.updateLandingParams = landingParamsHandle.update;
+        window.sitchco.tagManager.clearLandingParams = landingParamsHandle.clear;
     },
     10,
     'tag-manager'
