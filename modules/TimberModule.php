@@ -52,16 +52,56 @@ class TimberModule extends Module
                 'is_safe' => ['html'],
             ];
             $functions['format_currency'] = [
-                'callable' => [Str::class, 'formatCurrency'],
+                'callable' => fn(mixed $amount, array $options = []) => self::guardedNumericCall(
+                    'format_currency',
+                    [Str::class, 'formatCurrency'],
+                    [$amount],
+                    $options,
+                ),
             ];
             $functions['format_currency_range'] = [
-                'callable' => [Str::class, 'formatCurrencyRange'],
+                'callable' => fn(mixed $low, mixed $high, array $options = []) => self::guardedNumericCall(
+                    'format_currency_range',
+                    [Str::class, 'formatCurrencyRange'],
+                    [$low, $high],
+                    $options,
+                ),
             ];
             return $functions;
         });
         add_filter('timber/meta/transform_value', '__return_true');
         add_filter('acf/format_value/type=date_picker', [$this, 'transformDatePicker'], 20);
         add_filter('acf/format_value/type=date_time_picker', [$this, 'transformDatePicker'], 20);
+    }
+
+    private static function guardedNumericCall(string $name, callable $fn, array $numericArgs, mixed ...$rest): string
+    {
+        foreach ($numericArgs as $arg) {
+            if (!is_numeric($arg)) {
+                $template = self::getCallingTwigTemplate();
+                trigger_error(
+                    sprintf(
+                        '%s received non-numeric %s%s',
+                        $name,
+                        get_debug_type($arg),
+                        $template ? " in $template" : '',
+                    ),
+                    E_USER_WARNING,
+                );
+                return '';
+            }
+        }
+        return $fn(...$numericArgs, ...$rest);
+    }
+
+    private static function getCallingTwigTemplate(): ?string
+    {
+        foreach (debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 20) as $frame) {
+            if (isset($frame['object']) && $frame['object'] instanceof \Twig\Template) {
+                return $frame['object']->getTemplateName();
+            }
+        }
+        return null;
     }
 
     /**
