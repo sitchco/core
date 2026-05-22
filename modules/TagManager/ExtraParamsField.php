@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Sitchco\Modules\TagManager;
 
 /**
- * ACF "extra_params" field: key, validation, parsing, and filter registration.
+ * ACF "extra_params" field: key, validation, and CSV parsing helpers.
  *
  * Owns the param-name regex so the same pattern guards both the ACF validator
- * and the runtime token filter consumed by OutboundDomainsConfig.
+ * and the runtime token filter consumed by OutboundDomainsResolver.
  */
 final class ExtraParamsField
 {
@@ -17,16 +17,6 @@ final class ExtraParamsField
     private const PARAM_NAME_PATTERN_HUMAN = '^[A-Za-z0-9_-]+$';
 
     private const PARAM_NAME_PATTERN = '/' . self::PARAM_NAME_PATTERN_HUMAN . '/D';
-
-    public static function register(): void
-    {
-        add_filter('acf/validate_value/key=' . self::FIELD_KEY, [self::class, 'validateExtraParams'], 10, 2);
-    }
-
-    public static function unregister(): void
-    {
-        remove_filter('acf/validate_value/key=' . self::FIELD_KEY, [self::class, 'validateExtraParams'], 10);
-    }
 
     public static function validateExtraParams(bool|string $valid, mixed $value): bool|string
     {

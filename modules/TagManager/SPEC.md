@@ -22,8 +22,9 @@
 |---|---|
 | `TagManager` | Module entry. Boots at `init`; owns asset registration, hook attachment, snippet emission, dataLayer init, and inline-data emission. Declares `DEPENDENCIES = [UIFramework::class]`. |
 | `TagManagerSettings` | ACF options facade. Properties: `gtm_container_ids`, `gtm_decorate_outbound`, `gtm_outbound_domains`. Backed by `OptionsBase`. |
-| `OutboundDomainsConfig` | Immutable value object for the outbound decoration config. Named constructors `fromSettings()` and `fromFilterReturn()`; instance methods `toInlineData()` and `isEmpty()`. |
-| `ExtraParamsField` | Utility owning the `extra_params` ACF field key, parse/filter helpers, and the ACF validator. Self-registers via `ExtraParamsField::register()`. |
+| `OutboundDomainsConfig` | Immutable value object for the outbound decoration config. Inert state with instance methods `toInlineData()` and `isEmpty()`. |
+| `OutboundDomainsResolver` | Boundary adapter that builds an `OutboundDomainsConfig` from settings and the developer filter. Static methods `fromSettings()` and `fromFilterReturn()`; owns CSV parsing, filter application, key normalization, and collision detection. |
+| `ExtraParamsField` | Utility owning the `extra_params` ACF field key, parse/filter helpers, and the ACF validator. The validator is attached directly from `TagManager::init()` via `add_filter`. |
 
 **`TagManager::renderGtmAttribute(mixed $value): string`** — public static helper. Returns `''` for `null`/`''`, ` data-gtm="0"` for `false`/`0`, JSON-encoded HTML-escaped string for arrays/objects, and HTML-escaped string for scalars. Used by the `gtm_attr` Twig function.
 
@@ -37,8 +38,8 @@ All hooks are prefixed via `TagManager::hookName($suffix)`:
 |---|---|---|---|
 | `tag-manager::enable-gtm` | filter | `true` | Master gate. When `false`, `getContainerIds()` returns `[]` and no container snippets render (dataLayer init still renders). |
 | `tag-manager::current-state` | filter | output of `getPageMetadata()` | Lets plugins customize the dataLayer.push() payload. Receives the metadata array; must return an array. An empty return suppresses the push entirely. |
-| `tag-manager::outbound-domains` | filter | normalized ACF config: `array<string, array{extraParams: string[]}>` | Developer override for the outbound decorator config. Filter output is re-validated (`fromFilterReturn`): non-array/non-object returns fall back with `_doing_it_wrong`; invalid tokens are stripped; case-different duplicate domains trigger `_doing_it_wrong` and last-wins. |
-| `acf/validate_value/key=field_69b9be20813a0` | filter | — | The ACF validator attached by `ExtraParamsField::register()`. Receives `(bool\|string $valid, mixed $value)`; returns `true` or an error string identifying the offending token. |
+| `tag-manager::outbound-domains` | filter | normalized ACF config: `array<string, array{extraParams: string[]}>` | Developer override for the outbound decorator config. Filter output is re-validated (`OutboundDomainsResolver::fromFilterReturn`): non-array/non-object returns fall back with `_doing_it_wrong`; invalid tokens are stripped; case-different duplicate domains trigger `_doing_it_wrong` and last-wins. The return root must be an `array` or `ArrayObject`; each entry must be an `array` or `stdClass`. Other iterables (`Generator`, custom `IteratorAggregate`) are unsupported and may silently yield no entries. |
+| `acf/validate_value/key=field_69b9be20813a0` | filter | — | The ACF validator attached from `TagManager::init()` (`add_filter` on `ExtraParamsField::validateExtraParams`). Receives `(bool\|string $valid, mixed $value)`; returns `true` or an error string identifying the offending token. |
 | `timber/twig/functions` | filter (priority 20) | — | Registers the `gtm_attr` Twig function. |
 | `wp_head` priority 4 | action | — | `renderDataLayerInit()` |
 | `wp_head` priority 5 | action | — | Renders one GTM head snippet per container ID. |
@@ -58,7 +59,7 @@ ACF group `group_69b9bd38ce5fb`, scoped to the Tag Manager options page.
 
 ### Wire shape (PHP → JS)
 
-The module emits a single inline-data blob via `ModuleAssets::inlineScriptData()`. The blob is gated: it is only emitted when `OutboundDomainsConfig::fromSettings()->isEmpty()` is false.
+The module emits a single inline-data blob via `ModuleAssets::inlineScriptData()`. The blob is gated: it is only emitted when `OutboundDomainsResolver::fromSettings()->isEmpty()` is false.
 
 ```js
 window.sitchco = window.sitchco || {};
@@ -142,8 +143,8 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 ## Constraints (Must-NOT)
 
 1. **Must not emit the `outboundDecorator` payload when no domains are configured.** The inline-data gate (`isEmpty()`) is the sole authority. A payload with `{ domains: {} }` is never emitted.
-2. **Must not trust ACF storage without re-validation.** `OutboundDomainsConfig::fromSettings()` re-strips invalid tokens via `ExtraParamsField::filterTokens()` even after ACF write-time validation.
-3. **Must not trust filter output without re-validation.** `fromFilterReturn()` is the choke point: malformed root → fall back + `_doing_it_wrong`; non-array entries skipped; non-string `extraParams` coerced to `[]`; invalid tokens silently stripped; case-different duplicates trigger `_doing_it_wrong`.
+2. **Must not trust ACF storage without re-validation.** `OutboundDomainsResolver::fromSettings()` re-strips invalid tokens via `ExtraParamsField::filterTokens()` even after ACF write-time validation.
+3. **Must not trust filter output without re-validation.** `OutboundDomainsResolver::fromFilterReturn()` is the choke point: malformed root → fall back + `_doing_it_wrong`; non-array entries skipped; non-string `extraParams` coerced to `[]`; invalid tokens silently stripped; case-different duplicates trigger `_doing_it_wrong`.
 4. **Must not silently accept an invalid token name on ACF save.** `ExtraParamsField::validateExtraParams()` returns an error string identifying the offending token; the save is rejected.
 5. **Must not render GTM snippets when `tag-manager::enable-gtm` returns false.** Even with container IDs configured, the gate suppresses all snippet output.
 6. **Must not render the dataLayer push when filtered metadata is empty.** The init buffer is still emitted (`dataLayer=dataLayer||[]`), but no `push()` call is made.
@@ -165,7 +166,7 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 1. ACF runs `ExtraParamsField::validateExtraParams()` on the value.
 2. The validator splits on commas, trims each token, and tests each against `^[A-Za-z0-9_-]+$`.
 3. If every token is valid (or the field is empty), the save proceeds.
-4. On next page render, `OutboundDomainsConfig::fromSettings()` re-parses the stored CSV and re-strips invalid tokens (belt-and-suspenders).
+4. On next page render, `OutboundDomainsResolver::fromSettings()` re-parses the stored CSV and re-strips invalid tokens (belt-and-suspenders).
 5. The validated config is emitted to JS via `inlineScriptData`.
 
 **Must NOT:**
@@ -192,7 +193,7 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 **Trigger:** `gtm_decorate_outbound` is false.
 
-**Expected:** `OutboundDomainsConfig::fromSettings()` returns an empty config. No inline-data payload is emitted. The `tag-manager::outbound-domains` filter is **not** invoked.
+**Expected:** `OutboundDomainsResolver::fromSettings()` returns an empty config. No inline-data payload is emitted. The `tag-manager::outbound-domains` filter is **not** invoked.
 
 **Must NOT:** Emit `window.sitchco.tagManager.outboundDecorator` in any form.
 
@@ -202,7 +203,7 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 **Expected:**
 1. The filter receives the post-ACF normalized config.
-2. `fromFilterReturn()` re-validates: domain keys are trimmed + lowercased; non-array entries are skipped; `extraParams` is coerced to `[]` if non-array; tokens are stripped through the regex; case-different duplicates trigger `_doing_it_wrong` and last-wins.
+2. `OutboundDomainsResolver::fromFilterReturn()` re-validates: domain keys are trimmed + lowercased; non-array entries are skipped; `extraParams` is coerced to `[]` if non-array; tokens are stripped through the regex; case-different duplicates trigger `_doing_it_wrong` and last-wins.
 3. The validated value object's `toInlineData()` is shipped to JS.
 
 **Must NOT:**
@@ -380,7 +381,9 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 | Invalid token at ACF save | `validateExtraParams` returns the error string naming the offending token; save rejected. |
 | Invalid token from PHP filter return | `filterTokens` strips it silently on read. |
 | Non-array filter root | `_doing_it_wrong` + fallback to unfiltered ACF config. |
+| Non-array, non-`ArrayObject` iterable filter root (e.g. `Generator`, custom `IteratorAggregate`) | Unsupported. Passes the object gate then silently yields no entries via `(array)` cast. |
 | Non-array filter entry | Skipped. |
+| Non-`stdClass` object filter entry (e.g. custom `IteratorAggregate`) | Unsupported. `extraParams` reads as `[]` and the entry emits with no params. |
 | Non-array `extraParams` in filter entry | Coerced to `[]`. |
 | Integer or empty-string domain key in filter return | Skipped by `buildEntry`. |
 | Domain entered with `https://`, path, port, or leading dot | Passed through unchanged; silently fails to match at runtime. No format validation. |

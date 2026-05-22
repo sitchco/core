@@ -2,12 +2,12 @@
 
 namespace Sitchco\Tests\Modules\TagManager;
 
-use Sitchco\Modules\TagManager\OutboundDomainsConfig;
+use Sitchco\Modules\TagManager\OutboundDomainsResolver;
 use Sitchco\Modules\TagManager\TagManager;
 use Sitchco\Modules\TagManager\TagManagerSettings;
 use Sitchco\Tests\TestCase;
 
-class OutboundDomainsConfigTest extends TestCase
+class OutboundDomainsResolverTest extends TestCase
 {
     private TagManagerSettings $settings;
 
@@ -34,7 +34,7 @@ class OutboundDomainsConfigTest extends TestCase
 
     private function domainsFromSettings(): array
     {
-        return OutboundDomainsConfig::fromSettings($this->settings)->toInlineData()['domains'];
+        return OutboundDomainsResolver::fromSettings($this->settings)->toInlineData()['domains'];
     }
 
     public function test_normalizes_domain_case_and_whitespace(): void
@@ -76,6 +76,16 @@ class OutboundDomainsConfigTest extends TestCase
         $this->assertSame(['partner.com' => ['extraParams' => ['session_hash']]], $this->domainsFromSettings());
     }
 
+    public function test_acf_path_silent_on_case_collision_last_wins(): void
+    {
+        $this->setOutboundDomains(true, [
+            ['domain' => 'PARTNER.COM', 'extra_params' => 'tess'],
+            ['domain' => 'partner.com', 'extra_params' => 'session_hash'],
+        ]);
+        // Intentionally no setExpectedIncorrectUsage — ACF path must NOT emit _doing_it_wrong (per spec S8).
+        $this->assertSame(['partner.com' => ['extraParams' => ['session_hash']]], $this->domainsFromSettings());
+    }
+
     public function test_preserves_config_row_order(): void
     {
         $this->setOutboundDomains(true, [
@@ -111,7 +121,7 @@ class OutboundDomainsConfigTest extends TestCase
     public function test_returns_empty_when_toggle_disabled(): void
     {
         $this->setOutboundDomains(false, [['domain' => 'partner.com', 'extra_params' => 'tess']]);
-        $this->assertTrue(OutboundDomainsConfig::fromSettings($this->settings)->isEmpty());
+        $this->assertTrue(OutboundDomainsResolver::fromSettings($this->settings)->isEmpty());
     }
 
     public function test_filter_receives_nested_config_shape(): void
@@ -125,7 +135,7 @@ class OutboundDomainsConfigTest extends TestCase
             $captured = $domains;
             return $domains;
         });
-        OutboundDomainsConfig::fromSettings($this->settings);
+        OutboundDomainsResolver::fromSettings($this->settings);
         $this->assertSame(
             [
                 'example.com' => ['extraParams' => ['tess']],
@@ -143,7 +153,7 @@ class OutboundDomainsConfigTest extends TestCase
             $called = true;
             return $domains;
         });
-        OutboundDomainsConfig::fromSettings($this->settings);
+        OutboundDomainsResolver::fromSettings($this->settings);
         $this->assertFalse($called);
     }
 
@@ -169,7 +179,7 @@ class OutboundDomainsConfigTest extends TestCase
     {
         $this->setOutboundDomains(true, [['domain' => 'partner.com', 'extra_params' => 'tess']]);
         add_filter(TagManager::hookName('outbound-domains'), fn() => 'not-an-array');
-        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsConfig::fromFilterReturn');
+        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsResolver::fromFilterReturn');
         $result = $this->domainsFromSettings();
         $this->assertSame(['tess'], $result['partner.com']['extraParams'] ?? null);
     }
@@ -213,7 +223,7 @@ class OutboundDomainsConfigTest extends TestCase
                 'partner.com' => ['extraParams' => ['session_hash']],
             ];
         });
-        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsConfig::fromFilterReturn');
-        OutboundDomainsConfig::fromSettings($this->settings);
+        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsResolver::fromFilterReturn');
+        OutboundDomainsResolver::fromSettings($this->settings);
     }
 }

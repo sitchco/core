@@ -26,7 +26,7 @@ class TagManagerTest extends TestCase
         remove_all_filters(TagManager::hookName('enable-gtm'));
         remove_all_filters(TagManager::hookName('current-state'));
         remove_all_filters(TagManager::hookName('outbound-domains'));
-        ExtraParamsField::unregister();
+        remove_all_filters('acf/validate_value/key=' . ExtraParamsField::FIELD_KEY);
         parent::tearDown();
     }
 

@@ -69,4 +69,14 @@ class ExtraParamsFieldTest extends TestCase
     {
         $this->assertSame('prior error', ExtraParamsField::validateExtraParams('prior error', 'tess'));
     }
+
+    public function test_parse_returns_empty_for_whitespace_only_csv(): void
+    {
+        $this->assertSame([], ExtraParamsField::parse(',  ,'));
+    }
+
+    public function test_parse_returns_empty_for_empty_string(): void
+    {
+        $this->assertSame([], ExtraParamsField::parse(''));
+    }
 }
