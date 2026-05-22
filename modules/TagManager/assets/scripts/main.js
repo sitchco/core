@@ -1,4 +1,4 @@
-import { pushEvent, registerClickTracker, captureUtmParams, registerOutboundDecorator } from '@sitchco/datalayer';
+import { pushEvent, registerClickTracker, captureUrlParams, registerOutboundDecorator } from '@sitchco/datalayer';
 import { registerModalTracker } from './lib/modal-tracker.mjs';
 import { registerFormTracker } from './lib/form-tracker.mjs';
 import { registerHashTracker } from './lib/hash-tracker.mjs';
@@ -18,10 +18,18 @@ hooks.addAction(
         registerFormTracker(pushEvent);
         registerHashTracker(pushEvent);
         registerVideoTracker(pushEvent);
-        captureUtmParams();
-
-        const domains = Object.keys(window.sitchco?.tagManager?.outboundDomains || {});
-        registerOutboundDecorator({ domains });
+        const domainsRecord = window.sitchco?.tagManager?.outboundDecorator?.domains ?? {};
+        const outboundDecoratorConfig = {
+            domains: Object.entries(domainsRecord).map(([domain, entry]) => ({
+                domain,
+                extraParams: entry?.extraParams ?? [],
+            })),
+        };
+        const outboundDecoratorHandle = registerOutboundDecorator(outboundDecoratorConfig);
+        captureUrlParams();
+        window.sitchco.tagManager = window.sitchco.tagManager ?? {};
+        window.sitchco.tagManager.updateOutboundDecorator = outboundDecoratorHandle.update;
+        window.sitchco.tagManager.clearOutboundDecorator = outboundDecoratorHandle.clear;
     },
     10,
     'tag-manager'

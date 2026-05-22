@@ -22,10 +22,10 @@ class TagManager extends Module
         });
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript(static::hookName());
-            $outboundDomains = $this->getOutboundDomains();
-            if (!empty($outboundDomains)) {
+            $domains = OutboundDomainsResolver::fromSettings($this->settings);
+            if (!$domains->isEmpty()) {
                 $assets->inlineScriptData(static::hookName(), 'tagManager', [
-                    'outboundDomains' => $outboundDomains,
+                    'outboundDecorator' => $domains->toInlineData(),
                 ]);
             }
         });
@@ -33,6 +33,12 @@ class TagManager extends Module
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
         add_filter('timber/twig/functions', [$this, 'registerTwigFunctions'], 20);
+        add_filter(
+            'acf/validate_value/key=' . ExtraParamsField::FIELD_KEY,
+            [ExtraParamsField::class, 'validateExtraParams'],
+            10,
+            2,
+        );
     }
 
     public function registerOptionsPage(): void
@@ -82,17 +88,6 @@ class TagManager extends Module
             $value = wp_json_encode($value);
         }
         return sprintf(' data-gtm="%s"', esc_attr((string) $value));
-    }
-
-    protected function getOutboundDomains(): array
-    {
-        if (!$this->settings->gtm_decorate_outbound) {
-            return [];
-        }
-        $acfDomains = array_filter(array_column($this->settings->gtm_outbound_domains ?: [], 'domain'));
-        $domains = apply_filters(static::hookName('outbound-domains'), $acfDomains);
-
-        return array_fill_keys(array_values(array_filter($domains)), true);
     }
 
     protected function getContainerIds(): array
