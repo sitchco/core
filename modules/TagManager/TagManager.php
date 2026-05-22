@@ -23,9 +23,9 @@ class TagManager extends Module
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript(static::hookName());
             $domains = OutboundDomainsConfig::fromSettings($this->settings);
-            if (!empty($domains)) {
+            if (!$domains->isEmpty()) {
                 $assets->inlineScriptData(static::hookName(), 'tagManager', [
-                    'landingParams' => ['domains' => $domains],
+                    'outboundDecorator' => $domains->toInlineData(),
                 ]);
             }
         });
@@ -33,12 +33,7 @@ class TagManager extends Module
         add_action('wp_head', fn() => $this->renderContainerSnippets('headSnippet'), 5);
         add_action('wp_body_open', fn() => $this->renderContainerSnippets('bodySnippet'), 1);
         add_filter('timber/twig/functions', [$this, 'registerTwigFunctions'], 20);
-        add_filter(
-            'acf/validate_value/key=' . OutboundDomainsConfig::EXTRA_PARAMS_FIELD_KEY,
-            [OutboundDomainsConfig::class, 'validateExtraParams'],
-            10,
-            2,
-        );
+        ExtraParamsField::register();
     }
 
     public function registerOptionsPage(): void

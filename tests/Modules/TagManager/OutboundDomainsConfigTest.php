@@ -32,13 +32,15 @@ class OutboundDomainsConfigTest extends TestCase
         add_filter('acf/load_value/name=gtm_outbound_domains', fn() => $domains, 10, 0);
     }
 
+    private function domainsFromSettings(): array
+    {
+        return OutboundDomainsConfig::fromSettings($this->settings)->toInlineData()['domains'];
+    }
+
     public function test_normalizes_domain_case_and_whitespace(): void
     {
         $this->setOutboundDomains(true, [['domain' => '  Partner.COM ', 'extra_params' => 'tess']]);
-        $this->assertSame(
-            ['partner.com' => ['extraParams' => ['tess']]],
-            OutboundDomainsConfig::fromSettings($this->settings),
-        );
+        $this->assertSame(['partner.com' => ['extraParams' => ['tess']]], $this->domainsFromSettings());
     }
 
     public function test_strips_invalid_tokens_at_read_time(): void
@@ -46,19 +48,13 @@ class OutboundDomainsConfigTest extends TestCase
         $this->setOutboundDomains(true, [
             ['domain' => 'partner.com', 'extra_params' => 'tess, bad token, session_hash'],
         ]);
-        $this->assertSame(
-            ['partner.com' => ['extraParams' => ['tess', 'session_hash']]],
-            OutboundDomainsConfig::fromSettings($this->settings),
-        );
+        $this->assertSame(['partner.com' => ['extraParams' => ['tess', 'session_hash']]], $this->domainsFromSettings());
     }
 
     public function test_handles_missing_extra_params_key(): void
     {
         $this->setOutboundDomains(true, [['domain' => 'partner.com']]);
-        $this->assertSame(
-            ['partner.com' => ['extraParams' => []]],
-            OutboundDomainsConfig::fromSettings($this->settings),
-        );
+        $this->assertSame(['partner.com' => ['extraParams' => []]], $this->domainsFromSettings());
     }
 
     public function test_drops_malformed_rows(): void
@@ -68,10 +64,7 @@ class OutboundDomainsConfigTest extends TestCase
             ['domain' => 'partner.com', 'extra_params' => 'tess'],
             'not-an-array',
         ]);
-        $this->assertSame(
-            ['partner.com' => ['extraParams' => ['tess']]],
-            OutboundDomainsConfig::fromSettings($this->settings),
-        );
+        $this->assertSame(['partner.com' => ['extraParams' => ['tess']]], $this->domainsFromSettings());
     }
 
     public function test_collapses_duplicate_rows_last_wins(): void
@@ -80,10 +73,7 @@ class OutboundDomainsConfigTest extends TestCase
             ['domain' => 'partner.com', 'extra_params' => 'tess'],
             ['domain' => 'partner.com', 'extra_params' => 'session_hash'],
         ]);
-        $this->assertSame(
-            ['partner.com' => ['extraParams' => ['session_hash']]],
-            OutboundDomainsConfig::fromSettings($this->settings),
-        );
+        $this->assertSame(['partner.com' => ['extraParams' => ['session_hash']]], $this->domainsFromSettings());
     }
 
     public function test_preserves_config_row_order(): void
@@ -92,10 +82,7 @@ class OutboundDomainsConfigTest extends TestCase
             ['domain' => 'partner.com', 'extra_params' => 'tess'],
             ['domain' => 'shop.partner.com', 'extra_params' => 'session_hash'],
         ]);
-        $this->assertSame(
-            ['partner.com', 'shop.partner.com'],
-            array_keys(OutboundDomainsConfig::fromSettings($this->settings)),
-        );
+        $this->assertSame(['partner.com', 'shop.partner.com'], array_keys($this->domainsFromSettings()));
     }
 
     public function test_isolates_tokens_per_domain(): void
@@ -109,7 +96,7 @@ class OutboundDomainsConfigTest extends TestCase
                 'a.com' => ['extraParams' => ['tess']],
                 'b.com' => ['extraParams' => ['session_hash']],
             ],
-            OutboundDomainsConfig::fromSettings($this->settings),
+            $this->domainsFromSettings(),
         );
     }
 
@@ -118,16 +105,13 @@ class OutboundDomainsConfigTest extends TestCase
         $this->setOutboundDomains(true, [
             ['domain' => 'partner.com', 'extra_params' => 'tess, tess, session_hash, tess'],
         ]);
-        $this->assertSame(
-            ['partner.com' => ['extraParams' => ['tess', 'session_hash']]],
-            OutboundDomainsConfig::fromSettings($this->settings),
-        );
+        $this->assertSame(['partner.com' => ['extraParams' => ['tess', 'session_hash']]], $this->domainsFromSettings());
     }
 
     public function test_returns_empty_when_toggle_disabled(): void
     {
         $this->setOutboundDomains(false, [['domain' => 'partner.com', 'extra_params' => 'tess']]);
-        $this->assertSame([], OutboundDomainsConfig::fromSettings($this->settings));
+        $this->assertTrue(OutboundDomainsConfig::fromSettings($this->settings)->isEmpty());
     }
 
     public function test_filter_receives_nested_config_shape(): void
@@ -175,7 +159,7 @@ class OutboundDomainsConfigTest extends TestCase
                 'other.com' => 'not-an-array',
             ];
         });
-        $result = OutboundDomainsConfig::fromSettings($this->settings);
+        $result = $this->domainsFromSettings();
         $this->assertSame(['tess', 'session_hash'], $result['example.com']['extraParams'] ?? null);
         $this->assertSame([], $result['partner.com']['extraParams'] ?? null);
         $this->assertArrayNotHasKey('other.com', $result);
@@ -185,8 +169,8 @@ class OutboundDomainsConfigTest extends TestCase
     {
         $this->setOutboundDomains(true, [['domain' => 'partner.com', 'extra_params' => 'tess']]);
         add_filter(TagManager::hookName('outbound-domains'), fn() => 'not-an-array');
-        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsConfig::normalize');
-        $result = OutboundDomainsConfig::fromSettings($this->settings);
+        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsConfig::fromFilterReturn');
+        $result = $this->domainsFromSettings();
         $this->assertSame(['tess'], $result['partner.com']['extraParams'] ?? null);
     }
 
@@ -196,7 +180,7 @@ class OutboundDomainsConfigTest extends TestCase
         add_filter(TagManager::hookName('outbound-domains'), function () {
             return new \ArrayObject(['partner.com' => ['extraParams' => ['tess']]]);
         });
-        $result = OutboundDomainsConfig::fromSettings($this->settings);
+        $result = $this->domainsFromSettings();
         $this->assertSame(['tess'], $result['partner.com']['extraParams'] ?? null);
     }
 
@@ -206,7 +190,7 @@ class OutboundDomainsConfigTest extends TestCase
         add_filter(TagManager::hookName('outbound-domains'), function () {
             return ['partner.com' => (object) ['extraParams' => ['session_hash']]];
         });
-        $result = OutboundDomainsConfig::fromSettings($this->settings);
+        $result = $this->domainsFromSettings();
         $this->assertSame(['session_hash'], $result['partner.com']['extraParams'] ?? null);
     }
 
@@ -216,7 +200,7 @@ class OutboundDomainsConfigTest extends TestCase
         add_filter(TagManager::hookName('outbound-domains'), function () {
             return ['partner.com' => ['extraParams' => ["foo\n", 'session_hash']]];
         });
-        $result = OutboundDomainsConfig::fromSettings($this->settings);
+        $result = $this->domainsFromSettings();
         $this->assertSame(['session_hash'], $result['partner.com']['extraParams'] ?? null);
     }
 
@@ -229,70 +213,7 @@ class OutboundDomainsConfigTest extends TestCase
                 'partner.com' => ['extraParams' => ['session_hash']],
             ];
         });
-        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsConfig::normalize');
+        $this->setExpectedIncorrectUsage('Sitchco\\Modules\\TagManager\\OutboundDomainsConfig::fromFilterReturn');
         OutboundDomainsConfig::fromSettings($this->settings);
-    }
-
-    public function test_validator_accepts_single_token(): void
-    {
-        $this->assertTrue(OutboundDomainsConfig::validateExtraParams(true, 'tess'));
-    }
-
-    public function test_validator_accepts_csv(): void
-    {
-        $this->assertTrue(OutboundDomainsConfig::validateExtraParams(true, 'tess,session_hash'));
-    }
-
-    public function test_validator_accepts_whitespace_around_tokens(): void
-    {
-        $this->assertTrue(OutboundDomainsConfig::validateExtraParams(true, ' tess , session_hash '));
-    }
-
-    public function test_validator_accepts_empty_string(): void
-    {
-        $this->assertTrue(OutboundDomainsConfig::validateExtraParams(true, ''));
-    }
-
-    public function test_validator_accepts_duplicate_tokens(): void
-    {
-        $this->assertTrue(OutboundDomainsConfig::validateExtraParams(true, 'tess, tess'));
-    }
-
-    /**
-     * @dataProvider invalidCharacterTokenProvider
-     */
-    public function test_validator_rejects_token_with_invalid_character(string $token): void
-    {
-        $result = OutboundDomainsConfig::validateExtraParams(true, $token);
-        $this->assertIsString($result);
-        $this->assertStringContainsString($token, $result);
-    }
-
-    public static function invalidCharacterTokenProvider(): array
-    {
-        return [
-            'space' => ['utm source'],
-            'equals' => ['tess=hash'],
-            'period' => ['tess.hash'],
-        ];
-    }
-
-    public function test_validator_rejects_script_tag(): void
-    {
-        $result = OutboundDomainsConfig::validateExtraParams(true, '<script>');
-        $this->assertIsString($result);
-        $this->assertStringContainsString('<script>', $result);
-    }
-
-    public function test_validator_rejects_when_any_token_invalid(): void
-    {
-        $result = OutboundDomainsConfig::validateExtraParams(true, 'tess, bad token, session_hash');
-        $this->assertIsString($result);
-        $this->assertStringContainsString('bad token', $result);
-    }
-
-    public function test_validator_passes_through_prior_invalid(): void
-    {
-        $this->assertSame('prior error', OutboundDomainsConfig::validateExtraParams('prior error', 'tess'));
     }
 }

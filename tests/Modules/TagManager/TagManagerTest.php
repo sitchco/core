@@ -2,7 +2,7 @@
 
 namespace Sitchco\Tests\Modules\TagManager;
 
-use Sitchco\Modules\TagManager\OutboundDomainsConfig;
+use Sitchco\Modules\TagManager\ExtraParamsField;
 use Sitchco\Modules\TagManager\TagManager;
 use Sitchco\Tests\TestCase;
 
@@ -26,7 +26,7 @@ class TagManagerTest extends TestCase
         remove_all_filters(TagManager::hookName('enable-gtm'));
         remove_all_filters(TagManager::hookName('current-state'));
         remove_all_filters(TagManager::hookName('outbound-domains'));
-        remove_all_filters('acf/validate_value/key=' . OutboundDomainsConfig::EXTRA_PARAMS_FIELD_KEY);
+        ExtraParamsField::unregister();
         parent::tearDown();
     }
 
@@ -54,7 +54,7 @@ class TagManagerTest extends TestCase
         return ob_get_clean();
     }
 
-    private function captureLandingParamsInline(): string
+    private function captureOutboundParamsInline(): string
     {
         $handle = TagManager::hookName();
         $existing = wp_scripts()->registered[$handle]->extra['before'] ?? [];
@@ -65,14 +65,14 @@ class TagManagerTest extends TestCase
         return implode("\n", array_slice($after, $beforeCount));
     }
 
-    private function decodeLandingParams(?string $inline = null): ?array
+    private function decodeOutboundDecoratorPayload(?string $inline = null): ?array
     {
-        $inline ??= $this->captureLandingParamsInline();
+        $inline ??= $this->captureOutboundParamsInline();
         if (!preg_match('/window\.sitchco\.tagManager\s*=\s*(\{.+?\});/s', $inline, $m)) {
             return null;
         }
         $decoded = json_decode($m[1], true);
-        return is_array($decoded) ? $decoded['landingParams'] ?? null : null;
+        return is_array($decoded) ? $decoded['outboundDecorator'] ?? null : null;
     }
 
     public function test_renders_gtm_snippets_for_configured_containers(): void
@@ -181,21 +181,21 @@ class TagManagerTest extends TestCase
         $this->assertStringContainsString('{"label":"Donate","role":"cta"}', $decoded);
     }
 
-    public function test_landing_params_payload_uses_nested_wire_shape(): void
+    public function test_outbound_decorator_payload_uses_nested_wire_shape(): void
     {
         $this->setOutboundDomains(true, [['domain' => 'partner.com', 'extra_params' => 'tess, session_hash']]);
-        $inline = $this->captureLandingParamsInline();
+        $inline = $this->captureOutboundParamsInline();
         $this->assertSame(
             ['domains' => ['partner.com' => ['extraParams' => ['tess', 'session_hash']]]],
-            $this->decodeLandingParams($inline),
+            $this->decodeOutboundDecoratorPayload($inline),
         );
         $this->assertStringNotContainsString('"outboundDomains"', $inline);
     }
 
-    public function test_landing_params_payload_not_emitted_when_no_domains_configured(): void
+    public function test_outbound_decorator_payload_not_emitted_when_no_domains_configured(): void
     {
         $this->setOutboundDomains(true, []);
-        $this->assertNull($this->decodeLandingParams());
+        $this->assertNull($this->decodeOutboundDecoratorPayload());
     }
 
     public function test_datalayer_push_contains_term_metadata(): void
