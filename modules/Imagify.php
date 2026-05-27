@@ -38,10 +38,14 @@ class Imagify extends Module
     /**
      * Set the site root path for Imagify.
      *
-     * @param string $rootPath The original root path.
-     * @return string The modified root path.
+     * Imagify applies this filter with a `null` default (see Imagify_Filesystem::get_site_root())
+     * and falls back to its own path resolution for any non-string return, so the parameter and
+     * return type are nullable to match that contract.
+     *
+     * @param string|null $rootPath The original root path.
+     * @return string|null The modified root path.
      */
-    public function setSiteRoot(string $rootPath): string
+    public function setSiteRoot(?string $rootPath): ?string
     {
         $uploadBaseDir = imagify_get_filesystem()->get_upload_basedir(true);
 
