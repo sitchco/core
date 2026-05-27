@@ -14,6 +14,9 @@ class TagManagerTest extends TestCase
     {
         parent::setUp();
         acf_get_store('values')->reset();
+        // Isolate from any outbound-domains filter an active app module may have registered at
+        // bootstrap (e.g. the theme's CriterionLinkDecorator); these tests drive config themselves.
+        remove_all_filters(TagManager::hookName('outbound-domains'));
         $this->module = $this->container->get(TagManager::class);
         $this->module->init();
     }

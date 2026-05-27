@@ -15,6 +15,10 @@ class OutboundDomainsResolverTest extends TestCase
     {
         parent::setUp();
         acf_get_store('values')->reset();
+        // Isolate the resolver from any outbound-domains filter an active app module may have
+        // registered at bootstrap (e.g. the theme's CriterionLinkDecorator); these tests drive
+        // the filter input themselves.
+        remove_all_filters(TagManager::hookName('outbound-domains'));
         $this->settings = $this->container->get(TagManagerSettings::class);
     }
 
