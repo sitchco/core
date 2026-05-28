@@ -323,10 +323,17 @@
 
 /* Video modal dialog */
 
-.sitchco-modal--video {
+/*
+ * Doubled `.sitchco-modal` class lifts these overrides to specificity (0,2,0)
+ * so the video-modal variant wins over child-theme rules that set the same
+ * `--modal-*` custom properties on `.sitchco-modal` (0,1,0) and load after
+ * this stylesheet in the cascade. Mirrors the image-modal variant.
+ */
+.sitchco-modal.sitchco-modal--video {
     --modal-container-bg: transparent;
     --modal-container-color: #fff;
     --modal-container-padding: 0;
+    --modal-container-border-radius: 0;
     --modal-container-width: fit-content;
     --modal-close-color: #fff;
     --modal-close-top: 0.5rem;
