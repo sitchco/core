@@ -131,13 +131,22 @@ class AcfPostTypeAdminFilters extends Module
                 'label' => "Filter by {$row['label']}",
                 'selected' => false,
             ];
-            // Add label for each value
-            array_walk($field_values, fn($el) => ($el->label = (string) $el->meta_value));
-            // Hook: sitchco/acf_post_type_admin_filters/filter_values
+            // Derive each option's label from the same column_content/{column} filter chain that
+            // renders the column cell, so a module writes one handler for both. Wrap the value to
+            // match postMeta()'s array shape; pass post_id 0 since there's no single post.
+            array_walk($field_values, function ($el) use ($id, $post_type_config) {
+                $label = AcfPostTypeAdminColumns::renderColumnContent($id, [$el->meta_value], 0, $post_type_config);
+                $el->label = $label !== '' ? $label : (string) $el->meta_value;
+            });
+            // Hook: sitchco/acf_post_type_admin_filters/filter_values (optional array-level pass)
             $field_values = apply_filters(static::hookName('filter_values', $id), $field_values, $post_type_config);
 
             // Build options and determine whether value is currently selected
             foreach ($field_values as $field) {
+                // Skip empty values (not '0', which is a valid value); they make no useful filter
+                if ($field->meta_value === '' || $field->meta_value === null) {
+                    continue;
+                }
                 $filter['options'][] = [
                     'value' => urlencode($field->meta_value),
                     'label' => $field->label,

@@ -94,6 +94,31 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         );
     }
 
+    public function test_custom_filter_labels_use_column_content(): void
+    {
+        $this->createAcfPostTypeConfig();
+        $this->createPosts();
+
+        // One handler now drives both the column cell and the filter labels
+        add_filter('sitchco/acf_post_type_admin_columns/column_content/price_code', function ($content) {
+            $code = is_array($content) ? $content[0] ?? '' : $content;
+            return $code === '' ? '' : "Tier {$code}";
+        });
+
+        $_GET = ['price_code' => 'B'];
+        $filters = $this->module->renderColumnFilters($this->post_type, '');
+
+        $this->assertEquals(
+            [
+                ['value' => '', 'label' => 'Filter by Price Code', 'selected' => false],
+                ['value' => 'A', 'label' => 'Tier A', 'selected' => false],
+                ['value' => 'B', 'label' => 'Tier B', 'selected' => true],
+                ['value' => 'C', 'label' => 'Tier C', 'selected' => false],
+            ],
+            $filters['price_code']['options'],
+        );
+    }
+
     public function test_taxonomy_filter_includes_unpublished_and_excludes_empty_terms(): void
     {
         $this->createAcfPostTypeConfig();
