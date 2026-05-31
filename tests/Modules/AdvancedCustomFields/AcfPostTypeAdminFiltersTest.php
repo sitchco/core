@@ -94,6 +94,45 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         );
     }
 
+    public function test_taxonomy_filter_includes_unpublished_and_excludes_empty_terms(): void
+    {
+        $this->createAcfPostTypeConfig();
+
+        foreach (
+            ['published-cat' => 'Published Cat', 'draft-cat' => 'Draft Cat', 'empty-cat' => 'Empty Cat']
+            as $slug => $name
+        ) {
+            $this->factory()->term->create([
+                'taxonomy' => $this->taxonomy,
+                'name' => $name,
+                'slug' => $slug,
+            ]);
+        }
+
+        $published = $this->factory()->post->create_and_get([
+            'post_type' => $this->post_type,
+            'post_status' => 'publish',
+        ]);
+        wp_set_object_terms($published->ID, 'published-cat', $this->taxonomy);
+
+        $draft = $this->factory()->post->create_and_get([
+            'post_type' => $this->post_type,
+            'post_status' => 'draft',
+        ]);
+        wp_set_object_terms($draft->ID, 'draft-cat', $this->taxonomy);
+
+        // Term attached only to a different post type must not leak in
+        $other = $this->factory()->post->create_and_get(['post_type' => 'post']);
+        wp_set_object_terms($other->ID, 'published-cat', $this->taxonomy);
+
+        $filters = $this->module->renderColumnFilters($this->post_type, '');
+        $slugs = array_column($filters['performance-category']['options'], 'value');
+
+        $this->assertContains('published-cat', $slugs);
+        $this->assertContains('draft-cat', $slugs); // the fix: term used only by a draft
+        $this->assertNotContains('empty-cat', $slugs); // still excludes truly empty terms
+    }
+
     public function test_appends_parsed_query_with_selected_meta_filters(): void
     {
         global $wp_query, $pagenow;
