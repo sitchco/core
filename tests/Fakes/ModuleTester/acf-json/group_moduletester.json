@@ -1,0 +1,15 @@
+{
+    "key": "group_moduletester",
+    "title": "Module Tester",
+    "fields": [],
+    "location": [],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "",
+    "modified": 1700000000
+}
