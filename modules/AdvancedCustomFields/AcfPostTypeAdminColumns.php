@@ -191,6 +191,11 @@ class AcfPostTypeAdminColumns extends Module
      * column_content/{column} handler drives both the cell and the filter label. The generic
      * column_content hook (where postMeta does a DB lookup) is intentionally excluded.
      *
+     * Caller contract for the filter-label path (no single post):
+     *  - Wrap the raw meta value in a single-element array to match postMeta()'s get_post_meta()
+     *    shape — handlers read $content[0], so a bare scalar would silently break them.
+     *  - Pass post_id 0 as the "no single post" sentinel; post-dependent handlers must tolerate it.
+     *
      * @param string $column_name
      * @param mixed $content
      * @param int $post_id
@@ -259,15 +264,19 @@ class AcfPostTypeAdminColumns extends Module
 
     public function editor($content, $post_id): string
     {
+        // No real post in the filter-label path (post_id 0); fall back without dereferencing null.
         $post = get_post($post_id);
+        $fallback = is_array($content) ? '' : (string) $content;
 
-        return strip_tags($post->post_content) ?: $content;
+        return $post ? (strip_tags($post->post_content) ?: $fallback) : $fallback;
     }
 
     public function excerpt($content, $post_id): string
     {
+        // No real post in the filter-label path (post_id 0); fall back without dereferencing null.
         $post = get_post($post_id);
+        $fallback = is_array($content) ? '' : (string) $content;
 
-        return strip_tags($post->post_excerpt) ?: $content;
+        return $post ? (strip_tags($post->post_excerpt) ?: $fallback) : $fallback;
     }
 }

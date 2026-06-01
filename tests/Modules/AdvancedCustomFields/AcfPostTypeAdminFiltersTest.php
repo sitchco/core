@@ -124,7 +124,15 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
         $this->createAcfPostTypeConfig();
 
         foreach (
-            ['published-cat' => 'Published Cat', 'draft-cat' => 'Draft Cat', 'empty-cat' => 'Empty Cat']
+            [
+                'published-cat' => 'Published Cat',
+                'draft-cat' => 'Draft Cat',
+                'pending-cat' => 'Pending Cat',
+                'future-cat' => 'Future Cat',
+                'private-cat' => 'Private Cat',
+                'empty-cat' => 'Empty Cat',
+                'foreign-cat' => 'Foreign Cat',
+            ]
             as $slug => $name
         ) {
             $this->factory()->term->create([
@@ -134,28 +142,60 @@ class AcfPostTypeAdminFiltersTest extends AcfPostTypeTest
             ]);
         }
 
-        $published = $this->factory()->post->create_and_get([
-            'post_type' => $this->post_type,
-            'post_status' => 'publish',
-        ]);
-        wp_set_object_terms($published->ID, 'published-cat', $this->taxonomy);
-
-        $draft = $this->factory()->post->create_and_get([
-            'post_type' => $this->post_type,
-            'post_status' => 'draft',
-        ]);
-        wp_set_object_terms($draft->ID, 'draft-cat', $this->taxonomy);
+        // One CPT post per listing-visible status, each attached to its own term
+        $statuses = [
+            'publish' => 'published-cat',
+            'draft' => 'draft-cat',
+            'pending' => 'pending-cat',
+            'future' => 'future-cat',
+            'private' => 'private-cat',
+        ];
+        foreach ($statuses as $status => $term_slug) {
+            $post = $this->factory()->post->create_and_get([
+                'post_type' => $this->post_type,
+                'post_status' => $status,
+                'post_date' => $status === 'future' ? '2999-01-01 00:00:00' : '2024-11-20 00:00:00',
+            ]);
+            wp_set_object_terms($post->ID, $term_slug, $this->taxonomy);
+        }
 
         // Term attached only to a different post type must not leak in
         $other = $this->factory()->post->create_and_get(['post_type' => 'post']);
-        wp_set_object_terms($other->ID, 'published-cat', $this->taxonomy);
+        wp_set_object_terms($other->ID, 'foreign-cat', $this->taxonomy);
 
         $filters = $this->module->renderColumnFilters($this->post_type, '');
         $slugs = array_column($filters['performance-category']['options'], 'value');
 
-        $this->assertContains('published-cat', $slugs);
-        $this->assertContains('draft-cat', $slugs); // the fix: term used only by a draft
+        // The fix: terms surface for every listing-visible status, not just published
+        foreach ($statuses as $term_slug) {
+            $this->assertContains($term_slug, $slugs);
+        }
         $this->assertNotContains('empty-cat', $slugs); // still excludes truly empty terms
+        $this->assertNotContains('foreign-cat', $slugs); // excludes terms used only by other post types
+    }
+
+    public function test_filterable_editor_excerpt_column_does_not_fatal(): void
+    {
+        // Mark the built-in excerpt column filterable; renderColumnContent() will route its values
+        // through the excerpt() handler with post_id 0, which previously fataled on get_post(0).
+        $this->acf_post_type_config['listing_screen_columns']['row-row-1']['filterable'] = '1';
+        $this->createAcfPostTypeConfig();
+
+        $this->factory()->post->create([
+            'post_type' => $this->post_type,
+            'meta_input' => ['excerpt' => 'Some Summary'],
+        ]);
+        $this->factory()->post->create([
+            'post_type' => $this->post_type,
+            'meta_input' => ['excerpt' => 'Another Summary'],
+        ]);
+
+        $filters = $this->module->renderColumnFilters($this->post_type, '');
+
+        $this->assertArrayHasKey('excerpt', $filters);
+        foreach ($filters['excerpt']['options'] as $option) {
+            $this->assertIsString($option['label']);
+        }
     }
 
     public function test_appends_parsed_query_with_selected_meta_filters(): void

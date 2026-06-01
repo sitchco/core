@@ -133,9 +133,11 @@ class AcfPostTypeAdminFilters extends Module
             ];
             // Derive each option's label from the same column_content/{column} filter chain that
             // renders the column cell, so a module writes one handler for both. Wrap the value to
-            // match postMeta()'s array shape; pass post_id 0 since there's no single post.
+            // match postMeta()'s array shape and maybe_unserialize() it so handlers see the same
+            // input the cell path does; pass post_id 0 since there's no single post.
             array_walk($field_values, function ($el) use ($id, $post_type_config) {
-                $label = AcfPostTypeAdminColumns::renderColumnContent($id, [$el->meta_value], 0, $post_type_config);
+                $value = maybe_unserialize($el->meta_value);
+                $label = AcfPostTypeAdminColumns::renderColumnContent($id, [$value], 0, $post_type_config);
                 $el->label = $label !== '' ? $label : (string) $el->meta_value;
             });
             // Hook: sitchco/acf_post_type_admin_filters/filter_values (optional array-level pass)
