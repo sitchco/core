@@ -125,7 +125,7 @@ class ModuleAssetsTest extends TestCase
         ob_start();
         $deps->do_item($handle);
         $output = ob_get_clean();
-        $this->assertStringStartsWith($expected, $output);
+        $this->assertHTMLEquals($expected, $output);
     }
 
     public function test_creating_from_module()

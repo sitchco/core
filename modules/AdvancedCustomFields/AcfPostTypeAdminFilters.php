@@ -131,13 +131,24 @@ class AcfPostTypeAdminFilters extends Module
                 'label' => "Filter by {$row['label']}",
                 'selected' => false,
             ];
-            // Add label for each value
-            array_walk($field_values, fn($el) => ($el->label = (string) $el->meta_value));
-            // Hook: sitchco/acf_post_type_admin_filters/filter_values
+            // Derive each option's label from the same column_content/{column} filter chain that
+            // renders the column cell, so a module writes one handler for both. Wrap the value to
+            // match postMeta()'s array shape and maybe_unserialize() it so handlers see the same
+            // input the cell path does; pass post_id 0 since there's no single post.
+            array_walk($field_values, function ($el) use ($id, $post_type_config) {
+                $value = maybe_unserialize($el->meta_value);
+                $label = AcfPostTypeAdminColumns::renderColumnContent($id, [$value], 0, $post_type_config);
+                $el->label = $label !== '' ? $label : (string) $el->meta_value;
+            });
+            // Hook: sitchco/acf_post_type_admin_filters/filter_values (optional array-level pass)
             $field_values = apply_filters(static::hookName('filter_values', $id), $field_values, $post_type_config);
 
             // Build options and determine whether value is currently selected
             foreach ($field_values as $field) {
+                // Skip empty values (not '0', which is a valid value); they make no useful filter
+                if ($field->meta_value === '' || $field->meta_value === null) {
+                    continue;
+                }
                 $filter['options'][] = [
                     'value' => urlencode($field->meta_value),
                     'label' => $field->label,
@@ -158,14 +169,40 @@ class AcfPostTypeAdminFilters extends Module
      */
     protected function getTaxonomyFilters(array $post_type_config): array
     {
+        /** @var wpdb $wpdb */
+        global $wpdb;
         $filters = [];
+        $post_type = $post_type_config['post_type'];
         $taxonomies = array_filter((array) $post_type_config['taxonomies']);
         foreach ($taxonomies as $tax_slug) {
             $tax_obj = get_taxonomy($tax_slug);
             if (!$tax_obj->show_admin_column) {
                 continue;
             }
-            $terms = get_terms(['taxonomy' => $tax_slug]);
+            // Build the term list from terms actually attached to posts of this type across all
+            // listing-visible statuses. Relying on get_terms()'s `hide_empty` would only count
+            // published posts (the stored term count), hiding terms used solely by drafts, etc.
+            $term_ids = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT DISTINCT tt.term_id
+                     FROM $wpdb->term_relationships tr
+                     INNER JOIN $wpdb->term_taxonomy tt ON tt.term_taxonomy_id = tr.term_taxonomy_id
+                     INNER JOIN $wpdb->posts p ON p.ID = tr.object_id
+                     WHERE tt.taxonomy = %s
+                       AND p.post_type = %s
+                       AND p.post_status NOT IN ('trash', 'auto-draft')",
+                    $tax_slug,
+                    $post_type,
+                ),
+            );
+            if (empty($term_ids)) {
+                continue;
+            }
+            $terms = get_terms([
+                'taxonomy' => $tax_slug,
+                'include' => $term_ids,
+                'hide_empty' => false, // safe: `include` already guarantees real usage
+            ]);
             if (is_wp_error($terms)) {
                 continue;
             }

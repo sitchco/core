@@ -175,34 +175,62 @@ class AcfPostTypeAdminColumns extends Module
         if (!in_array($column_name, array_column($column_config, 'name'))) {
             return;
         }
-        $slug = $post_type_config['post_type'];
-        $filter_base = 'column_content';
-        $content = '';
         /**
+         * Generic hook — `postMeta()` populates $content from the DB by $post_id here.
          * add_filter('sitchco/acf_post_type_admin_columns/column_content', 'my_func', 10, 4);
          * function my_func($content, $post_id, $column_id, $post_type_config){ return $content; }
          */
-        $content = apply_filters(static::hookName($filter_base), $content, $post_id, $column_name, $post_type_config);
+        $content = apply_filters(static::hookName('column_content'), '', $post_id, $column_name, $post_type_config);
+        echo static::renderColumnContent($column_name, $content, $post_id, $post_type_config);
+    }
+
+    /**
+     * Applies the column-specific content filters to a value and collapses it to a display string.
+     *
+     * Shared by columnContent() and the admin filter dropdown so a single
+     * column_content/{column} handler drives both the cell and the filter label. The generic
+     * column_content hook (where postMeta does a DB lookup) is intentionally excluded.
+     *
+     * Caller contract for the filter-label path (no single post):
+     *  - Wrap the raw meta value in a single-element array to match postMeta()'s get_post_meta()
+     *    shape — handlers read $content[0], so a bare scalar would silently break them.
+     *  - Pass post_id 0 as the "no single post" sentinel; post-dependent handlers must tolerate it.
+     *
+     * @param string $column_name
+     * @param mixed $content
+     * @param int $post_id
+     * @param array $post_type_config
+     * @return string
+     */
+    public static function renderColumnContent(
+        string $column_name,
+        $content,
+        int $post_id,
+        array $post_type_config,
+    ): string {
+        $slug = $post_type_config['post_type'];
         /**
          * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_name}}', 'my_func', 10, 3);
          * function my_func($content, $post_id, $post_type_config){ return $content; }
          */
-        $content = apply_filters(static::hookName($filter_base, $column_name), $content, $post_id, $post_type_config);
+        $content = apply_filters(
+            static::hookName('column_content', $column_name),
+            $content,
+            $post_id,
+            $post_type_config,
+        );
         /**
          * add_filter('sitchco/acf_post_type_admin_columns/column_content/{{column_name}}/{{post_type}}', 'my_func', 10, 2);
          * function my_func($content, $post_id, $post_type_config){ return $content; }
          */
         $content = apply_filters(
-            static::hookName($filter_base, $column_name, $slug),
+            static::hookName('column_content', $column_name, $slug),
             $content,
             $post_id,
             $post_type_config,
         );
 
-        if (is_array($content)) {
-            $content = implode(' | ', $content);
-        }
-        echo $content;
+        return is_array($content) ? implode(' | ', $content) : (string) $content;
     }
 
     /**
@@ -236,15 +264,19 @@ class AcfPostTypeAdminColumns extends Module
 
     public function editor($content, $post_id): string
     {
+        // No real post in the filter-label path (post_id 0); fall back without dereferencing null.
         $post = get_post($post_id);
+        $fallback = is_array($content) ? '' : (string) $content;
 
-        return strip_tags($post->post_content) ?: $content;
+        return $post ? (strip_tags($post->post_content) ?: $fallback) : $fallback;
     }
 
     public function excerpt($content, $post_id): string
     {
+        // No real post in the filter-label path (post_id 0); fall back without dereferencing null.
         $post = get_post($post_id);
+        $fallback = is_array($content) ? '' : (string) $content;
 
-        return strip_tags($post->post_excerpt) ?: $content;
+        return $post ? (strip_tags($post->post_excerpt) ?: $fallback) : $fallback;
     }
 }
