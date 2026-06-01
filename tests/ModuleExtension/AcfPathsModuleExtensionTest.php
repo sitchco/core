@@ -15,9 +15,13 @@ class AcfPathsModuleExtensionTest extends TestCase
     {
         parent::setUp();
         $this->module = new ModuleTester();
-        $this->extension = new AcfPathsModuleExtension();
+        // Resolve through the container to match production wiring
+        // (ModuleRegistry::extensionPass() resolves extensions via the container),
+        // staying robust if the extension later gains constructor dependencies.
+        $this->extension = $this->container->get(AcfPathsModuleExtension::class);
         // extend() is the public seam that injects the active modules the
-        // extension resolves save paths against.
+        // extension resolves save paths against; the controlled module set keeps
+        // the filters isolated against a known fixture.
         $this->extension->extend([$this->module]);
     }
 
@@ -53,6 +57,20 @@ class AcfPathsModuleExtensionTest extends TestCase
         $this->assertContains($this->module->path('acf-json')->value(), $result);
         // ACF requires plain string paths; FilePath objects must be cast before
         // being returned from the filter.
+        $this->assertContainsOnly('string', $result);
+    }
+
+    public function test_dedupes_module_path_already_present_in_load_paths(): void
+    {
+        // The module's acf-json dir is already present in the incoming paths, so the
+        // merge+array_unique must collapse it to a single (string) entry rather than
+        // returning two copies (one string, one FilePath).
+        $modulePath = $this->module->path('acf-json')->value();
+
+        $result = $this->extension->addModuleJsonPaths([$modulePath]);
+
+        $matches = array_values(array_filter($result, fn($p) => $p === $modulePath));
+        $this->assertCount(1, $matches);
         $this->assertContainsOnly('string', $result);
     }
 
