@@ -17,6 +17,9 @@ class ImagifyTest extends TestCase
     {
         parent::setUp();
         $this->imagify = $this->container->get(Imagify::class);
+        if (!$this->imagify->isImagifyActivated()) {
+            $this->markTestSkipped('Imagify is not activated.');
+        }
     }
 
     public function testInitAddsFilter()

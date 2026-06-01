@@ -30,7 +30,7 @@ class Imagify extends Module
      *
      * @return bool True if Imagify is activated, false otherwise.
      */
-    private function isImagifyActivated(): bool
+    public function isImagifyActivated(): bool
     {
         return class_exists('Imagify');
     }

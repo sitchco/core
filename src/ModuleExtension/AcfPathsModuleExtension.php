@@ -37,7 +37,9 @@ class AcfPathsModuleExtension implements ModuleExtension
      */
     public function addModuleJsonPaths(array $paths): array
     {
-        $modulePaths = $this->getModuleJsonPaths();
+        // Cast FilePath objects to strings: ACF no longer coerces non-string
+        // load paths and rejects anything that isn't a plain string.
+        $modulePaths = array_map('strval', $this->getModuleJsonPaths());
 
         return array_unique(array_merge($paths, $modulePaths));
     }
@@ -62,7 +64,8 @@ class AcfPathsModuleExtension implements ModuleExtension
         // Use the field group key as provided (it should already include the "group_" prefix).
         $foundJsonPath = Acf::findJsonFile($modulePaths, $post['key']);
 
-        return $foundJsonPath ? [$foundJsonPath] : $paths;
+        // Cast to a string: ACF rejects a FilePath object as a save path.
+        return $foundJsonPath ? [(string) $foundJsonPath] : $paths;
     }
 
     /**
