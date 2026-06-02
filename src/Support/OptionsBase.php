@@ -51,6 +51,12 @@ class OptionsBase
     protected function get($name)
     {
         $default_value = func_get_args()[1] ?? ($this->default_values[$name] ?? null);
+        // ACF isn't loaded in every context this runs in: mu-plugins load before regular plugins,
+        // and minimal bootstraps like `wp core is-installed` skip plugins entirely. Fall back to the
+        // default rather than fataling on an undefined get_field().
+        if (!function_exists('get_field')) {
+            return $default_value;
+        }
         $value = get_field($name, 'option');
         $type = gettype($default_value);
         if (in_array($type, ['boolean', 'integer', 'double', 'string', 'array', 'object'])) {
