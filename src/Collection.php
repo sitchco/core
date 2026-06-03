@@ -16,20 +16,25 @@ use WP_Query;
  */
 class Collection extends IlluminateCollection implements PostCollectionInterface, JsonSerializable
 {
-    protected PostQuery $postQuery;
+    protected ?PostQuery $postQuery = null;
 
-    public function __construct(iterable $postQuery)
+    /**
+     * Accepts a PostQuery on initial creation to retain query context (pagination, etc.).
+     * Parent collection methods (map, filter, ...) clone via `new static($items)` with plain
+     * arrays, so the constructor must also accept any iterable; derived collections simply
+     * lose the PostQuery context.
+     */
+    public function __construct($items = [])
     {
-        if (!($postQuery instanceof PostQuery)) {
-            throw new \Exception('Collection iterable must be in instance of PostQuery');
+        if ($items instanceof PostQuery) {
+            $this->postQuery = $items;
         }
-        $this->postQuery = $postQuery;
-        parent::__construct($postQuery);
+        parent::__construct($items);
     }
 
     public function pagination(array $options = []): ?Pagination
     {
-        return $this->postQuery->pagination($options);
+        return $this->postQuery?->pagination($options);
     }
 
     public function to_array(): array
@@ -44,16 +49,16 @@ class Collection extends IlluminateCollection implements PostCollectionInterface
 
     public function query(): ?WP_Query
     {
-        return $this->postQuery->query();
+        return $this->postQuery?->query();
     }
 
     public function realize(): PostQuery|PostCollectionInterface
     {
-        return $this->postQuery->realize();
+        return $this->postQuery?->realize() ?? $this;
     }
 
     public function __debugInfo(): array
     {
-        return $this->postQuery->__debugInfo();
+        return $this->postQuery?->__debugInfo() ?? $this->items;
     }
 }

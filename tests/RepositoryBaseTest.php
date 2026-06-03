@@ -178,6 +178,19 @@ class RepositoryBaseTest extends TestCase
         wp_reset_postdata();
     }
 
+    public function test_find_results_support_collection_methods()
+    {
+        $this->factory()->post->create(['post_title' => 'Post 1']);
+        $this->factory()->post->create(['post_title' => 'Post 2']);
+        $found_posts = $this->container->get(PostRepository::class)->findAll();
+
+        // Regression: map() clones the collection with a plain array, which
+        // previously threw because the constructor required a PostQuery
+        $titles = $found_posts->map(fn($post) => $post->title());
+        $this->assertInstanceOf(Collection::class, $titles);
+        $this->assertEquals(['Post 1', 'Post 2'], $titles->to_array());
+    }
+
     public function test_find_all_method()
     {
         $first_post_id = $this->factory()->post->create(['post_title' => 'Post 1']);
