@@ -321,6 +321,22 @@ class Str
     }
 
     /**
+     * Strips HTML tags, comments, and entities from a string and trims whitespace,
+     * including non-breaking spaces.
+     *
+     * Useful for testing whether HTML content (e.g. block markup) is effectively empty.
+     *
+     * @param string $html The HTML content.
+     * @return string The plain-text content with surrounding whitespace removed.
+     */
+    public static function trimHtml(string $html): string
+    {
+        $text = wp_strip_all_tags($html);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        return trim($text, " \t\n\r\0\x0B\u{A0}");
+    }
+
+    /**
      * Normalize color value to RGB format
      *
      * @param string $hex Hex color (#RGB or #RRGGBB) or RGB string

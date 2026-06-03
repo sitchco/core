@@ -364,6 +364,39 @@ class StrTest extends TestCase
         $this->assertSame('<div data-test="x">Hello</div>', $result);
     }
 
+    // --- trimHtml ---
+
+    /**
+     * @dataProvider trimHtmlProvider
+     */
+    public function test_trim_html(string $input, string $expected): void
+    {
+        $this->assertSame($expected, Str::trimHtml($input));
+    }
+
+    public static function trimHtmlProvider(): array
+    {
+        return [
+            'plain text unchanged' => ['Hello world', 'Hello world'],
+            'surrounding whitespace trimmed' => ["  Hello world \n", 'Hello world'],
+            'tags stripped' => ['<p>Hello <strong>world</strong></p>', 'Hello world'],
+            'html comments stripped' => ['<!-- a comment -->Hello', 'Hello'],
+            'entities decoded' => ['Tom &amp; Jerry', 'Tom & Jerry'],
+            'empty string' => ['', ''],
+            'whitespace only' => ["  \n\t ", ''],
+            'tags only' => ['<p></p><div></div>', ''],
+            'nbsp entity only' => ['&nbsp;', ''],
+            'nbsp character only' => ["\u{A0}", ''],
+            'empty paragraph block markup' => ["<!-- wp:paragraph -->\n<p>&nbsp;</p>\n<!-- /wp:paragraph -->", ''],
+            'block delimiters with no inner content' => ["<!-- wp:paragraph -->\n<!-- /wp:paragraph -->", ''],
+            'paragraph block with content' => [
+                "<!-- wp:paragraph -->\n<p>A short bio.</p>\n<!-- /wp:paragraph -->",
+                'A short bio.',
+            ],
+            'interior nbsp preserved' => ['Hello&nbsp;world', "Hello\u{A0}world"],
+        ];
+    }
+
     // --- hexToRGB ---
 
     public function test_hex_to_rgb_six_digit(): void
