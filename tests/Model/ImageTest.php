@@ -25,6 +25,15 @@ class ImageTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_build_from_missing_attachment_returns_null()
+    {
+        $deleted_id = $this->factory()->attachment->create_upload_object(
+            SITCHCO_CORE_FIXTURES_DIR . '/sample-image.jpg',
+        );
+        wp_delete_attachment($deleted_id, true);
+        $this->assertNull(Image::buildFromAttachmentId($deleted_id));
+    }
+
     public function test_render_image()
     {
         $image = Image::buildFromAttachmentId($this->attachment_id);

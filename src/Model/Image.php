@@ -27,9 +27,11 @@ class Image extends \Timber\Image
 
     private array $attrs = [];
 
-    public static function buildFromAttachmentId(int $attachment_id): static
+    public static function buildFromAttachmentId(int $attachment_id): ?static
     {
-        return static::build(get_post($attachment_id));
+        $attachment = get_post($attachment_id);
+        // The attachment may have been deleted since the reference was stored
+        return $attachment instanceof \WP_Post ? static::build($attachment) : null;
     }
 
     public function attrs(): array
