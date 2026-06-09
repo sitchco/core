@@ -365,4 +365,95 @@ class Str
         preg_match('/(?<=\()(\d+,\s*\d+,\s*\d+)/', $hex, $matches);
         return $matches[0] ?? '';
     }
+
+    /**
+     * Convert a hex color to HSL components.
+     *
+     * Accepts the same input forms as hexToRGB (#RGB, #RRGGBB, or an
+     * rgb(...) string). Hue is returned in degrees (0-360); saturation and
+     * lightness as percentages (0-100). Invalid input degrades to black
+     * ([0, 0, 0]) rather than throwing.
+     *
+     * @param string $hex Hex color (#RGB or #RRGGBB) or RGB string
+     * @return float[] [$hue, $saturation, $lightness]
+     */
+    public static function hexToHSL(string $hex): array
+    {
+        $rgb = static::hexToRGB($hex);
+        if ($rgb === '') {
+            return [0.0, 0.0, 0.0];
+        }
+
+        [$r, $g, $b] = array_map(static fn($v) => (int) trim($v) / 255, explode(',', $rgb));
+
+        $max = max($r, $g, $b);
+        $min = min($r, $g, $b);
+        $l = ($max + $min) / 2;
+
+        if ($max === $min) {
+            // Achromatic (gray): no hue or saturation.
+            return [0.0, 0.0, $l * 100];
+        }
+
+        $d = $max - $min;
+        $s = $l > 0.5 ? $d / (2 - $max - $min) : $d / ($max + $min);
+
+        if ($max === $r) {
+            $h = ($g - $b) / $d + ($g < $b ? 6 : 0);
+        } elseif ($max === $g) {
+            $h = ($b - $r) / $d + 2;
+        } else {
+            $h = ($r - $g) / $d + 4;
+        }
+        $h /= 6;
+
+        return [$h * 360, $s * 100, $l * 100];
+    }
+
+    /**
+     * Convert HSL components to a hex color.
+     *
+     * Hue is taken in degrees (wrapped to 0-360); saturation and lightness
+     * as percentages, each clamped to 0-100 so callers can add to a
+     * component (e.g. lightness + 30) without overshooting the range.
+     *
+     * @param float $h Hue in degrees
+     * @param float $s Saturation percentage
+     * @param float $l Lightness percentage
+     * @return string Hex color (e.g., "#ff80bf")
+     */
+    public static function hslToHex(float $h, float $s, float $l): string
+    {
+        $h = fmod($h, 360.0);
+        if ($h < 0) {
+            $h += 360.0;
+        }
+        $s = max(0.0, min(100.0, $s)) / 100;
+        $l = max(0.0, min(100.0, $l)) / 100;
+
+        $c = (1 - abs(2 * $l - 1)) * $s;
+        $x = $c * (1 - abs(fmod($h / 60, 2) - 1));
+        $m = $l - $c / 2;
+
+        if ($h < 60) {
+            [$r, $g, $b] = [$c, $x, 0];
+        } elseif ($h < 120) {
+            [$r, $g, $b] = [$x, $c, 0];
+        } elseif ($h < 180) {
+            [$r, $g, $b] = [0, $c, $x];
+        } elseif ($h < 240) {
+            [$r, $g, $b] = [0, $x, $c];
+        } elseif ($h < 300) {
+            [$r, $g, $b] = [$x, 0, $c];
+        } else {
+            [$r, $g, $b] = [$c, 0, $x];
+        }
+
+        return sprintf(
+            '#%02x%02x%02x',
+            (int) round(($r + $m) * 255),
+            (int) round(($g + $m) * 255),
+            (int) round(($b + $m) * 255),
+        );
+    }
 }

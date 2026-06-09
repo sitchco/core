@@ -418,4 +418,105 @@ class StrTest extends TestCase
     {
         $this->assertSame('17, 34, 51', Str::hexToRGB('#112233'));
     }
+
+    // --- hexToHSL / hslToHex ---
+
+    /**
+     * @dataProvider hslRoundTripProvider
+     */
+    public function test_hsl_round_trip_within_one_per_channel(string $hex): void
+    {
+        $roundTripped = Str::hslToHex(...Str::hexToHSL($hex));
+        $this->assertChannelsWithinOne($hex, $roundTripped);
+    }
+
+    public static function hslRoundTripProvider(): array
+    {
+        return [
+            'red' => ['#ff0000'],
+            'green' => ['#00ff00'],
+            'blue' => ['#0000ff'],
+            'mixed' => ['#112233'],
+            'white' => ['#ffffff'],
+            'black' => ['#000000'],
+            'gray' => ['#808080'],
+            'brand magenta' => ['#e60073'],
+            'muted blue' => ['#486090'],
+        ];
+    }
+
+    public function test_hex_to_hsl_short_hex_matches_full_hex(): void
+    {
+        $this->assertSame(Str::hexToHSL('#ff0000'), Str::hexToHSL('#f00'));
+        $this->assertSame(Str::hexToHSL('#112233'), Str::hexToHSL('#123'));
+    }
+
+    public function test_hex_to_hsl_gray_is_achromatic(): void
+    {
+        [$h, $s, $l] = Str::hexToHSL('#808080');
+        $this->assertSame(0.0, $h);
+        $this->assertSame(0.0, $s);
+        $this->assertEqualsWithDelta(50.2, $l, 0.5);
+    }
+
+    public function test_hex_to_hsl_invalid_input_degrades_to_black(): void
+    {
+        $this->assertSame([0.0, 0.0, 0.0], Str::hexToHSL(''));
+        $this->assertSame([0.0, 0.0, 0.0], Str::hexToHSL('not-a-color'));
+    }
+
+    public function test_hsl_to_hex_clamps_lightness_high(): void
+    {
+        // Lightness over 100 must clamp to white, not wrap or overshoot.
+        $this->assertSame('#ffffff', Str::hslToHex(0, 0, 130));
+    }
+
+    public function test_hsl_to_hex_clamps_lightness_low(): void
+    {
+        // Negative lightness clamps to black.
+        $this->assertSame('#000000', Str::hslToHex(200, 100, -20));
+    }
+
+    public function test_hsl_to_hex_clamps_lightness_after_plus_thirty(): void
+    {
+        // A light base + 30 lightness overshoots 100 and must clamp to white.
+        [$h, $s, $l] = Str::hexToHSL('#cccccc'); // L ~80%
+        $this->assertSame('#ffffff', Str::hslToHex($h, $s, $l + 30));
+    }
+
+    /**
+     * The Criterion feed derives each "light" accent from its "base" by
+     * adding 30 percentage points of lightness. Deriving light from base
+     * must reproduce the feed's light within +/- 1 per channel.
+     *
+     * @dataProvider feedSampleProvider
+     */
+    public function test_light_derivation_matches_feed_samples(string $base, string $light): void
+    {
+        [$h, $s, $l] = Str::hexToHSL($base);
+        $derived = Str::hslToHex($h, $s, $l + 30);
+        $this->assertChannelsWithinOne($light, $derived);
+    }
+
+    public static function feedSampleProvider(): array
+    {
+        return [
+            '& Juliet' => ['#e60073', '#ff80bf'],
+            'Purpose' => ['#486090', '#a1b1d0'],
+            'Oedipus' => ['#137cb9', '#74c3f1'],
+        ];
+    }
+
+    private function assertChannelsWithinOne(string $expectedHex, string $actualHex): void
+    {
+        $expected = array_map('intval', explode(',', Str::hexToRGB($expectedHex)));
+        $actual = array_map('intval', explode(',', Str::hexToRGB($actualHex)));
+        foreach (['R', 'G', 'B'] as $i => $channel) {
+            $this->assertLessThanOrEqual(
+                1,
+                abs($expected[$i] - $actual[$i]),
+                "Channel {$channel} of {$actualHex} differs from {$expectedHex} by more than 1",
+            );
+        }
+    }
 }
