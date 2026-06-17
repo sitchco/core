@@ -160,8 +160,44 @@ abstract class FileRegistry
                 $this->initializeBasePaths();
             }
 
-            return $this->loadAndMergeFiles();
+            $merged = $this->loadAndMergeFiles();
+
+            // When the merge can't be trusted (e.g. a request landing mid-deploy while config files
+            // are momentarily missing/unreadable), hand the cache layer a "failure" (null).
+            // Cache::remember then neither persists nor serves it: load() substitutes
+            // getDefaultData() for this request, so the caller gets safe empty/default config
+            // instead of a degraded one, and the degraded merge (no modules/CPTs/assets) never
+            // poisons the object cache for the full TTL until the next object-cache flush.
+            // isMergedDataCacheable() lets each registry judge completeness with knowledge the
+            // generic cache layer doesn't have.
+            $cacheable = $this->isMergedDataCacheable($merged);
+            if (!$cacheable && !empty($merged)) {
+                Logger::warning(
+                    sprintf(
+                        '%s: Discarding a non-empty but incomplete config merge (cache key "%s", %d top-level keys) ' .
+                            'without caching — likely a mid-deploy degraded state.',
+                        static::class,
+                        static::CACHE_KEY,
+                        count($merged),
+                    ),
+                );
+            }
+
+            return $cacheable ? $merged : null;
         });
+    }
+
+    /**
+     * Decides whether a freshly merged data set is complete enough to cache.
+     * Base rule: a null or empty merge is never cacheable. Override to add registry-specific
+     * completeness checks (e.g. required sources that must have contributed).
+     *
+     * @param array|null $merged The merged data, or null if no files were found.
+     * @return bool True if the result is safe to persist.
+     */
+    protected function isMergedDataCacheable(?array $merged): bool
+    {
+        return !empty($merged);
     }
 
     /**

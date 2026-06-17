@@ -27,6 +27,34 @@ class ConfigRegistry extends FileRegistry
         return include $filePath->value();
     }
 
+    /**
+     * Beyond the base empty check, require that every theme whose sitchco.config.php currently
+     * exists on disk actually contributed to the merge. If a config file is present now but its
+     * directory isn't among the resolved base paths, it was unreadable when paths were resolved
+     * (the classic mid-deploy state), so the merge is missing modules it should have — caching
+     * it would silently disable those modules site-wide until the next object-cache flush.
+     *
+     * This deliberately keys off files present on disk rather than a hardcoded theme list, so it
+     * stays correct when modules come from filtered paths instead of the active theme (e.g. the
+     * test harness).
+     */
+    protected function isMergedDataCacheable(?array $merged): bool
+    {
+        if (!parent::isMergedDataCacheable($merged)) {
+            return false;
+        }
+
+        $contributing = array_map(fn(FilePath $fp) => $fp->value(), $this->getBasePaths());
+        foreach ([get_template_directory(), get_stylesheet_directory()] as $themeDir) {
+            $dir = FilePath::create($themeDir);
+            if ($dir->append(static::FILENAME)->isFile() && !in_array($dir->value(), $contributing, true)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected function normalizeData(array $data): array
     {
         $normalized = [];

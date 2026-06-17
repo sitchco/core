@@ -163,6 +163,21 @@ class FileRegistryTest extends TestCase
         $this->assertEquals(0, $parsedCount2);
     }
 
+    public function test_does_not_cache_empty_or_degraded_merged_data()
+    {
+        // Simulate a request landing mid-deploy: no config file is present yet, so the merge
+        // is empty/degraded. This must NOT be written to the object cache.
+        $emptyResult = $this->registry->load();
+        $this->assertSame([], $emptyResult);
+
+        // Filesystem settles after the deploy and the config file becomes available. Because
+        // the empty result was never cached, the next load rebuilds from the real file instead
+        // of serving the cached emptiness for the full TTL.
+        $registry = $this->createRegistryWithData(['modules' => ['ModuleA', 'ModuleB']]);
+
+        $this->assertSame(['ModuleA', 'ModuleB'], $registry->load('modules'));
+    }
+
     public function test_clear_cache_removes_cached_data()
     {
         $registry = $this->createRegistryWithData(['data' => 'value']);

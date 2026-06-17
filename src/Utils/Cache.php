@@ -30,10 +30,16 @@ class Cache
      * Remember a value using object cache (fastest, volatile).
      * Lost on cache flush. Good for performance-critical regeneratable data.
      *
-     * @param string   $key      Cache key
-     * @param callable $callback Function to generate value if not cached
-     * @param int      $ttl      Time-to-live in seconds
-     * @param string   $group    Cache group for organization
+     * @param string   $key        Cache key
+     * @param callable $callback   Function to generate value if not cached
+     * @param int      $ttl        Time-to-live in seconds
+     * @param string   $group      Cache group for organization
+     * @param int|null $failureTtl Optional TTL when the callback returns null/false (negative
+     *                             caching). Null (default) means failures are never persisted,
+     *                             so the next call re-runs the callback — correct for cheap,
+     *                             local work that should self-heal. Pass a short TTL to throttle
+     *                             retries of an expensive/flaky process so a failure isn't
+     *                             re-attempted on every request.
      * @return mixed The cached or freshly generated value
      */
     public static function remember(
@@ -41,6 +47,7 @@ class Cache
         callable $callback,
         int $ttl = DAY_IN_SECONDS,
         string $group = 'sitchco',
+        ?int $failureTtl = null,
     ): mixed {
         $cached = wp_cache_get($key, $group, false, $found);
         if ($found) {
@@ -48,7 +55,17 @@ class Cache
         }
 
         $value = $callback();
-        wp_cache_set($key, $value, $group, $ttl);
+
+        // Mirror rememberTransient/rememberOption: treat null/false as a failure. Persist it
+        // only when the caller opts into negative caching via $failureTtl (to throttle an
+        // expensive/failing process); otherwise leave it uncached so the next call retries.
+        // The object cache stores null natively and wp_cache_get()'s $found flag distinguishes
+        // a cached failure from a miss, so no value wrapper is needed here.
+        if ($value !== null && $value !== false) {
+            wp_cache_set($key, $value, $group, $ttl);
+        } elseif ($failureTtl !== null && $failureTtl > 0) {
+            wp_cache_set($key, $value, $group, $failureTtl);
+        }
 
         return $value;
     }

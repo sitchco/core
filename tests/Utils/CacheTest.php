@@ -12,6 +12,8 @@ class CacheTest extends TestCase
         wp_cache_delete('cache-key', 'custom_group');
         wp_cache_delete('null-key', 'sitchco');
         wp_cache_delete('false-key', 'sitchco');
+        wp_cache_delete('null-failure-key', 'sitchco');
+        wp_cache_delete('obj_falsy_key', 'sitchco');
         delete_option('persistent_cache_key');
         delete_option('persistent_cache_key_no_ttl');
         delete_option('option_null_key');
@@ -75,8 +77,8 @@ class CacheTest extends TestCase
         $this->assertSame(['data' => 'value'], $stored['_v']);
     }
 
-    // S4: Object cache stores null
-    public function test_remember_caches_null(): void
+    // S4: Object cache does not persist null without failureTtl (mirrors transient/option)
+    public function test_remember_does_not_cache_null_without_failureTtl(): void
     {
         $calls = 0;
         $callback = function () use (&$calls) {
@@ -84,21 +86,17 @@ class CacheTest extends TestCase
             return null;
         };
 
-        $first = Cache::remember('null-key', $callback);
-        $second = Cache::remember('null-key', $callback);
-
-        $this->assertNull($first);
-        $this->assertNull($second);
-        $this->assertSame(1, $calls, 'Callback should only run once for null.');
+        $this->assertNull(Cache::remember('null-key', $callback));
+        $this->assertNull(Cache::remember('null-key', $callback));
+        $this->assertSame(2, $calls, 'Callback should run every time for null without failureTtl.');
 
         $found = false;
-        $cached = wp_cache_get('null-key', 'sitchco', false, $found);
-        $this->assertTrue($found);
-        $this->assertNull($cached);
+        wp_cache_get('null-key', 'sitchco', false, $found);
+        $this->assertFalse($found, 'null must not be persisted without failureTtl.');
     }
 
-    // S5: Object cache stores false
-    public function test_remember_caches_false(): void
+    // S5: Object cache does not persist false without failureTtl
+    public function test_remember_does_not_cache_false_without_failureTtl(): void
     {
         $calls = 0;
         $callback = function () use (&$calls) {
@@ -106,17 +104,53 @@ class CacheTest extends TestCase
             return false;
         };
 
-        $first = Cache::remember('false-key', $callback);
-        $second = Cache::remember('false-key', $callback);
+        $this->assertFalse(Cache::remember('false-key', $callback));
+        $this->assertFalse(Cache::remember('false-key', $callback));
+        $this->assertSame(2, $calls, 'Callback should run every time for false without failureTtl.');
+    }
 
-        $this->assertFalse($first);
-        $this->assertFalse($second);
-        $this->assertSame(1, $calls, 'Callback should only run once for false.');
+    // S5b: Object cache persists null with failureTtl (negative caching to throttle retries)
+    public function test_remember_caches_null_with_failureTtl(): void
+    {
+        $calls = 0;
+        $callback = function () use (&$calls) {
+            $calls++;
+            return null;
+        };
+
+        $first = Cache::remember('null-failure-key', $callback, DAY_IN_SECONDS, failureTtl: HOUR_IN_SECONDS);
+        $second = Cache::remember('null-failure-key', $callback, DAY_IN_SECONDS, failureTtl: HOUR_IN_SECONDS);
+
+        $this->assertNull($first);
+        $this->assertNull($second);
+        $this->assertSame(1, $calls, 'Callback should only run once when failureTtl is set.');
 
         $found = false;
-        $cached = wp_cache_get('false-key', 'sitchco', false, $found);
+        $cached = wp_cache_get('null-failure-key', 'sitchco', false, $found);
         $this->assertTrue($found);
-        $this->assertFalse($cached);
+        $this->assertNull($cached);
+    }
+
+    // S5c: Object cache still persists falsy-but-non-null values (0, '', []) — they are not failures
+    public function test_remember_caches_falsy_non_null_values(): void
+    {
+        foreach ([0, '', []] as $falsyValue) {
+            $key = 'obj_falsy_key';
+            wp_cache_delete($key, 'sitchco');
+
+            $calls = 0;
+            $callback = function () use (&$calls, $falsyValue) {
+                $calls++;
+                return $falsyValue;
+            };
+
+            $first = Cache::remember($key, $callback);
+            $second = Cache::remember($key, $callback);
+
+            $this->assertSame($falsyValue, $first);
+            $this->assertSame($falsyValue, $second);
+            $this->assertSame(1, $calls, 'Callback should only run once for ' . var_export($falsyValue, true));
+        }
     }
 
     // S3: Transient caches falsy non-null values (0, '', [])
