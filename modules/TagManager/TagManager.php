@@ -114,15 +114,18 @@ class TagManager extends Module
                 'wp_post_type' => $obj->post_type,
                 'wp_post_id' => $obj->ID,
                 'wp_slug' => $obj->post_name,
+                'wp_title' => $obj->post_title,
             ],
             $obj instanceof \WP_Term => [
                 'wp_taxonomy' => $obj->taxonomy,
                 'wp_term_id' => $obj->term_id,
                 'wp_slug' => $obj->slug,
+                'wp_title' => $obj->name,
             ],
             $obj instanceof \WP_Post_Type => [
                 'wp_post_type' => $obj->name,
                 'wp_slug' => $obj->name,
+                'wp_title' => $obj->labels->name,
             ],
             default => [],
         };
@@ -131,6 +134,8 @@ class TagManager extends Module
     protected function renderDataLayerInit(): void
     {
         $data = apply_filters(static::hookName('current-state'), $this->getPageMetadata());
+        // TEMP (SP-579 M1): observe the resolved current-state push payload. Remove in M5.
+        error_log('[SP-579] current-state push: ' . wp_json_encode($data));
         $push = !empty($data) ? "\nwindow.dataLayer.push(" . wp_json_encode($data) . ');' : '';
         echo "<script>\nwindow.dataLayer=window.dataLayer||[];{$push}\n</script>\n";
     }

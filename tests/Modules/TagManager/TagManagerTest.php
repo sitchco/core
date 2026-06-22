@@ -126,12 +126,14 @@ class TagManagerTest extends TestCase
         $post = $this->factory()->post->create_and_get([
             'post_type' => 'page',
             'post_name' => 'about-us',
+            'post_title' => 'About Us',
         ]);
         $this->setQueriedObject($post, $post->ID);
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('"wp_post_type":"page"', $head);
         $this->assertStringContainsString('"wp_post_id":' . $post->ID, $head);
         $this->assertStringContainsString('"wp_slug":"about-us"', $head);
+        $this->assertStringContainsString('"wp_title":"About Us"', $head);
     }
 
     public function test_datalayer_push_has_no_event_key(): void
@@ -139,8 +141,15 @@ class TagManagerTest extends TestCase
         $post = $this->factory()->post->create_and_get();
         $this->setQueriedObject($post, $post->ID);
         $head = $this->captureHook('wp_head');
-        $this->assertMatchesRegularExpression('/dataLayer\.push\(\{[^}]+\}\)/', $head);
-        $this->assertDoesNotMatchRegularExpression('/dataLayer\.push\(\{[^}]*"event"/', $head);
+        // Semantic assertion: decode the current-state push and confirm it carries no
+        // `event` key (hardens against nested-object payloads the old structural regex
+        // could not parse). Anchor on `window.dataLayer.push(` so we isolate the
+        // current-state push from the GTM bootstrap snippet (which uses `w[l].push` and
+        // legitimately carries its own `event:'gtm.js'`); lazy match the JSON to `);`.
+        $this->assertSame(1, preg_match('/window\.dataLayer\.push\((\{.*?\})\);/s', $head, $m));
+        $data = json_decode($m[1], true);
+        $this->assertIsArray($data);
+        $this->assertArrayNotHasKey('event', $data);
     }
 
     public function test_datalayer_init_renders_without_container_ids(): void
@@ -168,6 +177,8 @@ class TagManagerTest extends TestCase
         });
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('"custom_key":"custom_value"', $head);
+        // The filter callback receives (and passes through) the base metadata, including wp_title.
+        $this->assertStringContainsString('"wp_title":', $head);
     }
 
     public function test_gtm_attr_renders_string_value(): void
@@ -203,12 +214,17 @@ class TagManagerTest extends TestCase
 
     public function test_datalayer_push_contains_term_metadata(): void
     {
-        $term = $this->factory()->term->create_and_get(['taxonomy' => 'category', 'slug' => 'news']);
+        $term = $this->factory()->term->create_and_get([
+            'taxonomy' => 'category',
+            'slug' => 'news',
+            'name' => 'News',
+        ]);
         $this->setQueriedObject($term, $term->term_id);
         $head = $this->captureHook('wp_head');
         $this->assertStringContainsString('"wp_taxonomy":"category"', $head);
         $this->assertStringContainsString('"wp_term_id":' . $term->term_id, $head);
         $this->assertStringContainsString('"wp_slug":"news"', $head);
+        $this->assertStringContainsString('"wp_title":"News"', $head);
     }
 
     public function test_datalayer_push_contains_post_type_metadata(): void
@@ -219,5 +235,6 @@ class TagManagerTest extends TestCase
         $this->assertStringContainsString('"wp_post_type":"page"', $head);
         $this->assertStringNotContainsString('"wp_post_id"', $head);
         $this->assertStringContainsString('"wp_slug":"page"', $head);
+        $this->assertStringContainsString('"wp_title":"Pages"', $head);
     }
 }
