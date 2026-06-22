@@ -32,12 +32,16 @@
 
 ### WordPress hooks exposed
 
-All hooks are prefixed via `TagManager::hookName($suffix)`:
+All hooks are prefixed via `TagManager::hookName($suffix)`. The `tag-manager::<suffix>`
+cells below are **shorthand**: the runtime tag is the slash-delimited
+`sitchco/tag-manager/<suffix>` (e.g. `hookName('current-state')` →
+`sitchco/tag-manager/current-state`). Register against `TagManager::hookName($suffix)`
+or that slash literal — the `::` string does not exist as a hook name and never fires.
 
 | Hook | Type | Default | Purpose |
 |---|---|---|---|
 | `tag-manager::enable-gtm` | filter | `true` | Master gate. When `false`, `getContainerIds()` returns `[]` and no container snippets render (dataLayer init still renders). |
-| `tag-manager::current-state` | filter | output of `getPageMetadata()` | Lets plugins customize the dataLayer.push() payload. Receives the metadata array; must return an array. An empty return suppresses the push entirely. |
+| `tag-manager::current-state` | filter | `getPageMetadata()` output, with the queried post model's `dataLayerContext()` already merged in | Lets plugins customize the dataLayer.push() payload. Before this filter runs, `renderDataLayerInit()` resolves the queried `WP_Post` to its Timber model and, when it is a `PostBase`, merges that model's `dataLayerContext()` (its per-type analytics keys) into the metadata. Receives the merged array; must return an array. An empty return suppresses the push entirely. |
 | `tag-manager::outbound-domains` | filter | normalized ACF config: `array<string, array{extraParams: string[]}>` | Developer override for the outbound decorator config. Filter output is re-validated (`OutboundDomainsResolver::fromFilterReturn`): non-array/non-object returns fall back with `_doing_it_wrong`; invalid tokens are stripped; case-different duplicate domains trigger `_doing_it_wrong` and last-wins. The return root must be an `array` or `ArrayObject`; each entry must be an `array` or `stdClass`. Other iterables (`Generator`, custom `IteratorAggregate`) are unsupported and may silently yield no entries. |
 | `acf/validate_value/key=field_69b9be20813a0` | filter | — | The ACF validator attached from `TagManager::init()` (`add_filter` on `ExtraParamsField::validateExtraParams`). Receives `(bool\|string $valid, mixed $value)`; returns `true` or an error string identifying the offending token. |
 | `timber/twig/functions` | filter (priority 20) | — | Registers the `gtm_attr` Twig function. |
@@ -121,10 +125,16 @@ Page-metadata defaults from `getPageMetadata()`:
 
 | Queried object | Pushed keys |
 |---|---|
-| `WP_Post` | `wp_post_type`, `wp_post_id`, `wp_slug` |
-| `WP_Term` | `wp_taxonomy`, `wp_term_id`, `wp_slug` |
-| `WP_Post_Type` | `wp_post_type`, `wp_slug` |
+| `WP_Post` | `wp_post_type`, `wp_post_id`, `wp_slug`, `wp_title` |
+| `WP_Term` | `wp_taxonomy`, `wp_term_id`, `wp_slug`, `wp_title` |
+| `WP_Post_Type` | `wp_post_type`, `wp_slug`, `wp_title` |
 | Other / 404 | `[]` (push suppressed) |
+
+For a `WP_Post`, `mergeQueriedModelContext()` then resolves it to its Timber model and,
+when that model is a `PostBase`, merges the model's `dataLayerContext()` keys on top of the
+globals (a no-op for terms, post-type archives, classmap-less posts, and any `PostBase`
+that hasn't overridden `buildDataLayerContext()`). The merge runs **before** the
+`current-state` filter.
 
 **Critical:** The pushed object has **no `event` key**. It is metadata-only and does not fire a GTM tag by itself.
 
@@ -294,13 +304,13 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 **Expected:** `renderDataLayerInit()` emits the init buffer only. No `dataLayer.push()` call.
 
-#### S18. `tag-manager::current-state` filter modifies the metadata
+#### S18. `current-state` filter modifies the metadata
 
-**Trigger:** Plugin adds `add_filter('tag-manager::current-state', fn($d) => array_merge($d, ['custom' => 'value']))`.
+**Trigger:** Plugin adds `add_filter(TagManager::hookName('current-state'), fn($d) => array_merge($d, ['custom' => 'value']))` (runtime tag `sitchco/tag-manager/current-state`).
 
-**Expected:** Push contains the merged custom field alongside the defaults.
+**Expected:** Push contains the merged custom field alongside the defaults and any per-type model keys (`dataLayerContext()`) that were merged in before the filter ran.
 
-**Must NOT:** Filter the value when no metadata exists (the push is suppressed regardless of filter intent if the final array is empty).
+**Must NOT:** Filter the value when no metadata exists (the push is suppressed regardless of filter intent if the final array is empty). Register against the literal `tag-manager::current-state` string — it never fires.
 
 ### Inline-data emission
 

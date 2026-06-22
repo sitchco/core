@@ -4,6 +4,8 @@ namespace Sitchco\Tests\Modules\TagManager;
 
 use Sitchco\Modules\TagManager\ExtraParamsField;
 use Sitchco\Modules\TagManager\TagManager;
+use Sitchco\Tests\Fakes\DataLayerPostTester;
+use Sitchco\Tests\Fakes\EventPostTester;
 use Sitchco\Tests\TestCase;
 
 class TagManagerTest extends TestCase
@@ -19,6 +21,15 @@ class TagManagerTest extends TestCase
         remove_all_filters(TagManager::hookName('outbound-domains'));
         $this->module = $this->container->get(TagManager::class);
         $this->module->init();
+        // Register PostBase fakes so the current-state model merge can resolve real classes:
+        // dl_tester → mixed-value builder, event → empty default, plain_post → bare Timber\Post.
+        // WP_UnitTestCase restores hooks after each test, so no explicit teardown is needed.
+        add_filter('timber/post/classmap', function ($classmap) {
+            $classmap['dl_tester'] = DataLayerPostTester::class;
+            $classmap['event'] = EventPostTester::class;
+            $classmap['plain_post'] = \Timber\Post::class;
+            return $classmap;
+        });
     }
 
     protected function tearDown(): void
@@ -179,6 +190,56 @@ class TagManagerTest extends TestCase
         $this->assertStringContainsString('"custom_key":"custom_value"', $head);
         // The filter callback receives (and passes through) the base metadata, including wp_title.
         $this->assertStringContainsString('"wp_title":', $head);
+    }
+
+    private function decodeCurrentStatePush(string $head): ?array
+    {
+        if (!preg_match('/window\.dataLayer\.push\((\{.*?\})\);/s', $head, $m)) {
+            return null;
+        }
+        return json_decode($m[1], true);
+    }
+
+    public function test_current_state_push_merges_queried_model_context(): void
+    {
+        // A queried WP_Post resolves to its PostBase model and contributes dataLayerContext()
+        // to the push, before the public current-state filter runs.
+        $post = $this->factory()->post->create_and_get(['post_type' => 'dl_tester']);
+        $this->setQueriedObject($post, $post->ID);
+        $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
+
+        $this->assertIsArray($data);
+        // Globals still present.
+        $this->assertSame('dl_tester', $data['wp_post_type']);
+        $this->assertSame($post->ID, $data['wp_post_id']);
+        // Model context merged; the final dataLayerContext() kept the meaningful values.
+        $this->assertSame('value', $data['kept_string']);
+        $this->assertSame(0, $data['kept_zero']);
+        $this->assertFalse($data['kept_false']);
+        $this->assertSame([], $data['kept_empty_array']);
+        // null / '' were stripped before the merge.
+        $this->assertArrayNotHasKey('dropped_null', $data);
+        $this->assertArrayNotHasKey('dropped_empty_string', $data);
+    }
+
+    public function test_current_state_push_adds_nothing_for_model_without_override(): void
+    {
+        // EventPostTester inherits the empty buildDataLayerContext() default → globals only.
+        $post = $this->factory()->post->create_and_get(['post_type' => 'event']);
+        $this->setQueriedObject($post, $post->ID);
+        $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
+
+        $this->assertSame(['wp_post_type', 'wp_post_id', 'wp_slug', 'wp_title'], array_keys($data));
+    }
+
+    public function test_current_state_push_skips_non_postbase_object(): void
+    {
+        // plain_post maps to a bare Timber\Post (not a PostBase) → merge is skipped, no fatal.
+        $post = $this->factory()->post->create_and_get(['post_type' => 'plain_post']);
+        $this->setQueriedObject($post, $post->ID);
+        $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
+
+        $this->assertSame(['wp_post_type', 'wp_post_id', 'wp_slug', 'wp_title'], array_keys($data));
     }
 
     public function test_gtm_attr_renders_string_value(): void

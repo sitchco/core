@@ -4,13 +4,16 @@ namespace Sitchco\Modules\TagManager;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Model\PostBase;
+use Sitchco\Modules\TimberModule;
 use Sitchco\Modules\UIFramework\UIFramework;
+use Timber\Timber;
 
 class TagManager extends Module
 {
     public const HOOK_SUFFIX = 'tag-manager';
 
-    public const DEPENDENCIES = [UIFramework::class];
+    public const DEPENDENCIES = [UIFramework::class, TimberModule::class];
 
     public function __construct(protected TagManagerSettings $settings) {}
 
@@ -131,9 +134,32 @@ class TagManager extends Module
         };
     }
 
+    /**
+     * Merge the queried post model's data-layer context into the base metadata.
+     *
+     * No-op for terms, post-type archives, classmap-less posts (plain Timber\Post),
+     * and any PostBase subclass that hasn't overridden buildDataLayerContext().
+     * Each model's dataLayerContext() is the single source of truth for its keys.
+     *
+     * @param array<string, mixed> $data Base page metadata from getPageMetadata().
+     * @return array<string, mixed>
+     */
+    protected function mergeQueriedModelContext(array $data): array
+    {
+        $obj = get_queried_object();
+        if ($obj instanceof \WP_Post) {
+            $post = Timber::get_post($obj->ID);
+            if ($post instanceof PostBase) {
+                return array_merge($data, $post->dataLayerContext());
+            }
+        }
+        return $data;
+    }
+
     protected function renderDataLayerInit(): void
     {
-        $data = apply_filters(static::hookName('current-state'), $this->getPageMetadata());
+        $metadata = $this->mergeQueriedModelContext($this->getPageMetadata());
+        $data = apply_filters(static::hookName('current-state'), $metadata);
         // TEMP (SP-579 M1): observe the resolved current-state push payload. Remove in M5.
         error_log('[SP-579] current-state push: ' . wp_json_encode($data));
         $push = !empty($data) ? "\nwindow.dataLayer.push(" . wp_json_encode($data) . ');' : '';
