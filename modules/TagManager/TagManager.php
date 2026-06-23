@@ -160,8 +160,6 @@ class TagManager extends Module
     {
         $metadata = $this->mergeQueriedModelContext($this->getPageMetadata());
         $data = apply_filters(static::hookName('current-state'), $metadata);
-        // TEMP (SP-579 M1): observe the resolved current-state push payload. Remove in M5.
-        error_log('[SP-579] current-state push: ' . wp_json_encode($data));
         $push = !empty($data) ? "\nwindow.dataLayer.push(" . wp_json_encode($data) . ');' : '';
         echo "<script>\nwindow.dataLayer=window.dataLayer||[];{$push}\n</script>\n";
     }
