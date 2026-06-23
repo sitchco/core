@@ -4,13 +4,16 @@ namespace Sitchco\Modules\TagManager;
 
 use Sitchco\Framework\Module;
 use Sitchco\Framework\ModuleAssets;
+use Sitchco\Model\PostBase;
+use Sitchco\Modules\TimberModule;
 use Sitchco\Modules\UIFramework\UIFramework;
+use Timber\Timber;
 
 class TagManager extends Module
 {
     public const HOOK_SUFFIX = 'tag-manager';
 
-    public const DEPENDENCIES = [UIFramework::class];
+    public const DEPENDENCIES = [UIFramework::class, TimberModule::class];
 
     public function __construct(protected TagManagerSettings $settings) {}
 
@@ -114,23 +117,49 @@ class TagManager extends Module
                 'wp_post_type' => $obj->post_type,
                 'wp_post_id' => $obj->ID,
                 'wp_slug' => $obj->post_name,
+                'wp_title' => $obj->post_title,
             ],
             $obj instanceof \WP_Term => [
                 'wp_taxonomy' => $obj->taxonomy,
                 'wp_term_id' => $obj->term_id,
                 'wp_slug' => $obj->slug,
+                'wp_title' => $obj->name,
             ],
             $obj instanceof \WP_Post_Type => [
                 'wp_post_type' => $obj->name,
                 'wp_slug' => $obj->name,
+                'wp_title' => $obj->labels->name,
             ],
             default => [],
         };
     }
 
+    /**
+     * Merge the queried post model's data-layer context into the base metadata.
+     *
+     * No-op for terms, post-type archives, classmap-less posts (plain Timber\Post),
+     * and any PostBase subclass that hasn't overridden buildDataLayerContext().
+     * Each model's dataLayerContext() is the single source of truth for its keys.
+     *
+     * @param array<string, mixed> $data Base page metadata from getPageMetadata().
+     * @return array<string, mixed>
+     */
+    protected function mergeQueriedModelContext(array $data): array
+    {
+        $obj = get_queried_object();
+        if ($obj instanceof \WP_Post) {
+            $post = Timber::get_post($obj->ID);
+            if ($post instanceof PostBase) {
+                return array_merge($data, $post->dataLayerContext());
+            }
+        }
+        return $data;
+    }
+
     protected function renderDataLayerInit(): void
     {
-        $data = apply_filters(static::hookName('current-state'), $this->getPageMetadata());
+        $metadata = $this->mergeQueriedModelContext($this->getPageMetadata());
+        $data = apply_filters(static::hookName('current-state'), $metadata);
         $push = !empty($data) ? "\nwindow.dataLayer.push(" . wp_json_encode($data) . ');' : '';
         echo "<script>\nwindow.dataLayer=window.dataLayer||[];{$push}\n</script>\n";
     }

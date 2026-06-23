@@ -47,6 +47,31 @@ class PostBase extends Post
     }
 
     /**
+     * Analytics data-layer context for this model.
+     *
+     * Template method: subclasses override the protected buildDataLayerContext()
+     * to contribute keys; this final entry point strips null/'' values so absent
+     * data yields an absent key (never a literal null) for every consumer.
+     *
+     * @return array<string, mixed>
+     */
+    final public function dataLayerContext(): array
+    {
+        return array_filter($this->buildDataLayerContext(), fn($v) => $v !== null && $v !== '');
+    }
+
+    /**
+     * Override point for per-type analytics keys. Defaults to an empty array,
+     * so a subclass that does not override contributes nothing.
+     *
+     * @return array<string, mixed>
+     */
+    protected function buildDataLayerContext(): array
+    {
+        return [];
+    }
+
+    /**
      * @param array<\WP_Term|Term|string|int> $terms
      * @param string $taxonomy
      * @return $this
