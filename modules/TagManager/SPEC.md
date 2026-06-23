@@ -20,7 +20,7 @@
 
 | Class | Role |
 |---|---|
-| `TagManager` | Module entry. Boots at `init`; owns asset registration, hook attachment, snippet emission, dataLayer init, and inline-data emission. Declares `DEPENDENCIES = [UIFramework::class]`. |
+| `TagManager` | Module entry. Boots at `init`; owns asset registration, hook attachment, snippet emission, dataLayer init, and inline-data emission. Declares `DEPENDENCIES = [UIFramework::class, TimberModule::class]`. |
 | `TagManagerSettings` | ACF options facade. Properties: `gtm_container_ids`, `gtm_decorate_outbound`, `gtm_outbound_domains`. Backed by `OptionsBase`. |
 | `OutboundDomainsConfig` | Immutable value object for the outbound decoration config. Inert state with instance methods `toInlineData()` and `isEmpty()`. |
 | `OutboundDomainsResolver` | Boundary adapter that builds an `OutboundDomainsConfig` from settings and the developer filter. Static methods `fromSettings()` and `fromFilterReturn()`; owns CSV parsing, filter application, key normalization, and collision detection. |
@@ -209,7 +209,7 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 #### S5. Developer overrides the outbound config via filter
 
-**Trigger:** `add_filter('tag-manager::outbound-domains', fn($entries) => [...])` returns a nested `Record<string, { extraParams: string[] }>`.
+**Trigger:** `add_filter(TagManager::hookName('outbound-domains'), fn($entries) => [...])` (runtime tag `sitchco/tag-manager/outbound-domains`) returns a nested `Record<string, { extraParams: string[] }>`.
 
 **Expected:**
 1. The filter receives the post-ACF normalized config.
@@ -274,7 +274,7 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 #### S13. `tag-manager::enable-gtm` returns false
 
-**Trigger:** Developer attaches `add_filter('tag-manager::enable-gtm', '__return_false')`.
+**Trigger:** Developer attaches `add_filter(TagManager::hookName('enable-gtm'), '__return_false')` (runtime tag `sitchco/tag-manager/enable-gtm`).
 
 **Expected:** `getContainerIds()` returns `[]`; no head/body snippets render despite configured containers. `renderDataLayerInit()` still runs.
 
@@ -282,7 +282,7 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 **Trigger:** Visitor lands on a single-post page.
 
-**Expected:** `renderDataLayerInit()` emits `dataLayer=dataLayer||[]` and pushes `{ wp_post_type, wp_post_id, wp_slug }`.
+**Expected:** `renderDataLayerInit()` emits `dataLayer=dataLayer||[]` and pushes `{ wp_post_type, wp_post_id, wp_slug, wp_title }`.
 
 **Must NOT:** Include an `event` key in the push.
 
@@ -290,13 +290,13 @@ Implicit subdomain matching applies (handled by the package): configuring `partn
 
 **Trigger:** Visitor lands on a taxonomy archive.
 
-**Expected:** Push contains `{ wp_taxonomy, wp_term_id, wp_slug }`.
+**Expected:** Push contains `{ wp_taxonomy, wp_term_id, wp_slug, wp_title }`.
 
 #### S16. Queried object is a `WP_Post_Type`
 
 **Trigger:** Visitor lands on a post-type archive.
 
-**Expected:** Push contains `{ wp_post_type, wp_slug }`. No `wp_post_id`.
+**Expected:** Push contains `{ wp_post_type, wp_slug, wp_title }`. No `wp_post_id`.
 
 #### S17. 404 / no queried object
 

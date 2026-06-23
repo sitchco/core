@@ -152,13 +152,10 @@ class TagManagerTest extends TestCase
         $post = $this->factory()->post->create_and_get();
         $this->setQueriedObject($post, $post->ID);
         $head = $this->captureHook('wp_head');
-        // Semantic assertion: decode the current-state push and confirm it carries no
-        // `event` key (hardens against nested-object payloads the old structural regex
-        // could not parse). Anchor on `window.dataLayer.push(` so we isolate the
-        // current-state push from the GTM bootstrap snippet (which uses `w[l].push` and
-        // legitimately carries its own `event:'gtm.js'`); lazy match the JSON to `);`.
-        $this->assertSame(1, preg_match('/window\.dataLayer\.push\((\{.*?\})\);/s', $head, $m));
-        $data = json_decode($m[1], true);
+        // Decode the current-state push via the shared helper and confirm it carries no
+        // `event` key. assertIsArray also asserts a push was found at all (the helper
+        // returns null when the anchored pattern does not match).
+        $data = $this->decodeCurrentStatePush($head);
         $this->assertIsArray($data);
         $this->assertArrayNotHasKey('event', $data);
     }
@@ -209,9 +206,11 @@ class TagManagerTest extends TestCase
         $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
 
         $this->assertIsArray($data);
-        // Globals still present.
+        // Globals still present, and base metadata survives the model merge.
         $this->assertSame('dl_tester', $data['wp_post_type']);
         $this->assertSame($post->ID, $data['wp_post_id']);
+        $this->assertSame($post->post_name, $data['wp_slug']);
+        $this->assertSame($post->post_title, $data['wp_title']);
         // Model context merged; the final dataLayerContext() kept the meaningful values.
         $this->assertSame('value', $data['kept_string']);
         $this->assertSame(0, $data['kept_zero']);
@@ -222,6 +221,22 @@ class TagManagerTest extends TestCase
         $this->assertArrayNotHasKey('dropped_empty_string', $data);
     }
 
+    public function test_current_state_filter_runs_after_model_merge(): void
+    {
+        // dl_tester's model contributes kept_string='value'; the filter overwrites the same key.
+        // The merge must run BEFORE the filter — if it ran after, the model value would clobber
+        // the filter's and this assertion would fail. Proves S4 merge-before-filter ordering.
+        $post = $this->factory()->post->create_and_get(['post_type' => 'dl_tester']);
+        $this->setQueriedObject($post, $post->ID);
+        add_filter(TagManager::hookName('current-state'), function (array $data) {
+            $data['kept_string'] = 'from_filter';
+            return $data;
+        });
+        $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
+        $this->assertIsArray($data);
+        $this->assertSame('from_filter', $data['kept_string']);
+    }
+
     public function test_current_state_push_adds_nothing_for_model_without_override(): void
     {
         // EventPostTester inherits the empty buildDataLayerContext() default → globals only.
@@ -229,7 +244,13 @@ class TagManagerTest extends TestCase
         $this->setQueriedObject($post, $post->ID);
         $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
 
-        $this->assertSame(['wp_post_type', 'wp_post_id', 'wp_slug', 'wp_title'], array_keys($data));
+        // Order-independent: exactly the base keys, no model keys leaked in.
+        $this->assertIsArray($data);
+        $this->assertCount(4, $data);
+        $this->assertArrayHasKey('wp_post_type', $data);
+        $this->assertArrayHasKey('wp_post_id', $data);
+        $this->assertArrayHasKey('wp_slug', $data);
+        $this->assertArrayHasKey('wp_title', $data);
     }
 
     public function test_current_state_push_skips_non_postbase_object(): void
@@ -239,7 +260,13 @@ class TagManagerTest extends TestCase
         $this->setQueriedObject($post, $post->ID);
         $data = $this->decodeCurrentStatePush($this->captureHook('wp_head'));
 
-        $this->assertSame(['wp_post_type', 'wp_post_id', 'wp_slug', 'wp_title'], array_keys($data));
+        // Order-independent: exactly the base keys, no model keys leaked in.
+        $this->assertIsArray($data);
+        $this->assertCount(4, $data);
+        $this->assertArrayHasKey('wp_post_type', $data);
+        $this->assertArrayHasKey('wp_post_id', $data);
+        $this->assertArrayHasKey('wp_slug', $data);
+        $this->assertArrayHasKey('wp_title', $data);
     }
 
     public function test_gtm_attr_renders_string_value(): void
