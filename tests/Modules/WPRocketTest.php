@@ -45,6 +45,25 @@ class WPRocketTest extends TestCase
         $this->assertSame(300, apply_filters('rocket_saas_pending_jobs_cron_interval', 100));
     }
 
+    public function testEditorPurgeCacheFeatureGrantsCapabilityToEditorsOnly()
+    {
+        $editor = $this->factory()->user->create_and_get(['role' => 'editor']);
+        $author = $this->factory()->user->create_and_get(['role' => 'author']);
+
+        $this->assertTrue(
+            user_can($editor, 'rocket_purge_cache'),
+            'Editors should be granted the WP Rocket purge cache capability at runtime',
+        );
+        $this->assertFalse(
+            user_can($author, 'rocket_purge_cache'),
+            'Roles below editor should not receive the purge cache capability',
+        );
+        $this->assertFalse(
+            user_can($editor, 'rocket_manage_options'),
+            'Editors should not gain access to the WP Rocket settings page',
+        );
+    }
+
     /**
      * Test that forceTrailingSlash generates the correct htaccess rules.
      */

@@ -3,6 +3,7 @@
 namespace Sitchco\Modules;
 
 use Sitchco\Framework\Module;
+use WP_User;
 
 /**
  * class WPRocket
@@ -11,6 +12,8 @@ use Sitchco\Framework\Module;
 class WPRocket extends Module
 {
     public const HOOK_SUFFIX = 'wp-rocket';
+
+    public const FEATURES = ['editorPurgeCache'];
 
     public function init(): void
     {
@@ -31,6 +34,24 @@ class WPRocket extends Module
 
         // Increase cron interval for unused CSS processing.
         add_filter('rocket_saas_pending_jobs_cron_interval', fn(): int => 300);
+    }
+
+    /**
+     * Grant editors the WP Rocket "Clear cache" action (admin bar) without
+     * exposing the settings page, which requires rocket_manage_options.
+     * Granted at runtime via user_has_cap — nothing is written to role tables.
+     */
+    public function editorPurgeCache(): void
+    {
+        add_filter('user_has_cap', [$this, 'grantEditorPurgeCache'], 10, 4);
+    }
+
+    public function grantEditorPurgeCache(array $allcaps, array $caps, array $args, WP_User $user): array
+    {
+        if (in_array('editor', (array) $user->roles, true)) {
+            $allcaps['rocket_purge_cache'] = true;
+        }
+        return $allcaps;
     }
 
     public function forceTrailingSlash(string $marker): string
