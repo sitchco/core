@@ -133,7 +133,7 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, $args);
     }
 
-    public function inlineScript(string $handle, string $content, $position = null): void
+    public function inlineScript(string $handle, string $content, $position = null, bool $module = false): void
     {
         if (!$this->isDevServer) {
             wp_add_inline_script($handle, $content, $position);
@@ -141,14 +141,34 @@ class ModuleAssets
         }
         $isHeader = $position !== 'after';
         $hook = $isHeader ? (is_admin() ? 'admin_head' : 'wp_head') : (is_admin() ? 'admin_footer' : 'wp_footer');
-        $callback = function () use ($content) {
-            echo "<script>{$content}</script>";
+        $type = $module ? ' type="module"' : '';
+        $callback = function () use ($content, $type) {
+            echo "<script{$type}>{$content}</script>";
         };
         if (did_action($hook)) {
             $callback();
         } else {
             add_action($hook, $callback);
         }
+    }
+
+    public function inlineScriptAsset(string $handle, string $src, $position = null): void
+    {
+        $assetPath = $this->scriptPath($src);
+        if ($this->isDevServer) {
+            $url = $this->assetUrl($assetPath);
+            if (!$url) {
+                return;
+            }
+            $content = sprintf('import %s;', wp_json_encode($url, JSON_UNESCAPED_SLASHES));
+            $this->inlineScript($handle, $content, $position, true);
+            return;
+        }
+        $content = $this->assetContents($assetPath);
+        if (!$content) {
+            return;
+        }
+        $this->inlineScript($handle, $content, $position);
     }
 
     public function inlineScriptData(string $handle, string $object_name, $data, $position = null): void
@@ -226,15 +246,30 @@ class ModuleAssets
         return '';
     }
 
+    private function assetPathRelative(string $relativePath): FilePath
+    {
+        return str_starts_with($relativePath, $this->moduleAssetsPath->value())
+            ? new FilePath($this->moduleAssetsPath->value())
+            : $this->moduleAssetsPath->append($relativePath);
+    }
+
+    private function assetContents(FilePath $assetPath): string
+    {
+        $buildAssetPath = $this->buildAssetPath($assetPath);
+        if (!$buildAssetPath) {
+            Logger::warning('Production build path not found for asset: ' . $assetPath->value());
+            return '';
+        }
+        return (string) file_get_contents($buildAssetPath->value());
+    }
+
     private function assetUrlRelative(string $relativePath): string
     {
         if (empty($relativePath)) {
             Logger::warning('Empty Asset Relative Path');
             return '';
         }
-        $assetPath = str_starts_with($relativePath, $this->moduleAssetsPath->value())
-            ? new FilePath($this->moduleAssetsPath->value())
-            : $this->moduleAssetsPath->append($relativePath);
+        $assetPath = $this->assetPathRelative($relativePath);
 
         return $this->assetUrl($assetPath);
     }
@@ -247,6 +282,11 @@ class ModuleAssets
     private function styleUrl(string $relative): string
     {
         return $this->assetUrlRelative("styles/$relative");
+    }
+
+    private function scriptPath(string $relative): FilePath
+    {
+        return $this->moduleAssetsPath->append("scripts/$relative");
     }
 
     private function stylePath(string $relative): FilePath

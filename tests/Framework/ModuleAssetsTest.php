@@ -255,6 +255,31 @@ class ModuleAssetsTest extends TestCase
         $this->assertViteClientEnqueued();
     }
 
+    public function test_inlineScriptAsset_prod()
+    {
+        $handle = ModuleTester::hookName('test');
+        $this->resetWPDependencies();
+        $this->prodAssets->enqueueScript($handle, 'test.js');
+        $this->prodAssets->inlineScriptAsset($handle, 'test.js');
+        $registered = wp_scripts()->registered[$handle];
+        $this->assertEquals("console.log('built test asset');", trim($registered->extra['before'][1]));
+    }
+
+    public function test_inlineScriptAsset_dev()
+    {
+        $handle = ModuleTester::hookName('test');
+        $this->devAssets->enqueueScript($handle, 'test.js');
+        $this->devAssets->inlineScriptAsset($handle, 'test.js');
+        ob_start();
+        do_action('wp_head');
+        $html_out = ob_get_clean();
+        $this->assertStringContainsString(
+            '<script type="module">import "https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js";</script>',
+            $html_out,
+        );
+        $this->assertViteClientEnqueued();
+    }
+
     public function test_blockTypeMetadata_loadsAssetPhpDependencies()
     {
         $metadata = [
