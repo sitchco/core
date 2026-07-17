@@ -133,9 +133,9 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, $args);
     }
 
-    public function inlineScript(string $handle, string $content, $position = null, bool $module = false): void
+    public function inlineScript(string $content, string $handle = '', $position = null, bool $module = false): void
     {
-        if (!$this->isDevServer) {
+        if ($handle && !$this->isDevServer) {
             wp_add_inline_script($handle, $content, $position);
             return;
         }
@@ -145,14 +145,17 @@ class ModuleAssets
         $callback = function () use ($content, $type) {
             echo "<script{$type}>{$content}</script>";
         };
+        // Without a handle the script isn't tied to an enqueued dependency, so print it at the
+        // very top of the head, ahead of the enqueued scripts (which output at priority 9).
+        $priority = $handle ? 10 : 1;
         if (did_action($hook)) {
             $callback();
         } else {
-            add_action($hook, $callback);
+            add_action($hook, $callback, $priority);
         }
     }
 
-    public function inlineScriptAsset(string $handle, string $src, $position = null): void
+    public function inlineScriptAsset(string $src, string $handle = '', $position = null): void
     {
         $assetPath = $this->scriptPath($src);
         if ($this->isDevServer) {
@@ -161,14 +164,14 @@ class ModuleAssets
                 return;
             }
             $content = sprintf('import %s;', wp_json_encode($url, JSON_UNESCAPED_SLASHES));
-            $this->inlineScript($handle, $content, $position, true);
+            $this->inlineScript($content, $handle, $position, true);
             return;
         }
         $content = $this->assetContents($assetPath);
         if (!$content) {
             return;
         }
-        $this->inlineScript($handle, $content, $position);
+        $this->inlineScript($content, $handle, $position);
     }
 
     public function inlineScriptData(string $handle, string $object_name, $data, $position = null): void
@@ -177,7 +180,7 @@ class ModuleAssets
             "window.sitchco = window.sitchco || {}; window.sitchco.$object_name = %s;",
             wp_json_encode($data),
         );
-        $this->inlineScript($handle, $content, $position);
+        $this->inlineScript($content, $handle, $position);
     }
 
     public function blockTypeMetadata(array $metadata, array $blocksConfig): array

@@ -235,7 +235,7 @@ class ModuleAssetsTest extends TestCase
         $handle = ModuleTester::hookName('test');
         $inline_js = 'window.test = true';
         $this->prodAssets->enqueueScript($handle, 'test.js');
-        $this->prodAssets->inlineScript($handle, $inline_js);
+        $this->prodAssets->inlineScript($inline_js, $handle);
         $registered = wp_scripts()->registered[$handle];
         $this->assertEquals($inline_js, $registered->extra['before'][1]);
     }
@@ -260,16 +260,25 @@ class ModuleAssetsTest extends TestCase
         $handle = ModuleTester::hookName('test');
         $this->resetWPDependencies();
         $this->prodAssets->enqueueScript($handle, 'test.js');
-        $this->prodAssets->inlineScriptAsset($handle, 'test.js');
+        $this->prodAssets->inlineScriptAsset('test.js', $handle);
         $registered = wp_scripts()->registered[$handle];
         $this->assertEquals("console.log('built test asset');", trim($registered->extra['before'][1]));
+    }
+
+    public function test_inlineScriptAsset_prod_withoutHandle_printsInHead()
+    {
+        ob_start();
+        $this->prodAssets->inlineScriptAsset('test.js');
+        do_action('wp_head');
+        $html_out = ob_get_clean();
+        $this->assertStringContainsString("<script>console.log('built test asset');", $html_out);
     }
 
     public function test_inlineScriptAsset_dev()
     {
         $handle = ModuleTester::hookName('test');
         $this->devAssets->enqueueScript($handle, 'test.js');
-        $this->devAssets->inlineScriptAsset($handle, 'test.js');
+        $this->devAssets->inlineScriptAsset('test.js', $handle);
         ob_start();
         do_action('wp_head');
         $html_out = ob_get_clean();
