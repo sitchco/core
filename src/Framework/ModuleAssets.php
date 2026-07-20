@@ -133,6 +133,18 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, $args);
     }
 
+    /**
+     * Print an inline script.
+     *
+     * When a handle is passed in production, the script is attached to that enqueued
+     * dependency via wp_add_inline_script() and this method returns early. In dev mode, or
+     * when no handle is given, the script is echoed directly on the appropriate hook:
+     * wp_head/wp_footer on the front end, admin_head/admin_footer in wp-admin, selected by
+     * $position ('after' targets the footer). If the hook has already fired the script is
+     * echoed immediately; otherwise it is registered on that hook. A handle-less script has
+     * no enqueued dependency to anchor to, so it prints at priority 0 — ahead of the
+     * enqueued scripts, which output at priority 9.
+     */
     public function inlineScript(string $content, string $handle = '', $position = null, bool $module = false): void
     {
         if ($handle && !$this->isDevServer) {
@@ -141,13 +153,11 @@ class ModuleAssets
         }
         $isHeader = $position !== 'after';
         $hook = $isHeader ? (is_admin() ? 'admin_head' : 'wp_head') : (is_admin() ? 'admin_footer' : 'wp_footer');
-        $type = $module ? ' type="module"' : '';
-        $callback = function () use ($content, $type) {
-            echo "<script{$type}>{$content}</script>";
+        $attributes = $module ? ['type' => 'module'] : [];
+        $callback = function () use ($content, $attributes) {
+            echo wp_get_inline_script_tag($content, $attributes);
         };
-        // Without a handle the script isn't tied to an enqueued dependency, so print it at the
-        // very top of the head, ahead of the enqueued scripts (which output at priority 9).
-        $priority = $handle ? 10 : 1;
+        $priority = $handle ? 10 : 0;
         if (did_action($hook)) {
             $callback();
         } else {
@@ -155,6 +165,14 @@ class ModuleAssets
         }
     }
 
+    /**
+     * Inline a built asset's contents by entry path.
+     *
+     * The full built file bytes are embedded verbatim into every HTML response (in dev
+     * mode a module `import` of the dev-server URL is emitted instead). Because inlining
+     * defeats HTTP caching by design, this is intended for small, critical scripts — e.g.
+     * a no-JS class swap — not for large bundles.
+     */
     public function inlineScriptAsset(string $src, string $handle = '', $position = null): void
     {
         $assetPath = $this->scriptPath($src);
@@ -241,29 +259,40 @@ class ModuleAssets
         if ($this->isDevServer) {
             return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
-        $buildAssetPath = $this->buildAssetPath($assetPath);
-        if ($buildAssetPath) {
-            return $buildAssetPath->url();
-        }
-        Logger::warning('Production build path not found for asset: ' . $assetPath->value());
-        return '';
+        $buildAssetPath = $this->resolveBuildAssetPath($assetPath);
+        return $buildAssetPath ? $buildAssetPath->url() : '';
     }
 
     private function assetPathRelative(string $relativePath): FilePath
     {
-        return str_starts_with($relativePath, $this->moduleAssetsPath->value())
-            ? new FilePath($this->moduleAssetsPath->value())
-            : $this->moduleAssetsPath->append($relativePath);
+        return $this->moduleAssetsPath->append($relativePath);
     }
 
-    private function assetContents(FilePath $assetPath): string
+    /**
+     * Resolve a built asset path from the Vite manifest, logging a warning when the
+     * manifest file or the asset's manifest key is missing.
+     */
+    private function resolveBuildAssetPath(FilePath $assetPath): ?FilePath
     {
         $buildAssetPath = $this->buildAssetPath($assetPath);
         if (!$buildAssetPath) {
             Logger::warning('Production build path not found for asset: ' . $assetPath->value());
+        }
+        return $buildAssetPath;
+    }
+
+    private function assetContents(FilePath $assetPath): string
+    {
+        $buildAssetPath = $this->resolveBuildAssetPath($assetPath);
+        if (!$buildAssetPath) {
             return '';
         }
-        return (string) file_get_contents($buildAssetPath->value());
+        $contents = file_get_contents($buildAssetPath->value());
+        if ($contents === false) {
+            Logger::warning('Failed to read built asset: ' . $buildAssetPath->value());
+            return '';
+        }
+        return $contents;
     }
 
     private function assetUrlRelative(string $relativePath): string

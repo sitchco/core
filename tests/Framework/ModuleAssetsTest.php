@@ -243,13 +243,17 @@ class ModuleAssetsTest extends TestCase
     public function test_inlineScript_dev()
     {
         $handle = ModuleTester::hookName('test');
+        $this->resetWPDependencies();
         $this->devAssets->enqueueScript($handle, 'test.js');
+        // The reset wipes the script registry, so leave only our inline callback on the hook —
+        // otherwise wp_head's default script printing warns about now-unregistered dependencies.
+        remove_all_actions('wp_head');
         $this->devAssets->inlineScriptData($handle, 'test', ['key' => 'value']);
         ob_start();
         do_action('wp_head');
         $html_out = ob_get_clean();
         $this->assertStringContainsString(
-            '<script>window.sitchco = window.sitchco || {}; window.sitchco.test = {"key":"value"};</script>',
+            "<script>\nwindow.sitchco = window.sitchco || {}; window.sitchco.test = {\"key\":\"value\"};\n</script>",
             $html_out,
         );
         $this->assertViteClientEnqueued();
@@ -261,32 +265,121 @@ class ModuleAssetsTest extends TestCase
         $this->resetWPDependencies();
         $this->prodAssets->enqueueScript($handle, 'test.js');
         $this->prodAssets->inlineScriptAsset('test.js', $handle);
-        $registered = wp_scripts()->registered[$handle];
-        $this->assertEquals("console.log('built test asset');", trim($registered->extra['before'][1]));
+        // Assert the rendered before-inline script rather than internal storage, and confirm
+        // the full built content is present and the tag is terminated (no bytes dropped).
+        ob_start();
+        wp_scripts()->do_item($handle);
+        $output = ob_get_clean();
+        $this->assertMatchesRegularExpression("~console\\.log\\('built test asset'\\);.*?</script>~s", $output);
     }
 
     public function test_inlineScriptAsset_prod_withoutHandle_printsInHead()
     {
+        $this->resetWPDependencies();
+        remove_all_actions('wp_head');
         ob_start();
         $this->prodAssets->inlineScriptAsset('test.js');
         do_action('wp_head');
         $html_out = ob_get_clean();
-        $this->assertStringContainsString("<script>console.log('built test asset');", $html_out);
+        $this->assertStringContainsString("<script>\nconsole.log('built test asset');\n</script>", $html_out);
     }
 
     public function test_inlineScriptAsset_dev()
     {
         $handle = ModuleTester::hookName('test');
+        $this->resetWPDependencies();
         $this->devAssets->enqueueScript($handle, 'test.js');
+        remove_all_actions('wp_head');
         $this->devAssets->inlineScriptAsset('test.js', $handle);
         ob_start();
         do_action('wp_head');
         $html_out = ob_get_clean();
         $this->assertStringContainsString(
-            '<script type="module">import "https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js";</script>',
+            "<script type=\"module\">\nimport \"https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js\";\n</script>",
             $html_out,
         );
         $this->assertViteClientEnqueued();
+    }
+
+    public function test_inlineScriptAsset_dev_withoutHandle_printsModuleImportInHead()
+    {
+        $this->resetWPDependencies();
+        remove_all_actions('wp_head');
+        ob_start();
+        $this->devAssets->inlineScriptAsset('test.js');
+        do_action('wp_head');
+        $html_out = ob_get_clean();
+        $this->assertStringContainsString(
+            "<script type=\"module\">\nimport \"https://example.org:5173/Fakes/ModuleTester/assets/scripts/test.js\";\n</script>",
+            $html_out,
+        );
+    }
+
+    public function test_inlineScriptAsset_prod_afterHookFired_echoesImmediately()
+    {
+        $this->resetWPDependencies();
+        remove_all_actions('wp_head');
+        // Fire and discard wp_head so did_action('wp_head') is truthy for the call below —
+        // the immediate-echo branch that real production traffic (nested inside wp_head) hits.
+        ob_start();
+        do_action('wp_head');
+        ob_end_clean();
+        ob_start();
+        $this->prodAssets->inlineScriptAsset('test.js');
+        $output = ob_get_clean();
+        $this->assertStringContainsString("<script>\nconsole.log('built test asset');\n</script>", $output);
+    }
+
+    public function test_inlineScriptAsset_positionAfter_printsInFooter()
+    {
+        $this->resetWPDependencies();
+        // reset already clears wp_footer; also clear wp_head so its default script printing
+        // doesn't warn about now-unregistered dependencies when we fire it below.
+        remove_all_actions('wp_head');
+        $this->prodAssets->inlineScriptAsset('test.js', '', 'after');
+        ob_start();
+        do_action('wp_head');
+        $head = ob_get_clean();
+        $this->assertStringNotContainsString("console.log('built test asset');", $head);
+        ob_start();
+        do_action('wp_footer');
+        $footer = ob_get_clean();
+        $this->assertStringContainsString("<script>\nconsole.log('built test asset');\n</script>", $footer);
+    }
+
+    public function test_inlineScriptAsset_admin_printsInAdminHead()
+    {
+        set_current_screen('edit-post');
+        $this->resetWPDependencies();
+        remove_all_actions('admin_head');
+        $this->prodAssets->inlineScriptAsset('test.js');
+        ob_start();
+        do_action('admin_head');
+        $html_out = ob_get_clean();
+        $this->assertStringContainsString("<script>\nconsole.log('built test asset');\n</script>", $html_out);
+        set_current_screen('front');
+    }
+
+    public function test_inlineScriptAsset_withoutHandle_printsBeforePriority9HeadOutput()
+    {
+        $this->resetWPDependencies();
+        // Clear default head printing, then stand in a competing handler at priority 9 (where
+        // enqueued scripts print) to prove the handle-less inline script lands ahead of it.
+        remove_all_actions('wp_head');
+        add_action('wp_head', fn() => print '<!-- enqueued-scripts-marker -->', 9);
+        $this->prodAssets->inlineScriptAsset('test.js');
+        ob_start();
+        do_action('wp_head');
+        $html_out = ob_get_clean();
+        $inlinePos = strpos($html_out, "console.log('built test asset');");
+        $markerPos = strpos($html_out, '<!-- enqueued-scripts-marker -->');
+        $this->assertNotFalse($inlinePos);
+        $this->assertNotFalse($markerPos);
+        $this->assertLessThan(
+            $markerPos,
+            $inlinePos,
+            'Handle-less inline script should print ahead of priority-9 enqueued-script output',
+        );
     }
 
     public function test_blockTypeMetadata_loadsAssetPhpDependencies()
