@@ -133,22 +133,63 @@ class ModuleAssets
         wp_enqueue_block_style($blockName, $args);
     }
 
-    public function inlineScript(string $handle, string $content, $position = null): void
+    /**
+     * Print an inline script.
+     *
+     * When a handle is passed in production, the script is attached to that enqueued
+     * dependency via wp_add_inline_script() and this method returns early. In dev mode, or
+     * when no handle is given, the script is echoed directly on the appropriate hook:
+     * wp_head/wp_footer on the front end, admin_head/admin_footer in wp-admin, selected by
+     * $position ('after' targets the footer). If the hook has already fired the script is
+     * echoed immediately; otherwise it is registered on that hook. A handle-less script has
+     * no enqueued dependency to anchor to, so it prints at priority 0 — ahead of the
+     * enqueued scripts, which output at priority 9.
+     */
+    public function inlineScript(string $content, string $handle = '', $position = null, bool $module = false): void
     {
-        if (!$this->isDevServer) {
+        if ($handle && !$this->isDevServer) {
             wp_add_inline_script($handle, $content, $position);
             return;
         }
         $isHeader = $position !== 'after';
         $hook = $isHeader ? (is_admin() ? 'admin_head' : 'wp_head') : (is_admin() ? 'admin_footer' : 'wp_footer');
-        $callback = function () use ($content) {
-            echo "<script>{$content}</script>";
+        $attributes = $module ? ['type' => 'module'] : [];
+        $callback = function () use ($content, $attributes) {
+            echo wp_get_inline_script_tag($content, $attributes);
         };
+        $priority = $handle ? 10 : 0;
         if (did_action($hook)) {
             $callback();
         } else {
-            add_action($hook, $callback);
+            add_action($hook, $callback, $priority);
         }
+    }
+
+    /**
+     * Inline a built asset's contents by entry path.
+     *
+     * The full built file bytes are embedded verbatim into every HTML response (in dev
+     * mode a module `import` of the dev-server URL is emitted instead). Because inlining
+     * defeats HTTP caching by design, this is intended for small, critical scripts — e.g.
+     * a no-JS class swap — not for large bundles.
+     */
+    public function inlineScriptAsset(string $src, string $handle = '', $position = null): void
+    {
+        $assetPath = $this->scriptPath($src);
+        if ($this->isDevServer) {
+            $url = $this->assetUrl($assetPath);
+            if (!$url) {
+                return;
+            }
+            $content = sprintf('import %s;', wp_json_encode($url, JSON_UNESCAPED_SLASHES));
+            $this->inlineScript($content, $handle, $position, true);
+            return;
+        }
+        $content = $this->assetContents($assetPath);
+        if (!$content) {
+            return;
+        }
+        $this->inlineScript($content, $handle, $position);
     }
 
     public function inlineScriptData(string $handle, string $object_name, $data, $position = null): void
@@ -157,7 +198,7 @@ class ModuleAssets
             "window.sitchco = window.sitchco || {}; window.sitchco.$object_name = %s;",
             wp_json_encode($data),
         );
-        $this->inlineScript($handle, $content, $position);
+        $this->inlineScript($content, $handle, $position);
     }
 
     public function blockTypeMetadata(array $metadata, array $blocksConfig): array
@@ -218,12 +259,40 @@ class ModuleAssets
         if ($this->isDevServer) {
             return $this->devBuildUrl . '/' . $assetPath->relativeTo($this->productionBuildPath);
         }
+        $buildAssetPath = $this->resolveBuildAssetPath($assetPath);
+        return $buildAssetPath ? $buildAssetPath->url() : '';
+    }
+
+    private function assetPathRelative(string $relativePath): FilePath
+    {
+        return $this->moduleAssetsPath->append($relativePath);
+    }
+
+    /**
+     * Resolve a built asset path from the Vite manifest, logging a warning when the
+     * manifest file or the asset's manifest key is missing.
+     */
+    private function resolveBuildAssetPath(FilePath $assetPath): ?FilePath
+    {
         $buildAssetPath = $this->buildAssetPath($assetPath);
-        if ($buildAssetPath) {
-            return $buildAssetPath->url();
+        if (!$buildAssetPath) {
+            Logger::warning('Production build path not found for asset: ' . $assetPath->value());
         }
-        Logger::warning('Production build path not found for asset: ' . $assetPath->value());
-        return '';
+        return $buildAssetPath;
+    }
+
+    private function assetContents(FilePath $assetPath): string
+    {
+        $buildAssetPath = $this->resolveBuildAssetPath($assetPath);
+        if (!$buildAssetPath) {
+            return '';
+        }
+        $contents = file_get_contents($buildAssetPath->value());
+        if ($contents === false) {
+            Logger::warning('Failed to read built asset: ' . $buildAssetPath->value());
+            return '';
+        }
+        return $contents;
     }
 
     private function assetUrlRelative(string $relativePath): string
@@ -232,9 +301,7 @@ class ModuleAssets
             Logger::warning('Empty Asset Relative Path');
             return '';
         }
-        $assetPath = str_starts_with($relativePath, $this->moduleAssetsPath->value())
-            ? new FilePath($this->moduleAssetsPath->value())
-            : $this->moduleAssetsPath->append($relativePath);
+        $assetPath = $this->assetPathRelative($relativePath);
 
         return $this->assetUrl($assetPath);
     }
@@ -247,6 +314,11 @@ class ModuleAssets
     private function styleUrl(string $relative): string
     {
         return $this->assetUrlRelative("styles/$relative");
+    }
+
+    private function scriptPath(string $relative): FilePath
+    {
+        return $this->moduleAssetsPath->append("scripts/$relative");
     }
 
     private function stylePath(string $relative): FilePath

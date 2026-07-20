@@ -67,7 +67,7 @@ class UIFramework extends Module
         // so PHP_INT_MAX ensures this inline script appears after all other editor scripts.
         $this->enqueueEditorUIAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript(static::hookName('editor-flush'));
-            $assets->inlineScript(static::hookName('editor-flush'), static::EDITOR_FLUSH_SCRIPT);
+            $assets->inlineScript(static::EDITOR_FLUSH_SCRIPT, static::hookName('editor-flush'));
         }, PHP_INT_MAX);
     }
 
@@ -76,7 +76,7 @@ class UIFramework extends Module
         $this->enqueueFrontendAssets(function (ModuleAssets $assets) {
             $assets->enqueueScript(static::hookName());
             $assets->enqueueStyle(static::hookName());
-            $assets->inlineScript(static::hookName(), static::NO_JS_SCRIPT, 'before');
+            $assets->inlineScript(static::NO_JS_SCRIPT, static::hookName(), 'before');
         });
     }
 }
