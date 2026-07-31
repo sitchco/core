@@ -13,6 +13,19 @@ class TagManager extends Module
 {
     public const HOOK_SUFFIX = 'tag-manager';
 
+    /**
+     * Window global a page can set to suppress the container for the current page load.
+     *
+     * The client-side counterpart to the `enable-gtm` filter: that one decides at render time,
+     * this one decides in the browser, for cases the server can't know about — chiefly a
+     * client-side redirect. `location.replace()` does not stop the current document from parsing,
+     * so without this the doomed page load still initializes GTM and fires a pageview that the
+     * destination load fires again.
+     *
+     * Must be set before this snippet runs (wp_head priority 5) to have any effect.
+     */
+    public const DISABLE_GLOBAL = '__sitchco_tagManager_disableGTM';
+
     public const DEPENDENCIES = [UIFramework::class, TimberModule::class];
 
     public function __construct(protected TagManagerSettings $settings) {}
@@ -167,13 +180,14 @@ class TagManager extends Module
     protected function headSnippet(string $id): string
     {
         $id = esc_js($id);
+        $disable = self::DISABLE_GLOBAL;
         return <<<HTML
         <!-- Google Tag Manager -->
-        <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+        <script>if(!window.{$disable}){(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-        })(window,document,'script','dataLayer','{$id}');</script>
+        })(window,document,'script','dataLayer','{$id}');}</script>
         <!-- End Google Tag Manager -->
 
         HTML;
