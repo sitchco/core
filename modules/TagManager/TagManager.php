@@ -177,6 +177,16 @@ class TagManager extends Module
         echo "<script>\nwindow.dataLayer=window.dataLayer||[];{$push}\n</script>\n";
     }
 
+    /**
+     * Google's stock GTM container snippet, pasted verbatim from the Tag Manager UI with exactly
+     * one modification: the IIFE is wrapped in `if (!window.<DISABLE_GLOBAL>) { ... }`.
+     *
+     * Preserve that wrapper if you ever re-paste an updated snippet from Google. Dropping it fails
+     * silently — nothing errors, the container simply starts loading again on page loads that are
+     * about to navigate away, and duplicate pageviews reappear in GA4.
+     *
+     * @see self::DISABLE_GLOBAL for what sets the global, and why.
+     */
     protected function headSnippet(string $id): string
     {
         $id = esc_js($id);
