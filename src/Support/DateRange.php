@@ -47,7 +47,7 @@ readonly class DateRange
         return new self($start_date, $end_date);
     }
 
-    public function formattedRange(DateFormat $format = null, bool $with_end_date_year = false): array
+    public function formattedRange(?DateFormat $format = null, bool $with_end_date_year = false): array
     {
         $format ??= new DateFormat();
 
@@ -67,7 +67,7 @@ readonly class DateRange
     }
 
     public function formatRange(
-        DateFormat $format = null,
+        ?DateFormat $format = null,
         bool|string $start_format = true,
         bool|string $end_format = true,
     ): array {
@@ -83,7 +83,7 @@ readonly class DateRange
     }
 
     public function format(
-        DateFormat $format = null,
+        ?DateFormat $format = null,
         bool $with_end_date_year = false,
         string $separator = ' - ',
     ): string {

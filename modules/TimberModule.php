@@ -133,7 +133,7 @@ class TimberModule extends Module
         string $content = '',
         bool $is_preview = false,
         int $post_id = 0,
-        WP_Block $wp_block = null,
+        ?WP_Block $wp_block = null,
     ): void {
         $scope = [
             'context' => static::setupContext(...func_get_args()),
@@ -175,7 +175,7 @@ class TimberModule extends Module
         string $content = '',
         bool $is_preview = false,
         int $post_id = 0,
-        WP_Block $wp_block = null,
+        ?WP_Block $wp_block = null,
     ): array {
         $context = Timber::context();
         $context['post'] = $post_id ? Timber::get_post($post_id) : Timber::get_post();

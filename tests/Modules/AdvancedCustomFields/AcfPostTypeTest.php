@@ -94,7 +94,7 @@ abstract class AcfPostTypeTest extends TestCase
         $this->acf_taxonomy->register_taxonomies();
     }
 
-    protected function getTestPostTitles(WP_Query $query = null): array
+    protected function getTestPostTitles(?WP_Query $query = null): array
     {
         if (!$query) {
             $query = new WP_Query(['post_type' => $this->post_type]);

@@ -22,7 +22,7 @@ class DateTime extends Carbon
         $this->setTimezone($this->getDefaultTimezone($time));
     }
 
-    public static function createFromTimestamp($timestamp, DateTimeZone|string|int $timezone = null): static
+    public static function createFromTimestamp($timestamp, DateTimeZone|string|int|null $timezone = null): static
     {
         $datetime = new static("@$timestamp", new DateTimeZone('UTC'));
         $datetime->setTimezone($datetime->getDefaultTimezone($timestamp, $timezone));

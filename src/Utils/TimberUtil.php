@@ -23,7 +23,7 @@ class TimberUtil
         return Timber::compile($template, $context);
     }
 
-    static function compileString(string $twig_string, array $context = [], string $filter_key = null): string
+    static function compileString(string $twig_string, array $context = [], ?string $filter_key = null): string
     {
         if ($filter_key) {
             $hookName = Hooks::name('template-context', $filter_key);

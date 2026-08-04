@@ -18,7 +18,7 @@ class WordPress
      * @param array|null $args Optional arguments to customize the post generation.
      * @return void
      */
-    public function generateRandomPosts(array $args = null): void
+    public function generateRandomPosts(?array $args = null): void
     {
         $defaults = [
             'number' => 20,

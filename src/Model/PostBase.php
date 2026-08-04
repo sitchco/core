@@ -88,7 +88,7 @@ class PostBase extends Post
      * @param string|null $taxonomy
      * @return $this
      */
-    public function addTerms(array $terms, string $taxonomy = null): static
+    public function addTerms(array $terms, ?string $taxonomy = null): static
     {
         foreach ($terms as $term) {
             $this->addTerm($term, $taxonomy);
@@ -101,7 +101,7 @@ class PostBase extends Post
      * @param string|null $taxonomy
      * @return $this
      */
-    public function addTerm(\WP_Term|Term|string|int $term, string $taxonomy = null): static
+    public function addTerm(\WP_Term|Term|string|int $term, ?string $taxonomy = null): static
     {
         $term = $this->normalizeTerm($term, $taxonomy);
         $this->_local_add_terms_reference[$term->taxonomy][$term->slug] = $term;
@@ -114,7 +114,7 @@ class PostBase extends Post
      * @param string|null $taxonomy
      * @return $this
      */
-    public function removeTerms(array $terms, string $taxonomy = null): static
+    public function removeTerms(array $terms, ?string $taxonomy = null): static
     {
         foreach ($terms as $term) {
             $this->removeTerm($term, $taxonomy);
@@ -127,7 +127,7 @@ class PostBase extends Post
      * @param string|null $taxonomy
      * @return $this
      */
-    public function removeTerm(\WP_Term|Term|string|int $term, string $taxonomy = null): static
+    public function removeTerm(\WP_Term|Term|string|int $term, ?string $taxonomy = null): static
     {
         $term = $this->normalizeTerm($term, $taxonomy);
         $this->_local_remove_terms_reference[$term->taxonomy][$term->slug] = $term;
@@ -167,7 +167,7 @@ class PostBase extends Post
      * @param string|null $taxonomy
      * @return Term|null
      */
-    private function normalizeTerm(\WP_Term|Term|string|int $term, string $taxonomy = null): ?Term
+    private function normalizeTerm(\WP_Term|Term|string|int $term, ?string $taxonomy = null): ?Term
     {
         if ($term instanceof Term) {
             return $term;

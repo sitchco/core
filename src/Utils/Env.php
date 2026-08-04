@@ -12,7 +12,7 @@ class Env
         return defined('PHPUNIT_COMPOSER_INSTALL');
     }
 
-    public static function exit(string|ExitException $exception = null): void
+    public static function exit(string|ExitException|null $exception = null): void
     {
         if (static::isTesting()) {
             if (!($exception instanceof ExitException)) {
