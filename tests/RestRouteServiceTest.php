@@ -113,6 +113,24 @@ class RestRouteServiceTest extends TestCase
     }
 
     /**
+     * Test that a null root opts out of the 'sitchco' prefix entirely.
+     */
+    public function testRootOverride(): void
+    {
+        $data = ['status' => 'ok'];
+        $service = new RestRouteService('roundabout/v1', root: null);
+        $service->addReadRoute('/rootless', fn() => $data);
+
+        $routes = rest_get_server()->get_routes('roundabout/v1');
+        $this->assertArrayHasKey('/roundabout/v1/rootless', $routes);
+
+        $response = rest_do_request(new WP_REST_Request('GET', '/roundabout/v1/rootless'));
+
+        $this->assertEquals(200, $response->get_status());
+        $this->assertEquals($data, $response->get_data());
+    }
+
+    /**
      * Test that a route with args validates required parameters.
      */
     public function testRouteWithArgsValidation(): void

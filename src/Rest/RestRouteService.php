@@ -3,7 +3,7 @@
 namespace Sitchco\Rest;
 
 use Closure;
-use Sitchco\Utils\Hooks;
+use Sitchco\Support\HookName;
 use WP_REST_Server;
 
 /**
@@ -18,11 +18,16 @@ class RestRouteService
     /**
      * Constructor for RestRouteService.
      *
-     * @param string $namespace The API namespace, defaults to 'sitchco/v1'.
+     * @param string $namespace The API namespace, appended to the root: 'sitchco' by default.
+     * @param string|null $root The namespace root. Pass null (or '') to opt out of the 'sitchco'
+     *                          prefix entirely, for routes that need to own their own vendor
+     *                          namespace — e.g. new RestRouteService('roundabout/v1', root: null).
      */
-    public function __construct(string $namespace = '')
+    public function __construct(string $namespace = '', ?string $root = HookName::ROOT)
     {
-        $this->namespace = Hooks::name($namespace);
+        // join() filters out empty parts, so a null/'' root simply drops away and the default
+        // stays byte-identical to the Hooks::name() result this replaced.
+        $this->namespace = HookName::join((string) $root, $namespace);
     }
 
     /**
