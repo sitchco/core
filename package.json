@@ -21,7 +21,7 @@
         "@sitchco/datalayer": "^0.2.0"
     },
     "devDependencies": {
-        "@sitchco/cli": "2.1.10",
+        "@sitchco/cli": "2.1.11",
         "@sitchco/eslint-config": "^2.1.2"
     }
 }
