@@ -12,9 +12,34 @@ class SvgSprite extends Module
 {
     public const HOOK_SUFFIX = 'svg-sprite';
 
+    /**
+     * Filename prefix that marks a sprite symbol as an icon rather than a plain shape.
+     */
+    public const ICON_PREFIX = 'icon-';
+
     protected array $iconList;
 
     public function __construct(protected ConfigRegistry $configRegistry) {}
+
+    /**
+     * Reduce a list of sprite symbol names to the icons among them, with the prefix stripped.
+     *
+     * A module's svg-sprite directory is not an icon directory. Everything in it goes into the
+     * sprite, and this prefix is what separates the icons from shapes that are only ever
+     * referenced directly with `<use href="#{id}">`. Only prefixed symbols can render through
+     * renderIcon(), which asks the sprite for `#icon-{name}` and resolves the source file by
+     * globbing `icon-{name}.svg` — so an unprefixed name in this list is an icon picker choice
+     * that points at nothing. Leaving it out is what lets a module ship a shape without
+     * polluting the picker: don't prefix it.
+     *
+     * Mirrors iconNames() in @sitchco/module-builder's svgstore-sprite plugin, which applies
+     * the same rule when it writes the sprite-icons.json that production builds read.
+     */
+    public static function iconNames(array $symbolNames): array
+    {
+        $icons = array_filter($symbolNames, fn(string $name) => str_starts_with($name, static::ICON_PREFIX));
+        return array_values(array_map(fn(string $name) => substr($name, strlen(static::ICON_PREFIX)), $icons));
+    }
 
     public function init(): void
     {
@@ -74,7 +99,7 @@ class SvgSprite extends Module
             // For dev server, glob list of svg sprite icon filenames
             if ($this->assets()->isDevServer) {
                 $matches = $this->findSvgPaths($path);
-                $icons = array_map(fn(FilePath $match) => str_replace('icon-', '', $match->name()), $matches);
+                $icons = static::iconNames(array_map(fn(FilePath $match) => $match->name(), $matches));
                 $this->addIcons($icons, $path);
                 $sprite = $this->getSpritePath($path);
                 if ($sprite->exists()) {
@@ -83,7 +108,9 @@ class SvgSprite extends Module
                 }
                 continue;
             }
-            // For production build, read generated icon list and output sprite in body
+            // For production build, read generated icon list and output sprite in body.
+            // The build applies the icon-prefix rule when it writes that list, so it arrives
+            // filtered and stripped — see iconNames() above.
             $sprite = $this->getSpritePath($path);
             $spriteIcons = $path->append('dist/assets/images/sprite-icons.json');
             if (!($sprite->exists() && $spriteIcons->exists())) {
@@ -116,8 +143,10 @@ class SvgSprite extends Module
 
     protected function renderIconSvg(string $name): string
     {
+        // The sprite ids the symbol by its source filename, so this doubles as the file's basename.
+        $symbolId = static::ICON_PREFIX . $name;
         if (!($this->assets()->isDevServer || Block::isPreview())) {
-            return '<svg aria-hidden="true"><use fill="currentColor" href="#icon-' . $name . '"></use></svg>';
+            return '<svg aria-hidden="true"><use fill="currentColor" href="#' . $symbolId . '"></use></svg>';
         }
         if (!isset($this->iconList)) {
             $this->iconList = apply_filters(static::hookName('icon-list'), []);
@@ -127,7 +156,7 @@ class SvgSprite extends Module
         $configPath = $foundIconList['configPath'] ?? null;
 
         /* @var ?FilePath $svgFile */
-        $svgFile = collect($this->findSvgPaths($configPath, "icon-$name"))->last();
+        $svgFile = collect($this->findSvgPaths($configPath, $symbolId))->last();
         if (!$svgFile?->exists()) {
             return "<!-- SVG Symbol $name not found -->";
         }
