@@ -80,6 +80,17 @@ class TimberModuleTest extends TestCase
         $this->assertArrayHasKey('post', $context);
     }
 
+    public function test_blockRenderCallback_fields_is_empty_array_when_block_has_no_saved_values()
+    {
+        $post_id = $this->factory()->post->create(['post_title' => 'Test Post']);
+
+        $context = $this->renderBlockWithContext(postId: $post_id, return_context: true);
+
+        // get_fields() returns false for a block with no saved values; block.php files
+        // pass $context['fields'] to array-typed helpers, so it must always be an array.
+        $this->assertSame([], $context['fields']);
+    }
+
     public function test_blockRenderCallback_parses_content_when_no_wp_block()
     {
         $post_id = $this->factory()->post->create(['post_title' => 'Test Post']);

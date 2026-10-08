@@ -179,7 +179,7 @@ class TimberModule extends Module
     ): array {
         $context = Timber::context();
         $context['post'] = $post_id ? Timber::get_post($post_id) : Timber::get_post();
-        $context['fields'] = get_fields();
+        $context['fields'] = get_fields() ?: [];
         $context['is_preview'] = $is_preview;
         $context['content'] = $content;
 
